@@ -210,3 +210,63 @@ export interface LikedMeItemResponse {
   weddingId?: number;
   likedAt: string;
 }
+
+export type MatchStatus = 'ACTIVE' | 'BLOCKED';
+
+export interface MatchUserProfile {
+  userId: number;
+  primaryPhotoUrl: string | null;
+  fullName: string;
+  age: number;
+  heightCm: number;
+  areaOfResidence: string;
+  religiousLevel: string;
+  education: string;
+  occupation: string;
+  selfDescription: string;
+  hobbies: string;
+  familyDescription: string | null;
+  lookingFor: string;
+  headCovering: string | null;
+  hasDrivingLicense: boolean | null;
+}
+
+export interface MatchResponse {
+  matchId: number;
+  otherUserId: number;
+  otherUserFullName: string;
+  otherUserPrimaryPhotoUrl: string | null;
+  poolType: PoolType;
+  weddingId: number | null;
+  status: MatchStatus;
+  createdAt: string;
+}
+
+export type MatchListItemResponse = MatchResponse;
+
+export interface MatchDetailsResponse {
+  matchId: number;
+  otherUserProfile: MatchUserProfile;
+  poolType: PoolType;
+  weddingId: number | null;
+  status: MatchStatus;
+  createdAt: string;
+}
+
+export interface ChatMessageResponse {
+  id: number;
+  matchId: number;
+  senderId: number;
+  content: string;
+  sentAt: string;
+}
+
+export interface ChatMessagesResponse {
+  matchId: number;
+  messages: ChatMessageResponse[];
+}
+
+export interface ChatMessageRequest {
+  content: string;
+}
+

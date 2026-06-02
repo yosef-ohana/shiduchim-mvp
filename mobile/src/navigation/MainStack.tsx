@@ -10,6 +10,9 @@ import { PoolSelectionScreen } from '../screens/discover/PoolSelectionScreen';
 import { DiscoverScreen } from '../screens/discover/DiscoverScreen';
 import { CandidateProfileScreen } from '../screens/discover/CandidateProfileScreen';
 import { ListsScreen } from '../screens/lists/ListsScreen';
+import { MatchesScreen } from '../screens/matches/MatchesScreen';
+import { MatchDetailsScreen } from '../screens/matches/MatchDetailsScreen';
+import { ChatScreen } from '../screens/chat/ChatScreen';
 import { DiscoverPool } from '../types/api';
 
 export type MainStackParamList = {
@@ -23,6 +26,9 @@ export type MainStackParamList = {
   Discover: { pool: DiscoverPool; weddingId?: number };
   CandidateProfile: { userId: number };
   Lists: undefined;
+  Matches: undefined;
+  MatchDetails: { matchId: number };
+  Chat: { matchId: number };
 };
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
@@ -40,6 +46,9 @@ export const MainStack = () => {
       <Stack.Screen name="Discover" component={DiscoverScreen} options={{ title: 'Candidates' }} />
       <Stack.Screen name="CandidateProfile" component={CandidateProfileScreen} options={{ title: 'Candidate Profile' }} />
       <Stack.Screen name="Lists" component={ListsScreen} options={{ title: 'My Lists' }} />
+      <Stack.Screen name="Matches" component={MatchesScreen} options={{ title: 'My Matches' }} />
+      <Stack.Screen name="MatchDetails" component={MatchDetailsScreen} options={{ title: 'Match Details' }} />
+      <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'Chat' }} />
     </Stack.Navigator>
   );
 };
