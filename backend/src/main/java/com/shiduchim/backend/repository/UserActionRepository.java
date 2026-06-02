@@ -23,4 +23,17 @@ public interface UserActionRepository extends JpaRepository<UserAction, Long> {
     );
 
     List<UserAction> findByActorUserIdAndPoolType(Long actorUserId, PoolType poolType);
+
+    List<UserAction> findByActorUserIdAndActionType(Long actorUserId, com.shiduchim.backend.enums.ActionType actionType);
+
+    List<UserAction> findByActorUserIdAndActionTypeAndPoolType(Long actorUserId, com.shiduchim.backend.enums.ActionType actionType, PoolType poolType);
+
+    List<UserAction> findByActorUserIdAndActionTypeAndPoolTypeAndWeddingId(Long actorUserId, com.shiduchim.backend.enums.ActionType actionType, PoolType poolType, Long weddingId);
+
+    List<UserAction> findByTargetUserIdAndActionType(Long targetUserId, com.shiduchim.backend.enums.ActionType actionType);
+
+    List<UserAction> findByTargetUserIdAndActionTypeAndPoolType(Long targetUserId, com.shiduchim.backend.enums.ActionType actionType, PoolType poolType);
+
+    List<UserAction> findByTargetUserIdAndActionTypeAndPoolTypeAndWeddingId(Long targetUserId, com.shiduchim.backend.enums.ActionType actionType, PoolType poolType, Long weddingId);
 }
+
