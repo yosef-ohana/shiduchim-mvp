@@ -5,7 +5,7 @@ import { AppButton } from '../../components/AppButton';
 import { useAuth } from '../../context/AuthContext';
 import { theme } from '../../theme/theme';
 
-export const MeScreen = () => {
+export const MeScreen = ({ navigation }: any) => {
   const { user, logout, refreshMe } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -23,7 +23,7 @@ export const MeScreen = () => {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>My Profile</Text>
+        <Text style={styles.title}>My Account</Text>
 
         <View style={styles.card}>
           <View style={styles.row}>
@@ -57,10 +57,28 @@ export const MeScreen = () => {
         </View>
 
         <AppButton 
+          title="My Profile Details" 
+          onPress={() => navigation.navigate('Profile')}
+          style={styles.button}
+        />
+
+        <AppButton 
+          title="Complete Basic Profile" 
+          onPress={() => navigation.navigate('BasicProfile')}
+          style={styles.button}
+        />
+
+        <AppButton 
+          title="Complete Full Profile" 
+          onPress={() => navigation.navigate('FullProfile')}
+          style={styles.button}
+        />
+
+        <AppButton 
           title="Refresh Profile" 
           onPress={handleRefresh} 
           loading={isRefreshing}
-          style={styles.button}
+          style={[styles.button, styles.refreshButton]}
         />
         
         <AppButton 
@@ -118,5 +136,8 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     backgroundColor: theme.colors.error,
+  },
+  refreshButton: {
+    backgroundColor: '#4A4A4A',
   },
 });
