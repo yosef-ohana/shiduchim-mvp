@@ -2,7 +2,7 @@ import apiClient from './client';
 import { PhotoResponse, PhotoUploadResponse } from '../types/api';
 
 export const getMyPhotos = async (): Promise<PhotoResponse[]> => {
-  const response = await apiClient.get<PhotoResponse[]>('/api/photos/me');
+  const response = await apiClient.get<PhotoResponse[]>('/photos/me');
   return response.data;
 };
 
@@ -15,7 +15,7 @@ export const uploadPhoto = async (imageUri: string, mimeType?: string, fileName?
     name: fileName || 'profile-photo.jpg',
   } as any);
 
-  const response = await apiClient.post<PhotoUploadResponse>('/api/photos', formData, {
+  const response = await apiClient.post<PhotoUploadResponse>('/photos', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -24,10 +24,10 @@ export const uploadPhoto = async (imageUri: string, mimeType?: string, fileName?
 };
 
 export const setPrimaryPhoto = async (photoId: number): Promise<PhotoResponse> => {
-  const response = await apiClient.put<PhotoResponse>(`/api/photos/${photoId}/primary`);
+  const response = await apiClient.put<PhotoResponse>(`/photos/${photoId}/primary`);
   return response.data;
 };
 
 export const deletePhoto = async (photoId: number): Promise<void> => {
-  await apiClient.delete(`/api/photos/${photoId}`);
+  await apiClient.delete(`/photos/${photoId}`);
 };
