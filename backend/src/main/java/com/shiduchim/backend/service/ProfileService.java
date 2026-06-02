@@ -18,10 +18,13 @@ public class ProfileService {
 
     private final UserRepository userRepository;
     private final UserPhotoRepository userPhotoRepository;
+    private final com.shiduchim.backend.repository.WeddingParticipantRepository weddingParticipantRepository;
 
-    public ProfileService(UserRepository userRepository, UserPhotoRepository userPhotoRepository) {
+    public ProfileService(UserRepository userRepository, UserPhotoRepository userPhotoRepository,
+                          com.shiduchim.backend.repository.WeddingParticipantRepository weddingParticipantRepository) {
         this.userRepository = userRepository;
         this.userPhotoRepository = userPhotoRepository;
+        this.weddingParticipantRepository = weddingParticipantRepository;
     }
 
     // ─── GET /api/profile/me ──────────────────────────────────────────────────
@@ -125,6 +128,75 @@ public class ProfileService {
 
         boolean globalPoolEnabled = user.getProfileStatus() == ProfileStatus.FULL;
         return new FullProfileResponse(user.getProfileStatus(), globalPoolEnabled, missingFields);
+    }
+
+    // ─── GET /api/profiles/{userId} ───────────────────────────────────────────
+
+    public PublicProfileResponse getPublicProfile(User currentUser, Long targetUserId) {
+        requireUserRole(currentUser);
+
+        if (currentUser.getId().equals(targetUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot view own profile via this endpoint");
+        }
+
+        User targetUser = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Target user not found"));
+
+        if (targetUser.getRole() != UserRole.USER) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Target user is not a USER");
+        }
+        if (Boolean.TRUE.equals(targetUser.getAdminBlocked())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Target user is blocked");
+        }
+        if (currentUser.getGender() != null && currentUser.getGender() == targetUser.getGender()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Same-gender viewing is not allowed");
+        }
+
+        List<com.shiduchim.backend.entity.UserPhoto> targetPhotos = userPhotoRepository.findByUserIdOrderByOrderIndexAscCreatedAtAsc(targetUserId);
+        String primaryPhotoUrl = null;
+        String additionalPhotoUrl = null;
+        for (com.shiduchim.backend.entity.UserPhoto photo : targetPhotos) {
+            if (Boolean.TRUE.equals(photo.getIsPrimary())) {
+                primaryPhotoUrl = photo.getImageUrl();
+            } else if (additionalPhotoUrl == null) {
+                additionalPhotoUrl = photo.getImageUrl();
+            }
+        }
+
+        if (primaryPhotoUrl == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Target user has no primary photo");
+        }
+
+        boolean eligibleGlobal = (targetUser.getProfileStatus() == ProfileStatus.FULL);
+        boolean eligibleWedding = false;
+
+        if (targetUser.getProfileStatus() == ProfileStatus.BASIC || targetUser.getProfileStatus() == ProfileStatus.FULL) {
+            eligibleWedding = weddingParticipantRepository.existsSharedActiveWedding(currentUser.getId(), targetUserId);
+        }
+
+        if (!eligibleGlobal && !eligibleWedding) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Target user is not eligible in any shared context");
+        }
+
+        PublicProfileResponse response = new PublicProfileResponse();
+        response.setUserId(targetUser.getId());
+        response.setPrimaryPhotoUrl(primaryPhotoUrl);
+        response.setAdditionalPhotoUrl(additionalPhotoUrl);
+        response.setFullName(targetUser.getFullName());
+        response.setAge(targetUser.getAge());
+        response.setHeightCm(targetUser.getHeightCm());
+        response.setAreaOfResidence(targetUser.getAreaOfResidence());
+        response.setReligiousLevel(targetUser.getReligiousLevel());
+        response.setEducation(targetUser.getEducation());
+        response.setOccupation(targetUser.getOccupation());
+        response.setSelfDescription(targetUser.getSelfDescription());
+        response.setHobbies(targetUser.getHobbies());
+        response.setFamilyDescription(targetUser.getFamilyDescription());
+        response.setLookingFor(targetUser.getLookingFor());
+        response.setHeadCovering(targetUser.getHeadCovering());
+        response.setHasDrivingLicense(targetUser.getHasDrivingLicense());
+
+        return response;
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
