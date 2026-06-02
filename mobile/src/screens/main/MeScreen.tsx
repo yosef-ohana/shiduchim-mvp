@@ -75,6 +75,18 @@ export const MeScreen = ({ navigation }: any) => {
         />
 
         <AppButton 
+          title="My Photos" 
+          onPress={() => navigation.navigate('Photos')}
+          style={styles.button}
+        />
+
+        <AppButton 
+          title="Join Wedding" 
+          onPress={() => navigation.navigate('JoinWedding')}
+          style={styles.button}
+        />
+
+        <AppButton 
           title="Refresh Profile" 
           onPress={handleRefresh} 
           loading={isRefreshing}

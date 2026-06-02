@@ -91,3 +91,33 @@ export interface FullProfileResponse {
   missingFields: string[];
 }
 
+export type ParticipantStatus = 'ACTIVE' | 'REMOVED';
+
+export interface PhotoResponse {
+  id: number;
+  imageUrl: string;
+  isPrimary: boolean;
+  orderIndex: number;
+  createdAt: string;
+}
+
+export interface PhotoUploadResponse {
+  photoId: number;
+  imageUrl: string;
+  isPrimary: boolean;
+  orderIndex: number;
+  photoCount: number;
+  hasPrimaryPhoto: boolean;
+}
+
+export interface JoinWeddingRequest {
+  accessCode: string;
+}
+
+export interface JoinWeddingResponse {
+  weddingId: number;
+  weddingName: string;
+  participantStatus: ParticipantStatus;
+  joinedAt: string;
+}
+
