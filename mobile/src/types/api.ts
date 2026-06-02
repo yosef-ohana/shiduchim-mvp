@@ -121,3 +121,44 @@ export interface JoinWeddingResponse {
   joinedAt: string;
 }
 
+export type DiscoverPool = 'WEDDING' | 'GLOBAL';
+
+export interface PublicUserCardResponse {
+  userId: number;
+  primaryPhotoUrl?: string;
+  fullName: string;
+  age: number;
+  heightCm: number;
+  areaOfResidence: string;
+  religiousLevel: string;
+  education: string;
+  occupation?: string;
+  lookingForShort?: string;
+  poolType?: string;
+  weddingId?: number;
+}
+
+export interface DiscoverResponse {
+  items: PublicUserCardResponse[];
+}
+
+export interface PublicProfileResponse {
+  userId: number;
+  primaryPhotoUrl: string;
+  additionalPhotoUrl: string | null;
+  fullName: string;
+  age: number;
+  heightCm: number;
+  areaOfResidence: string;
+  religiousLevel: string;
+  education: string;
+  occupation: string;
+  selfDescription: string;
+  hobbies: string;
+  familyDescription: string | null;
+  lookingFor: string;
+  headCovering: string | null;
+  hasDrivingLicense: boolean | null;
+}
+
+

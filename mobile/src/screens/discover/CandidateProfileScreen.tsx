@@ -1,40 +1,43 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
-import { getMyProfile } from '../../api/profileApi';
-import { ProfileMeResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
+import { getPublicProfile } from '../../api/profileApi';
+import { PublicProfileResponse } from '../../types/api';
 
-export const ProfileScreen = ({ navigation }: any) => {
-  const [profile, setProfile] = useState<ProfileMeResponse | null>(null);
+export const CandidateProfileScreen = ({ route, navigation }: any) => {
+  const { userId } = route.params || {};
+  const [profile, setProfile] = useState<PublicProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchProfile = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setError(null);
-      const data = await getMyProfile();
+      const data = await getPublicProfile(userId);
       setProfile(data);
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Failed to load profile');
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          'Failed to load candidate profile. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchProfile();
-    }, [])
-  );
+  useEffect(() => {
+    fetchProfile();
+  }, [userId]);
 
   if (loading) {
     return (
       <Screen style={styles.centerContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Loading profile...</Text>
+        <Text style={styles.stateText}>Loading profile details...</Text>
       </Screen>
     );
   }
@@ -49,8 +52,9 @@ export const ProfileScreen = ({ navigation }: any) => {
   }
 
   const renderRow = (label: string, value: any, isLongText = false) => {
-    const displayValue = value === null || value === undefined || value === '' ? 'Not specified' : String(value);
-    
+    const displayValue =
+      value === null || value === undefined || value === '' ? 'Not specified' : String(value);
+
     if (isLongText) {
       return (
         <View style={styles.longTextContainer} key={label}>
@@ -71,74 +75,69 @@ export const ProfileScreen = ({ navigation }: any) => {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Profile Details</Text>
-
-        {/* Account Info Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account Info</Text>
-          <View style={styles.card}>
-            {renderRow('Full Name', profile.fullName)}
-            {renderRow('Email', profile.email)}
-            {renderRow('Gender', profile.gender)}
-            {renderRow('Role', profile.role)}
-            {renderRow('Profile Status', profile.profileStatus)}
-            {renderRow('Admin Blocked', profile.adminBlocked ? 'Yes' : 'No')}
+        {/* Photo Section */}
+        <View style={styles.photoSection}>
+          <View style={styles.photoContainer}>
+            {profile.primaryPhotoUrl ? (
+              <Image source={{ uri: profile.primaryPhotoUrl }} style={styles.mainImage} />
+            ) : (
+              <View style={[styles.mainImage, styles.placeholderImage]}>
+                <Text style={styles.placeholderText}>No Photo</Text>
+              </View>
+            )}
+            {profile.additionalPhotoUrl ? (
+              <Image source={{ uri: profile.additionalPhotoUrl }} style={styles.sideImage} />
+            ) : null}
           </View>
         </View>
 
-        {/* Basic Profile Section */}
+        {/* Header Info */}
+        <View style={styles.headerInfo}>
+          <Text style={styles.name}>{profile.fullName}</Text>
+          <Text style={styles.subtitle}>
+            {profile.age} yrs • {profile.heightCm} cm
+          </Text>
+        </View>
+
+        {/* Basic Info Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Basic Profile Info</Text>
+          <Text style={styles.sectionTitle}>Profile Details</Text>
           <View style={styles.card}>
-            {renderRow('Age', profile.age)}
-            {renderRow('Height (cm)', profile.heightCm)}
-            {renderRow('Area of Residence', profile.areaOfResidence)}
+            {renderRow('Residence', profile.areaOfResidence)}
             {renderRow('Religious Level', profile.religiousLevel)}
-            {renderRow('Phone', profile.phone)}
+            {renderRow('Head Covering', profile.headCovering)}
+            {renderRow(
+              'Driving License',
+              profile.hasDrivingLicense !== null
+                ? profile.hasDrivingLicense
+                  ? 'Yes'
+                  : 'No'
+                : 'Not specified'
+            )}
           </View>
         </View>
 
-        {/* Full Profile Section */}
+        {/* Education & Occupation Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Full Profile Info</Text>
+          <Text style={styles.sectionTitle}>Education & Career</Text>
           <View style={styles.card}>
             {renderRow('Education', profile.education)}
             {renderRow('Occupation', profile.occupation)}
-            {renderRow('Head Covering', profile.headCovering)}
-            {renderRow('Has Driving License', profile.hasDrivingLicense !== null ? (profile.hasDrivingLicense ? 'Yes' : 'No') : 'Not specified')}
-            {renderRow('Self Description', profile.selfDescription, true)}
-            {renderRow('Hobbies', profile.hobbies, true)}
-            {renderRow('Looking For', profile.lookingFor, true)}
-            {renderRow('Family Description', profile.familyDescription, true)}
           </View>
         </View>
 
-        {/* Photos Info Section */}
+        {/* Written Description Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Photos Info</Text>
+          <Text style={styles.sectionTitle}>About Me</Text>
           <View style={styles.card}>
-            {renderRow('Primary Photo Set', profile.hasPrimaryPhoto ? 'Yes' : 'No')}
-            {renderRow('Photo Count', profile.photoCount)}
+            {renderRow('Self Description', profile.selfDescription, true)}
+            {renderRow('Hobbies & Interests', profile.hobbies, true)}
+            {renderRow('Family Background', profile.familyDescription, true)}
+            {renderRow('What I am Looking For', profile.lookingFor, true)}
           </View>
         </View>
 
-        <AppButton 
-          title="Discover Candidates" 
-          onPress={() => navigation.navigate('PoolSelection')}
-          style={styles.button}
-        />
-
-        <AppButton 
-          title="Edit Basic Profile" 
-          onPress={() => navigation.navigate('BasicProfile')}
-          style={styles.button}
-        />
-
-        <AppButton 
-          title="Edit Full Profile" 
-          onPress={() => navigation.navigate('FullProfile')}
-          style={[styles.button, styles.secondaryButton]}
-        />
+        <View style={styles.spacing} />
       </ScrollView>
     </Screen>
   );
@@ -155,7 +154,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: theme.spacing.l,
   },
-  loadingText: {
+  stateText: {
     marginTop: theme.spacing.m,
     color: theme.colors.textSecondary,
     fontSize: 16,
@@ -169,12 +168,50 @@ const styles = StyleSheet.create({
   retryButton: {
     width: '60%',
   },
-  title: {
+  photoSection: {
+    marginBottom: theme.spacing.m,
+  },
+  photoContainer: {
+    flexDirection: 'row',
+    height: 280,
+    gap: theme.spacing.s,
+  },
+  mainImage: {
+    flex: 1,
+    height: '100%',
+    borderRadius: theme.borderRadius.l,
+    backgroundColor: theme.colors.border,
+  },
+  sideImage: {
+    width: 120,
+    height: '100%',
+    borderRadius: theme.borderRadius.l,
+    backgroundColor: theme.colors.border,
+  },
+  placeholderImage: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EAEAEA',
+  },
+  placeholderText: {
+    color: theme.colors.textSecondary,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  headerInfo: {
+    alignItems: 'center',
+    marginBottom: theme.spacing.l,
+  },
+  name: {
     fontSize: 26,
     fontWeight: 'bold',
+    color: theme.colors.text,
+  },
+  subtitle: {
+    fontSize: 16,
     color: theme.colors.primary,
-    marginBottom: theme.spacing.l,
-    textAlign: 'center',
+    fontWeight: '600',
+    marginTop: 4,
   },
   section: {
     marginBottom: theme.spacing.l,
@@ -191,13 +228,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.m,
     paddingVertical: theme.spacing.s,
     borderRadius: theme.borderRadius.m,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 3,
     elevation: 2,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
   },
   row: {
     flexDirection: 'row',
@@ -230,11 +267,7 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.s,
     lineHeight: 20,
   },
-  button: {
-    marginTop: theme.spacing.m,
-  },
-  secondaryButton: {
-    backgroundColor: '#4A4A4A',
-    marginBottom: theme.spacing.l,
+  spacing: {
+    height: theme.spacing.xl,
   },
 });

@@ -63,6 +63,12 @@ export const MeScreen = ({ navigation }: any) => {
         />
 
         <AppButton 
+          title="Discover Candidates" 
+          onPress={() => navigation.navigate('PoolSelection')}
+          style={styles.button}
+        />
+
+        <AppButton 
           title="Complete Basic Profile" 
           onPress={() => navigation.navigate('BasicProfile')}
           style={styles.button}
