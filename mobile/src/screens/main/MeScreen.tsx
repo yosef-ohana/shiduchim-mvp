@@ -69,6 +69,12 @@ export const MeScreen = ({ navigation }: any) => {
         />
 
         <AppButton 
+          title="My Lists" 
+          onPress={() => navigation.navigate('Lists')}
+          style={styles.button}
+        />
+
+        <AppButton 
           title="Complete Basic Profile" 
           onPress={() => navigation.navigate('BasicProfile')}
           style={styles.button}

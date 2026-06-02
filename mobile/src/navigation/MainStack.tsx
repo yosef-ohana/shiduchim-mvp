@@ -9,6 +9,7 @@ import { JoinWeddingScreen } from '../screens/weddings/JoinWeddingScreen';
 import { PoolSelectionScreen } from '../screens/discover/PoolSelectionScreen';
 import { DiscoverScreen } from '../screens/discover/DiscoverScreen';
 import { CandidateProfileScreen } from '../screens/discover/CandidateProfileScreen';
+import { ListsScreen } from '../screens/lists/ListsScreen';
 import { DiscoverPool } from '../types/api';
 
 export type MainStackParamList = {
@@ -21,6 +22,7 @@ export type MainStackParamList = {
   PoolSelection: undefined;
   Discover: { pool: DiscoverPool; weddingId?: number };
   CandidateProfile: { userId: number };
+  Lists: undefined;
 };
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
@@ -37,8 +39,10 @@ export const MainStack = () => {
       <Stack.Screen name="PoolSelection" component={PoolSelectionScreen} options={{ title: 'Select Pool' }} />
       <Stack.Screen name="Discover" component={DiscoverScreen} options={{ title: 'Candidates' }} />
       <Stack.Screen name="CandidateProfile" component={CandidateProfileScreen} options={{ title: 'Candidate Profile' }} />
+      <Stack.Screen name="Lists" component={ListsScreen} options={{ title: 'My Lists' }} />
     </Stack.Navigator>
   );
 };
+
 
 

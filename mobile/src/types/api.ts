@@ -161,4 +161,52 @@ export interface PublicProfileResponse {
   hasDrivingLicense: boolean | null;
 }
 
+export type ActionType = 'LIKE' | 'DISLIKE' | 'FREEZE';
+export type PoolType = 'WEDDING' | 'GLOBAL';
 
+export interface ActionResponse {
+  targetUserId: number;
+  actionType: ActionType;
+  poolType: PoolType;
+  weddingId?: number | null;
+  matchCreated: boolean;
+  matchBlocked: boolean;
+  matchId?: number | null;
+}
+
+export interface UnfreezeResponse {
+  targetUserId: number;
+  removed: boolean;
+  canAppearInDiscoverAgain: boolean;
+}
+
+export interface ActionListItemResponse {
+  userId: number;
+  primaryPhotoUrl?: string;
+  fullName: string;
+  age: number;
+  heightCm: number;
+  areaOfResidence: string;
+  religiousLevel: string;
+  education: string;
+  lookingForShort?: string;
+  actionType: ActionType;
+  poolType: PoolType;
+  weddingId?: number;
+  actionUpdatedAt: string;
+}
+
+export interface LikedMeItemResponse {
+  userId: number;
+  primaryPhotoUrl?: string;
+  fullName: string;
+  age: number;
+  heightCm: number;
+  areaOfResidence: string;
+  religiousLevel: string;
+  education: string;
+  lookingForShort?: string;
+  poolType: PoolType;
+  weddingId?: number;
+  likedAt: string;
+}

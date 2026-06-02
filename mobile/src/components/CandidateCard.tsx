@@ -7,9 +7,10 @@ import { PublicUserCardResponse } from '../types/api';
 interface CandidateCardProps {
   candidate: PublicUserCardResponse;
   onViewProfile: () => void;
+  actionButtons?: React.ReactNode;
 }
 
-export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewProfile }) => {
+export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewProfile, actionButtons }) => {
   const {
     primaryPhotoUrl,
     fullName,
@@ -72,6 +73,8 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewP
           onPress={onViewProfile}
           style={styles.button}
         />
+
+        {actionButtons}
       </View>
     </View>
   );

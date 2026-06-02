@@ -6,6 +6,7 @@ import { CandidateCard } from '../../components/CandidateCard';
 import { theme } from '../../theme/theme';
 import { getDiscoverCandidates } from '../../api/discoverApi';
 import { PublicUserCardResponse } from '../../types/api';
+import { ActionButtons } from '../../components/ActionButtons';
 
 export const DiscoverScreen = ({ route, navigation }: any) => {
   const { pool, weddingId } = route.params || {};
@@ -13,6 +14,7 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [matchMessage, setMatchMessage] = useState<string | null>(null);
 
   const fetchCandidates = async (showRefreshIndicator = false) => {
     if (showRefreshIndicator) {
@@ -73,6 +75,12 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
 
   return (
     <Screen>
+      {matchMessage && (
+        <View style={styles.matchBanner}>
+          <Text style={styles.matchBannerText}>{matchMessage}</Text>
+          <Text style={styles.matchBannerClose} onPress={() => setMatchMessage(null)}>✕</Text>
+        </View>
+      )}
       <FlatList
         data={candidates}
         keyExtractor={(item) => item.userId.toString()}
@@ -80,6 +88,19 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
           <CandidateCard
             candidate={item}
             onViewProfile={() => handleViewProfile(item.userId)}
+            actionButtons={
+              <ActionButtons
+                targetUserId={item.userId}
+                poolType={pool}
+                weddingId={weddingId}
+                onActionCompleted={(matchCreated) => {
+                  if (matchCreated) {
+                    setMatchMessage(`It is a match with ${item.fullName}!`);
+                  }
+                  setCandidates((prev) => prev.filter((c) => c.userId !== item.userId));
+                }}
+              />
+            }
           />
         )}
         contentContainerStyle={styles.listContainer}
@@ -148,4 +169,30 @@ const styles = StyleSheet.create({
   refreshButton: {
     width: '50%',
   },
+  matchBanner: {
+    backgroundColor: '#E8F5E9',
+    borderColor: '#4CAF50',
+    borderWidth: 1,
+    padding: theme.spacing.m,
+    marginHorizontal: theme.spacing.m,
+    marginTop: theme.spacing.m,
+    borderRadius: theme.borderRadius.m,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  matchBannerText: {
+    color: '#2E7D32',
+    fontSize: 16,
+    fontWeight: 'bold',
+    flex: 1,
+  },
+  matchBannerClose: {
+    color: '#2E7D32',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: theme.spacing.s,
+    paddingHorizontal: theme.spacing.s,
+  },
 });
+
