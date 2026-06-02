@@ -17,6 +17,10 @@ import com.shiduchim.backend.repository.UserPhotoRepository;
 import com.shiduchim.backend.repository.UserRepository;
 import com.shiduchim.backend.repository.WeddingParticipantRepository;
 import com.shiduchim.backend.repository.WeddingRepository;
+import com.shiduchim.backend.repository.MatchRepository;
+import com.shiduchim.backend.entity.Match;
+import com.shiduchim.backend.enums.MatchStatus;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,18 +36,21 @@ public class ActionService {
     private final WeddingRepository weddingRepository;
     private final WeddingParticipantRepository weddingParticipantRepository;
     private final UserActionRepository userActionRepository;
+    private final MatchRepository matchRepository;
 
     public ActionService(
             UserRepository userRepository,
             UserPhotoRepository userPhotoRepository,
             WeddingRepository weddingRepository,
             WeddingParticipantRepository weddingParticipantRepository,
-            UserActionRepository userActionRepository) {
+            UserActionRepository userActionRepository,
+            MatchRepository matchRepository) {
         this.userRepository = userRepository;
         this.userPhotoRepository = userPhotoRepository;
         this.weddingRepository = weddingRepository;
         this.weddingParticipantRepository = weddingParticipantRepository;
         this.userActionRepository = userActionRepository;
+        this.matchRepository = matchRepository;
     }
 
     @Transactional
@@ -67,15 +74,57 @@ public class ActionService {
             userActionRepository.save(newAction);
         }
 
-        // Batch 8: Return false/null for match properties
+        boolean matchCreated = false;
+        boolean matchBlocked = false;
+        Long matchId = null;
+
+        Long user1Id = Math.min(actor.getId(), targetUserId);
+        Long user2Id = Math.max(actor.getId(), targetUserId);
+
+        Optional<Match> existingMatchOpt = matchRepository.findByUser1IdAndUser2IdAndPoolTypeAndWeddingId(
+                user1Id, user2Id, poolType, weddingId);
+
+        if (actionType == ActionType.LIKE) {
+            Optional<UserAction> oppositeActionOpt = userActionRepository.findByActorUserIdAndTargetUserIdAndPoolTypeAndWeddingId(
+                    targetUserId, actor.getId(), poolType, weddingId);
+
+            if (oppositeActionOpt.isPresent() && oppositeActionOpt.get().getActionType() == ActionType.LIKE) {
+                Match match = existingMatchOpt.orElseGet(() -> {
+                    Match m = new Match();
+                    m.setUser1Id(user1Id);
+                    m.setUser2Id(user2Id);
+                    m.setPoolType(poolType);
+                    m.setWeddingId(weddingId);
+                    return m;
+                });
+                
+                match.setStatus(MatchStatus.ACTIVE);
+                match.setBlockedAt(null);
+                matchRepository.save(match);
+                
+                matchCreated = true;
+                matchId = match.getId();
+            }
+        } else if (actionType == ActionType.DISLIKE || actionType == ActionType.FREEZE) {
+            if (existingMatchOpt.isPresent() && existingMatchOpt.get().getStatus() == MatchStatus.ACTIVE) {
+                Match match = existingMatchOpt.get();
+                match.setStatus(MatchStatus.BLOCKED);
+                match.setBlockedAt(java.time.LocalDateTime.now());
+                matchRepository.save(match);
+                
+                matchBlocked = true;
+                matchId = match.getId();
+            }
+        }
+
         return new ActionResponse(
                 targetUserId,
                 actionType,
                 poolType,
                 weddingId,
-                false,
-                false,
-                null
+                matchCreated,
+                matchBlocked,
+                matchId
         );
     }
 

@@ -18,6 +18,8 @@ public interface UserPhotoRepository extends JpaRepository<UserPhoto, Long> {
 
     boolean existsByUserIdAndIsPrimaryTrue(Long userId);
 
+    Optional<UserPhoto> findByUserIdAndIsPrimaryTrue(Long userId);
+
     Optional<UserPhoto> findByIdAndUserId(Long id, Long userId);
 }
 
