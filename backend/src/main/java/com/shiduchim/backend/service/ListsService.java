@@ -60,10 +60,29 @@ public class ListsService {
         }
 
         List<ActionListItemResponse> responseList = new ArrayList<>();
+        
+        Set<String> activeMatchContextKeys = null;
+        if (actionType == ActionType.LIKE) {
+            List<Match> activeMatches = matchRepository.findByUserIdAndStatus(currentUser.getId(), MatchStatus.ACTIVE);
+            activeMatchContextKeys = activeMatches.stream()
+                    .map(m -> {
+                        Long partnerId = m.getUser1Id().equals(currentUser.getId()) ? m.getUser2Id() : m.getUser1Id();
+                        return partnerId + "_" + m.getPoolType() + "_" + m.getWeddingId();
+                    })
+                    .collect(Collectors.toSet());
+        }
+
         for (UserAction action : actions) {
             User targetUser = userRepository.findById(action.getTargetUserId()).orElse(null);
             if (targetUser == null || Boolean.TRUE.equals(targetUser.getAdminBlocked())) {
                 continue;
+            }
+
+            if (actionType == ActionType.LIKE && activeMatchContextKeys != null) {
+                String contextKey = targetUser.getId() + "_" + action.getPoolType() + "_" + action.getWeddingId();
+                if (activeMatchContextKeys.contains(contextKey)) {
+                    continue;
+                }
             }
 
             String primaryPhotoUrl = userPhotoRepository.findByUserIdAndIsPrimaryTrue(targetUser.getId())

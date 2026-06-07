@@ -5,8 +5,10 @@ import { AppInput } from '../../components/AppInput';
 import { AppButton } from '../../components/AppButton';
 import { getMyProfile, updateBasicProfile } from '../../api/profileApi';
 import { theme } from '../../theme/theme';
+import { useAuth } from '../../context/AuthContext';
 
 export const BasicProfileScreen = ({ navigation }: any) => {
+  const { refreshMe } = useAuth();
   const [fullName, setFullName] = useState('');
   const [age, setAge] = useState('');
   const [heightCm, setHeightCm] = useState('');
@@ -78,6 +80,7 @@ export const BasicProfileScreen = ({ navigation }: any) => {
         religiousLevel: religiousLevel.trim(),
         phone: phone.trim(),
       });
+      await refreshMe();
       setSuccessInfo(response);
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || err.message || 'Failed to save basic profile');

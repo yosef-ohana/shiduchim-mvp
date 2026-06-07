@@ -5,8 +5,10 @@ import { AppButton } from '../../components/AppButton';
 import { AppInput } from '../../components/AppInput';
 import { theme } from '../../theme/theme';
 import { DiscoverPool } from '../../types/api';
+import { useAuth } from '../../context/AuthContext';
 
 export const PoolSelectionScreen = ({ navigation }: any) => {
+  const { user } = useAuth();
   const [selectedPool, setSelectedPool] = useState<DiscoverPool>('GLOBAL');
   const [weddingIdText, setWeddingIdText] = useState('');
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -14,9 +16,30 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
   const handleDiscover = () => {
     setErrorText(null);
 
+    // 1. Primary photo check
+    if (!user?.hasPrimaryPhoto) {
+      setErrorText("Please upload a primary photo before using Discover.");
+      return;
+    }
+
     if (selectedPool === 'GLOBAL') {
+      // 2. Global Pool eligibility checks
+      if (!user?.profileStatus || user.profileStatus === 'NONE' || user.profileStatus === 'FULL_INCOMPLETE_BLOCKED') {
+        setErrorText("Please complete your basic profile before using the discovery pool.");
+        return;
+      }
+      if (user.profileStatus === 'BASIC') {
+        setErrorText("Global Pool is available only after completing your full profile.");
+        return;
+      }
       navigation.navigate('Discover', { pool: 'GLOBAL' });
     } else {
+      // 3. Wedding Pool eligibility checks
+      if (!user?.profileStatus || user.profileStatus === 'NONE' || user.profileStatus === 'FULL_INCOMPLETE_BLOCKED') {
+        setErrorText("Please complete your basic profile before using the wedding pool.");
+        return;
+      }
+      
       const parsedId = parseInt(weddingIdText.trim(), 10);
       if (isNaN(parsedId) || parsedId <= 0) {
         setErrorText('Please enter a valid, positive numeric Wedding ID.');
@@ -99,6 +122,7 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
           </View>
         )}
 
+        {errorText ? <Text style={styles.errorText}>{errorText}</Text> : null}
         <AppButton
           title="Discover Candidates"
           onPress={handleDiscover}
@@ -175,5 +199,12 @@ const styles = StyleSheet.create({
   actionButton: {
     marginTop: 'auto',
     marginBottom: theme.spacing.l,
+  },
+  errorText: {
+    color: theme.colors.error,
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: theme.spacing.m,
+    paddingHorizontal: theme.spacing.m,
   },
 });

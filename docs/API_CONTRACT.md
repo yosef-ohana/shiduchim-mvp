@@ -224,6 +224,14 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 - `matchBlocked`
 - `matchId`
 
+`RemoveActionResponse`
+- `success`
+- `message`
+- `targetUserId`
+- `poolType`
+- `weddingId`
+- `removedActionType`
+
 `UnfreezeResponse`
 - `targetUserId`
 - `removed`
@@ -285,6 +293,17 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 `ChatMessagesResponse`
 - `matchId`
 - `messages: List<ChatMessageResponse>`
+
+`ConversationResponse`
+- `matchId`
+- `otherUserId`
+- `otherUserFullName`
+- `otherUserPrimaryPhotoUrl`
+- `lastMessagePreview`
+- `lastMessageAt`
+- `poolType`
+- `weddingId`
+- `matchStatus`
 
 ---
 
@@ -398,6 +417,7 @@ All actions require USER and valid `ActionRequest`.
 | POST | `/api/actions/{targetUserId}/dislike` | USER | `ActionRequest` | `ActionResponse` | Upsert DISLIKE; replaces previous action; blocks active Match | 400, 401, 403, 404 |
 | POST | `/api/actions/{targetUserId}/freeze` | USER | `ActionRequest` | `ActionResponse` | Upsert FREEZE; replaces previous action; blocks active Match | 400, 401, 403, 404 |
 | DELETE | `/api/actions/{targetUserId}/freeze` | USER | `ActionRequest` | `UnfreezeResponse` | Removes Freeze; may return `removed=false` if no Freeze | 400, 401, 403, 404 |
+| DELETE | `/api/actions/{targetUserId}` | USER | `ActionRequest` | `RemoveActionResponse` | Removes existing action (Like/Dislike/Freeze). Target may return to Discover if eligible. Blocked if ACTIVE Match exists. Match/Chat not deleted. | 400, 401, 403, 404 |
 
 Rules:
 - Last action wins.
@@ -435,6 +455,7 @@ Never expose who Disliked/Froze current user.
 
 | Method | Path | Role | Request | Response | Rules | Errors |
 |---|---|---|---|---|---|---|
+| GET | `/api/chats/conversations` | USER | — | `List<ConversationResponse>` | Returns current user's active conversations sorted newest-first | 401, 403 |
 | GET | `/api/matches/{matchId}/messages` | USER | — | `ChatMessagesResponse` | Match must be ACTIVE; user must be side | 401, 403, 404 |
 | POST | `/api/matches/{matchId}/messages` | USER | `ChatMessageRequest` | `ChatMessageResponse` | Text only; content not blank; ACTIVE Match only | 400, 401, 403, 404 |
 

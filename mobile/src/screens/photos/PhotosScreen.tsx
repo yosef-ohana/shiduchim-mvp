@@ -7,8 +7,11 @@ import { AppButton } from '../../components/AppButton';
 import { theme } from '../../theme/theme';
 import { getMyPhotos, uploadPhoto, setPrimaryPhoto, deletePhoto } from '../../api/photosApi';
 import { PhotoResponse } from '../../types/api';
+import { getImageUrl } from '../../utils/imageUrl';
+import { useAuth } from '../../context/AuthContext';
 
 export const PhotosScreen = () => {
+  const { refreshMe } = useAuth();
   const [photos, setPhotos] = useState<PhotoResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -53,8 +56,15 @@ export const PhotosScreen = () => {
         setError('');
         await uploadPhoto(asset.uri, asset.mimeType, asset.fileName || 'profile-photo.jpg');
         await loadPhotos();
+        await refreshMe();
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to upload photo');
+        const status = err.response?.status;
+        const message = err.response?.data?.message || '';
+        if (status === 409 || message.toLowerCase().includes('maximum of') || message.toLowerCase().includes('photos allowed') || message.toLowerCase().includes('limit')) {
+          setError('You can upload up to 2 photos.');
+        } else {
+          setError('Failed to upload photo. Please try again.');
+        }
       } finally {
         setActionLoading(false);
       }
@@ -67,6 +77,7 @@ export const PhotosScreen = () => {
       setError('');
       await setPrimaryPhoto(photoId);
       await loadPhotos();
+      await refreshMe();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to set primary photo');
     } finally {
@@ -80,6 +91,7 @@ export const PhotosScreen = () => {
       setError('');
       await deletePhoto(photoId);
       await loadPhotos();
+      await refreshMe();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to delete photo');
     } finally {
@@ -100,7 +112,7 @@ export const PhotosScreen = () => {
           <View style={styles.photoList}>
             {photos.map((photo) => (
               <View key={photo.id} style={styles.photoCard}>
-                <Image source={{ uri: photo.imageUrl }} style={styles.image} />
+                <Image source={{ uri: getImageUrl(photo.imageUrl) }} style={styles.image} />
                 <View style={styles.photoInfo}>
                   <Text style={styles.photoText}>Order: {photo.orderIndex}</Text>
                   {photo.isPrimary && <Text style={styles.primaryBadge}>Primary</Text>}

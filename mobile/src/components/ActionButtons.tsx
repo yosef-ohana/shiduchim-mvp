@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet, Text, Alert } from 'react-native';
 import { AppButton } from './AppButton';
 import { theme } from '../theme/theme';
 import { PoolType } from '../types/api';
@@ -22,30 +22,61 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const handleAction = async (action: 'LIKE' | 'DISLIKE' | 'FREEZE') => {
-    setLoadingAction(action);
-    setError(null);
+    const execute = async () => {
+      setLoadingAction(action);
+      setError(null);
 
-    try {
-      const params = { poolType, weddingId };
-      let response;
+      try {
+        const params = { poolType, weddingId };
+        let response;
 
-      if (action === 'LIKE') {
-        response = await likeUser(targetUserId, params);
-      } else if (action === 'DISLIKE') {
-        response = await dislikeUser(targetUserId, params);
-      } else {
-        response = await freezeUser(targetUserId, params);
+        if (action === 'LIKE') {
+          response = await likeUser(targetUserId, params);
+        } else if (action === 'DISLIKE') {
+          response = await dislikeUser(targetUserId, params);
+        } else {
+          response = await freezeUser(targetUserId, params);
+        }
+
+        onActionCompleted(response.matchCreated);
+      } catch (err: any) {
+        setError(
+          err.response?.data?.message ||
+            err.message ||
+            `Failed to perform action. Please try again.`
+        );
+      } finally {
+        setLoadingAction(null);
       }
+    };
 
-      onActionCompleted(response.matchCreated);
-    } catch (err: any) {
-      setError(
-        err.response?.data?.message ||
-          err.message ||
-          `Failed to perform action. Please try again.`
+    if (action === 'LIKE') {
+      Alert.alert(
+        'Like Candidate',
+        'If the other side also likes you, a Match will be created and you will be able to chat.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Like', onPress: execute },
+        ]
       );
-    } finally {
-      setLoadingAction(null);
+    } else if (action === 'DISLIKE') {
+      Alert.alert(
+        'Dislike Candidate',
+        'This user will move to Dislikes and will not be shown again in your feed.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Dislike', style: 'destructive', onPress: execute },
+        ]
+      );
+    } else if (action === 'FREEZE') {
+      Alert.alert(
+        'Freeze Candidate',
+        'This user will be saved aside and will not appear in your feed until you remove them from Freeze.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Freeze', onPress: execute },
+        ]
+      );
     }
   };
 

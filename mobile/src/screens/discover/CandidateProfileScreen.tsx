@@ -5,6 +5,8 @@ import { AppButton } from '../../components/AppButton';
 import { theme } from '../../theme/theme';
 import { getPublicProfile } from '../../api/profileApi';
 import { PublicProfileResponse } from '../../types/api';
+import { getImageUrl } from '../../utils/imageUrl';
+
 
 export const CandidateProfileScreen = ({ route, navigation }: any) => {
   const { userId } = route.params || {};
@@ -78,15 +80,15 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
         {/* Photo Section */}
         <View style={styles.photoSection}>
           <View style={styles.photoContainer}>
-            {profile.primaryPhotoUrl ? (
-              <Image source={{ uri: profile.primaryPhotoUrl }} style={styles.mainImage} />
+            {getImageUrl(profile.primaryPhotoUrl) ? (
+              <Image source={{ uri: getImageUrl(profile.primaryPhotoUrl) }} style={styles.mainImage} />
             ) : (
               <View style={[styles.mainImage, styles.placeholderImage]}>
                 <Text style={styles.placeholderText}>No Photo</Text>
               </View>
             )}
-            {profile.additionalPhotoUrl ? (
-              <Image source={{ uri: profile.additionalPhotoUrl }} style={styles.sideImage} />
+            {getImageUrl(profile.additionalPhotoUrl) ? (
+              <Image source={{ uri: getImageUrl(profile.additionalPhotoUrl) }} style={styles.sideImage} />
             ) : null}
           </View>
         </View>

@@ -24,7 +24,14 @@ export const LoginScreen = ({ navigation }: any) => {
     try {
       await login({ email, password });
     } catch (e: any) {
-      setErrorMsg(e.message || 'Login failed');
+      const message = e.message || '';
+      if (message.toLowerCase().includes('invalid credentials') || message.toLowerCase().includes('unauthorized')) {
+        setErrorMsg('Email or password is incorrect.');
+      } else if (message.toLowerCase().includes('network') || message.toLowerCase().includes('timeout') || message.toLowerCase().includes('status code 5')) {
+        setErrorMsg('Network error. Please check your connection and try again.');
+      } else {
+        setErrorMsg(message || 'Login failed');
+      }
     } finally {
       setIsLoading(false);
     }

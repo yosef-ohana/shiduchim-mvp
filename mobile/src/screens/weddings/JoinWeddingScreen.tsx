@@ -26,7 +26,16 @@ export const JoinWeddingScreen = ({ navigation }: any) => {
       const data = await joinWedding({ accessCode: accessCode.trim() });
       setSuccessData(data);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to join wedding');
+      const status = err.response?.status;
+      const message = err.response?.data?.message || '';
+      
+      if (status === 409 || message.toLowerCase().includes('already joined')) {
+        setError('You already joined this wedding.');
+      } else if (status === 404 || message.toLowerCase().includes('not found')) {
+        setError('Wedding code not found or invalid.');
+      } else {
+        setError('Failed to join wedding. Please check the code and try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -67,7 +76,7 @@ export const JoinWeddingScreen = ({ navigation }: any) => {
         ) : (
           <View style={styles.formContainer}>
             <Text style={styles.instruction}>
-              Enter the access code provided by the event organizer to join the wedding pool.
+              Enter the wedding access code (provided by the organizer) to join. Please note this must be the access code (e.g. letters/numbers), not the numeric wedding ID.
             </Text>
             <AppInput
               label="Access Code"

@@ -1,6 +1,7 @@
 package com.shiduchim.backend.service;
 
 import com.shiduchim.backend.dto.action.ActionResponse;
+import com.shiduchim.backend.dto.action.RemoveActionResponse;
 import com.shiduchim.backend.dto.action.UnfreezeResponse;
 import com.shiduchim.backend.entity.User;
 import com.shiduchim.backend.entity.UserAction;
@@ -145,6 +146,39 @@ public class ActionService {
         }
 
         return new UnfreezeResponse(targetUserId, removed, true);
+    }
+
+    @Transactional
+    public RemoveActionResponse removeAction(User actor, Long targetUserId, PoolType poolType, Long weddingId) {
+        validateActorAndContext(actor, targetUserId, poolType, weddingId);
+
+        Long user1Id = Math.min(actor.getId(), targetUserId);
+        Long user2Id = Math.max(actor.getId(), targetUserId);
+
+        Optional<Match> existingMatchOpt = matchRepository.findByUser1IdAndUser2IdAndPoolTypeAndWeddingId(
+                user1Id, user2Id, poolType, weddingId);
+
+        if (existingMatchOpt.isPresent() && existingMatchOpt.get().getStatus() == MatchStatus.ACTIVE) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot remove action when an ACTIVE Match exists.");
+        }
+
+        Optional<UserAction> existingActionOpt = userActionRepository.findByActorUserIdAndTargetUserIdAndPoolTypeAndWeddingId(
+                actor.getId(), targetUserId, poolType, weddingId);
+
+        ActionType removedType = null;
+        if (existingActionOpt.isPresent()) {
+            removedType = existingActionOpt.get().getActionType();
+            userActionRepository.delete(existingActionOpt.get());
+        }
+
+        return new RemoveActionResponse(
+                true,
+                "Action removed successfully",
+                targetUserId,
+                poolType,
+                weddingId,
+                removedType
+        );
     }
 
     private User validateActorAndContext(User actor, Long targetUserId, PoolType poolType, Long weddingId) {

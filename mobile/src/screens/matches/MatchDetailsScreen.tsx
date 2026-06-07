@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, Alert } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
 import { theme } from '../../theme/theme';
 import { getMatchDetails } from '../../api/matchesApi';
+import { dislikeUser } from '../../api/actionsApi';
 import { MatchDetailsResponse } from '../../types/api';
+import { getImageUrl } from '../../utils/imageUrl';
+
 
 export const MatchDetailsScreen = ({ route, navigation }: any) => {
   const { matchId } = route.params || {};
   const [details, setDetails] = useState<MatchDetailsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dislikeLoading, setDislikeLoading] = useState(false);
 
   const fetchDetails = async () => {
     setLoading(true);
@@ -32,6 +36,49 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
   useEffect(() => {
     fetchDetails();
   }, [matchId]);
+
+  const handleCancelMatch = async () => {
+    if (!details || !details.otherUserProfile?.userId) return;
+
+    setDislikeLoading(true);
+    try {
+      await dislikeUser(details.otherUserProfile.userId, {
+        poolType: details.poolType,
+        weddingId: details.weddingId ?? undefined,
+      });
+
+      Alert.alert(
+        'Match Cancelled',
+        'You have successfully cancelled this match.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              navigation.goBack();
+            },
+          },
+        ]
+      );
+    } catch (err: any) {
+      Alert.alert(
+        'Error',
+        err.response?.data?.message || err.message || 'Failed to cancel match. Please try again.'
+      );
+    } finally {
+      setDislikeLoading(false);
+    }
+  };
+
+  const handleCancelMatchPress = () => {
+    Alert.alert(
+      'Cancel Match',
+      'This Match and chat will be cancelled, and the user will move to your Dislikes.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Yes, Cancel Match', style: 'destructive', onPress: handleCancelMatch },
+      ]
+    );
+  };
 
   if (loading) {
     return (
@@ -80,8 +127,8 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
         {/* Photo Section */}
         <View style={styles.photoSection}>
           <View style={styles.photoContainer}>
-            {profile.primaryPhotoUrl ? (
-              <Image source={{ uri: profile.primaryPhotoUrl }} style={styles.mainImage} />
+            {getImageUrl(profile.primaryPhotoUrl) ? (
+              <Image source={{ uri: getImageUrl(profile.primaryPhotoUrl) }} style={styles.mainImage} />
             ) : (
               <View style={[styles.mainImage, styles.placeholderImage]}>
                 <Text style={styles.placeholderText}>No Photo</Text>
@@ -112,6 +159,13 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
               style={styles.profileButton}
             />
           ) : null}
+          <AppButton
+            title="💔 Dislike / Cancel Match"
+            onPress={handleCancelMatchPress}
+            style={styles.dislikeButton}
+            loading={dislikeLoading}
+            disabled={dislikeLoading}
+          />
         </View>
 
         {/* Basic Info Section */}
@@ -230,6 +284,10 @@ const styles = StyleSheet.create({
   },
   profileButton: {
     backgroundColor: '#4A4A4A',
+  },
+  dislikeButton: {
+    backgroundColor: theme.colors.error,
+    marginTop: theme.spacing.s,
   },
   section: {
     marginBottom: theme.spacing.l,

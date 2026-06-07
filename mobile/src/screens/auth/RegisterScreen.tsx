@@ -27,7 +27,12 @@ export const RegisterScreen = ({ navigation }: any) => {
     try {
       await register({ fullName, email, password, gender });
     } catch (e: any) {
-      setErrorMsg(e.message || 'Registration failed');
+      const message = e.message || '';
+      if (message.toLowerCase().includes('already in use') || message.toLowerCase().includes('already registered') || message.toLowerCase().includes('conflict')) {
+        setErrorMsg('This email is already registered.');
+      } else {
+        setErrorMsg(message || 'Registration failed');
+      }
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,7 @@
 package com.shiduchim.backend.controller;
 
 import com.shiduchim.backend.dto.action.ActionResponse;
+import com.shiduchim.backend.dto.action.RemoveActionResponse;
 import com.shiduchim.backend.dto.action.UnfreezeResponse;
 import com.shiduchim.backend.entity.User;
 import com.shiduchim.backend.enums.ActionType;
@@ -61,6 +62,17 @@ public class ActionController {
             @RequestParam(value = "weddingId", required = false) Long weddingId) {
 
         UnfreezeResponse response = actionService.unfreeze(user, targetUserId, poolType, weddingId);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{targetUserId}")
+    public ResponseEntity<RemoveActionResponse> removeAction(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long targetUserId,
+            @RequestParam("poolType") PoolType poolType,
+            @RequestParam(value = "weddingId", required = false) Long weddingId) {
+
+        RemoveActionResponse response = actionService.removeAction(user, targetUserId, poolType, weddingId);
         return ResponseEntity.ok(response);
     }
 }

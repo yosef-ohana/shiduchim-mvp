@@ -49,3 +49,13 @@ export const unfreezeUser = async (targetUserId: number, params: ActionParams): 
   });
   return response.data;
 };
+
+export const removeAction = async (targetUserId: number, params: ActionParams): Promise<void> => {
+  const queryParams: any = { poolType: params.poolType };
+  if (params.poolType === 'WEDDING' && params.weddingId !== undefined) {
+    queryParams.weddingId = params.weddingId;
+  }
+  await apiClient.delete(`/actions/${targetUserId}`, {
+    params: queryParams,
+  });
+};

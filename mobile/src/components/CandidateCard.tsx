@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, Image } from 'react-native';
 import { theme } from '../theme/theme';
 import { AppButton } from './AppButton';
 import { PublicUserCardResponse } from '../types/api';
+import { getImageUrl } from '../utils/imageUrl';
+
 
 interface CandidateCardProps {
   candidate: PublicUserCardResponse;
@@ -23,10 +25,12 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewP
     lookingForShort,
   } = candidate;
 
+  const resolvedPhotoUrl = getImageUrl(primaryPhotoUrl);
+
   return (
     <View style={styles.card}>
-      {primaryPhotoUrl ? (
-        <Image source={{ uri: primaryPhotoUrl }} style={styles.image} resizeMode="cover" />
+      {resolvedPhotoUrl ? (
+        <Image source={{ uri: resolvedPhotoUrl }} style={styles.image} resizeMode="cover" />
       ) : (
         <View style={styles.placeholderImage}>
           <Text style={styles.placeholderText}>No Photo Provided</Text>

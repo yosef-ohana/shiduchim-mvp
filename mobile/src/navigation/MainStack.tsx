@@ -13,6 +13,13 @@ import { ListsScreen } from '../screens/lists/ListsScreen';
 import { MatchesScreen } from '../screens/matches/MatchesScreen';
 import { MatchDetailsScreen } from '../screens/matches/MatchDetailsScreen';
 import { ChatScreen } from '../screens/chat/ChatScreen';
+import { ChatsScreen } from '../screens/chat/ChatsScreen';
+import { AdminUsersScreen } from '../screens/admin/AdminUsersScreen';
+import { AdminWeddingsScreen } from '../screens/admin/AdminWeddingsScreen';
+import { CreateEventManagerScreen } from '../screens/admin/CreateEventManagerScreen';
+import { EventManagerWeddingsScreen } from '../screens/eventManager/EventManagerWeddingsScreen';
+import { CreateWeddingScreen } from '../screens/eventManager/CreateWeddingScreen';
+import { EventManagerWeddingDetailsScreen } from '../screens/eventManager/EventManagerWeddingDetailsScreen';
 import { DiscoverPool } from '../types/api';
 
 export type MainStackParamList = {
@@ -29,6 +36,13 @@ export type MainStackParamList = {
   Matches: undefined;
   MatchDetails: { matchId: number };
   Chat: { matchId: number };
+  Chats: undefined;
+  AdminUsers: undefined;
+  AdminWeddings: undefined;
+  CreateEventManager: undefined;
+  EventManagerWeddings: undefined;
+  CreateWedding: undefined;
+  EventManagerWeddingDetails: { weddingId: number };
 };
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
@@ -49,6 +63,13 @@ export const MainStack = () => {
       <Stack.Screen name="Matches" component={MatchesScreen} options={{ title: 'My Matches' }} />
       <Stack.Screen name="MatchDetails" component={MatchDetailsScreen} options={{ title: 'Match Details' }} />
       <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'Chat' }} />
+      <Stack.Screen name="Chats" component={ChatsScreen} options={{ title: 'Chats' }} />
+      <Stack.Screen name="AdminUsers" component={AdminUsersScreen} options={{ title: 'Manage Users' }} />
+      <Stack.Screen name="AdminWeddings" component={AdminWeddingsScreen} options={{ title: 'Manage Weddings' }} />
+      <Stack.Screen name="CreateEventManager" component={CreateEventManagerScreen} options={{ title: 'New Event Manager' }} />
+      <Stack.Screen name="EventManagerWeddings" component={EventManagerWeddingsScreen} options={{ title: 'My Weddings' }} />
+      <Stack.Screen name="CreateWedding" component={CreateWeddingScreen} options={{ title: 'Create Wedding' }} />
+      <Stack.Screen name="EventManagerWeddingDetails" component={EventManagerWeddingDetailsScreen} options={{ title: 'Wedding Details' }} />
     </Stack.Navigator>
   );
 };

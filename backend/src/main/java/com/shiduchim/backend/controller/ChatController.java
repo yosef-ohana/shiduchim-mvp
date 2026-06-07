@@ -9,8 +9,10 @@ import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import com.shiduchim.backend.dto.chat.ConversationResponse;
+
 @RestController
-@RequestMapping("/api/matches/{matchId}/messages")
 public class ChatController {
 
     private final ChatService chatService;
@@ -19,13 +21,18 @@ public class ChatController {
         this.chatService = chatService;
     }
 
-    @GetMapping
+    @GetMapping("/api/matches/{matchId}/messages")
     public ChatMessagesResponse getMessages(@AuthenticationPrincipal User currentUser, @PathVariable Long matchId) {
         return chatService.getMessages(currentUser, matchId);
     }
 
-    @PostMapping
+    @PostMapping("/api/matches/{matchId}/messages")
     public ChatMessageResponse sendMessage(@AuthenticationPrincipal User currentUser, @PathVariable Long matchId, @Valid @RequestBody ChatMessageRequest request) {
         return chatService.sendMessage(currentUser, matchId, request);
+    }
+
+    @GetMapping("/api/chats/conversations")
+    public List<ConversationResponse> getConversations(@AuthenticationPrincipal User currentUser) {
+        return chatService.getConversations(currentUser);
     }
 }

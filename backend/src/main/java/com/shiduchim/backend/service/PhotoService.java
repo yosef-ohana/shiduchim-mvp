@@ -52,15 +52,21 @@ public class PhotoService {
                     "Unsupported image type. Allowed: jpeg, png, webp");
         }
 
-        long currentCount = userPhotoRepository.countByUserId(user.getId());
+        List<UserPhoto> existingPhotos = userPhotoRepository.findByUserId(user.getId());
+        long currentCount = existingPhotos.size();
         if (currentCount >= MAX_PHOTOS_PER_USER) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Maximum of " + MAX_PHOTOS_PER_USER + " photos allowed per user");
         }
 
         // Determine order and primary flag before saving to disk
-        boolean isFirst = (currentCount == 0);
-        int orderIndex = isFirst ? 1 : 2;
+        boolean isFirst = existingPhotos.isEmpty();
+        int orderIndex = 1;
+        if (!isFirst) {
+            boolean hasSlot1 = existingPhotos.stream()
+                    .anyMatch(p -> p.getOrderIndex() != null && p.getOrderIndex() == 1);
+            orderIndex = hasSlot1 ? 2 : 1;
+        }
         boolean isPrimary = isFirst;
 
         // Save file to local storage
@@ -137,15 +143,17 @@ public class PhotoService {
         userPhotoRepository.delete(photo);
 
         // If deleted photo was primary and another photo exists, promote it
-        List<UserPhoto> remaining = userPhotoRepository.findByUserId(user.getId());
+        List<UserPhoto> remaining = userPhotoRepository.findByUserIdOrderByOrderIndexAscCreatedAtAsc(user.getId()).stream()
+                .filter(p -> !p.getId().equals(photoId))
+                .collect(Collectors.toList());
         if (wasPhotoFirst && !remaining.isEmpty()) {
             UserPhoto newPrimary = remaining.get(0);
             newPrimary.setIsPrimary(true);
             userPhotoRepository.save(newPrimary);
         }
 
-        long newCount = userPhotoRepository.countByUserId(user.getId());
-        boolean hasPrimary = userPhotoRepository.existsByUserIdAndIsPrimaryTrue(user.getId());
+        long newCount = remaining.size();
+        boolean hasPrimary = remaining.stream().anyMatch(p -> Boolean.TRUE.equals(p.getIsPrimary()));
 
         return new PhotoUploadResponse(null, null, null, null, newCount, hasPrimary);
     }

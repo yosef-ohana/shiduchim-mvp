@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { CandidateCard } from '../../components/CandidateCard';
 import { AppButton } from '../../components/AppButton';
 import { theme } from '../../theme/theme';
 import { getLikes, getDislikes, getFreezes, getLikedMe } from '../../api/listsApi';
-import { unfreezeUser } from '../../api/actionsApi';
+import { likeUser, dislikeUser, removeAction } from '../../api/actionsApi';
 import { PoolType } from '../../types/api';
 
 type TabType = 'likes' | 'dislikes' | 'freezes' | 'liked-me';
@@ -15,7 +15,7 @@ export const ListsScreen = ({ navigation }: any) => {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [unfreezingId, setUnfreezingId] = useState<number | null>(null);
+  const [processingId, setProcessingId] = useState<number | null>(null);
 
   const tabs: { id: TabType; label: string }[] = [
     { id: 'likes', label: 'Likes' },
@@ -54,21 +54,97 @@ export const ListsScreen = ({ navigation }: any) => {
     fetchList(activeTab);
   }, [activeTab]);
 
-  const handleUnfreeze = async (targetUserId: number, poolType: PoolType, weddingId?: number) => {
-    setUnfreezingId(targetUserId);
-    setError(null);
-    try {
-      await unfreezeUser(targetUserId, { poolType, weddingId });
-      // Refresh the list immediately after unfreezing
-      await fetchList('freezes');
-    } catch (err: any) {
-      setError(
-        err.response?.data?.message ||
-          err.message ||
-          `Failed to unfreeze user. Please try again.`
+  const handleLike = async (targetUserId: number, poolType: PoolType, weddingId?: number) => {
+    const execute = async () => {
+      setProcessingId(targetUserId);
+      setError(null);
+      try {
+        await likeUser(targetUserId, { poolType, weddingId });
+        await fetchList(activeTab);
+      } catch (err: any) {
+        setError(err.response?.data?.message || err.message || `Failed to like user. Please try again.`);
+      } finally {
+        setProcessingId(null);
+      }
+    };
+
+    if (activeTab === 'liked-me') {
+      Alert.alert(
+        'Like Candidate',
+        'This may create a Match immediately if the other user already liked you.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Like', onPress: execute },
+        ]
       );
-    } finally {
-      setUnfreezingId(null);
+    } else {
+      Alert.alert(
+        'Like Candidate',
+        'If the other side also likes you, a Match will be created and you will be able to chat.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Like', onPress: execute },
+        ]
+      );
+    }
+  };
+
+  const handleDislike = async (targetUserId: number, poolType: PoolType, weddingId?: number) => {
+    const execute = async () => {
+      setProcessingId(targetUserId);
+      setError(null);
+      try {
+        await dislikeUser(targetUserId, { poolType, weddingId });
+        await fetchList(activeTab);
+      } catch (err: any) {
+        setError(err.response?.data?.message || err.message || `Failed to dislike user. Please try again.`);
+      } finally {
+        setProcessingId(null);
+      }
+    };
+
+    Alert.alert(
+      'Dislike Candidate',
+      'This user will move to Dislikes and will not be shown again in your feed.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Dislike', style: 'destructive', onPress: execute },
+      ]
+    );
+  };
+
+  const handleRemoveAction = async (targetUserId: number, poolType: PoolType, weddingId?: number) => {
+    const execute = async () => {
+      setProcessingId(targetUserId);
+      setError(null);
+      try {
+        await removeAction(targetUserId, { poolType, weddingId });
+        await fetchList(activeTab);
+      } catch (err: any) {
+        setError(err.response?.data?.message || err.message || `Failed to return to feed. Please try again.`);
+      } finally {
+        setProcessingId(null);
+      }
+    };
+
+    if (activeTab === 'freezes') {
+      Alert.alert(
+        'Unfreeze Candidate',
+        'This user will be removed from Freeze and may appear again in your feed if they are still eligible.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Unfreeze', onPress: execute },
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Return to Feed',
+        'This action will be removed, and the user may appear again in your feed if they are still eligible.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Return to Feed', onPress: execute },
+        ]
+      );
     }
   };
 
@@ -123,14 +199,34 @@ export const ListsScreen = ({ navigation }: any) => {
               }}
               onViewProfile={() => handleViewProfile(item.userId)}
               actionButtons={
-                activeTab === 'freezes' ? (
-                  <AppButton
-                    title="Unfreeze"
-                    onPress={() => handleUnfreeze(item.userId, item.poolType, item.weddingId)}
-                    loading={unfreezingId === item.userId}
-                    style={styles.unfreezeButton}
-                  />
-                ) : undefined
+                <View style={styles.actionsContainer}>
+                  {activeTab === 'likes' && (
+                    <>
+                      <AppButton title="Dislike" onPress={() => handleDislike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
+                      <AppButton title="Return to Feed" onPress={() => handleRemoveAction(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.returnButton} />
+                    </>
+                  )}
+                  {activeTab === 'dislikes' && (
+                    <>
+                      <AppButton title="Like" onPress={() => handleLike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
+                      <AppButton title="Return to Feed" onPress={() => handleRemoveAction(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.returnButton} />
+                    </>
+                  )}
+                  {activeTab === 'freezes' && (
+                    <>
+                      <AppButton title="Like" onPress={() => handleLike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
+                      <AppButton title="Dislike" onPress={() => handleDislike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
+                      <AppButton title="Return to Feed" onPress={() => handleRemoveAction(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.returnButton} />
+                    </>
+                  )}
+                  {activeTab === 'liked-me' && (
+                    <>
+                      <AppButton title="Like" onPress={() => handleLike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
+                      <AppButton title="Dislike" onPress={() => handleDislike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
+                      <AppButton title="Return to Feed" onPress={() => handleRemoveAction(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.returnButton} />
+                    </>
+                  )}
+                </View>
               }
             />
           )}
@@ -221,7 +317,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-  unfreezeButton: {
+  actionsContainer: {
+    marginTop: theme.spacing.s,
+  },
+  actionButton: {
+    marginTop: theme.spacing.s,
+  },
+  returnButton: {
     marginTop: theme.spacing.s,
     backgroundColor: '#757575',
   },

@@ -27,6 +27,9 @@ Start the local MySQL database using Docker Compose:
 ```bash
 docker compose up -d
 ```
+> [!IMPORTANT]
+> The Docker Desktop daemon must be running on your host machine for the command to succeed. The backend requires this local MySQL database to be active in order to boot successfully.
+
 This spins up a MySQL container named `shiduchim_mysql` listening on port `3306`.
 *   **Database:** `shiduchim`
 *   **User:** `shiduchim_user`

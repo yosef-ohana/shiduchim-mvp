@@ -56,60 +56,107 @@ export const MeScreen = ({ navigation }: any) => {
           </View>
         </View>
 
-        <AppButton 
-          title="My Profile Details" 
-          onPress={() => navigation.navigate('Profile')}
-          style={styles.button}
-        />
+        {user.role === 'USER' && (
+          <>
+            <AppButton 
+              title="My Profile Details" 
+              onPress={() => navigation.navigate('Profile')}
+              style={styles.button}
+            />
 
-        <AppButton 
-          title="Discover Candidates" 
-          onPress={() => navigation.navigate('PoolSelection')}
-          style={styles.button}
-        />
+            <AppButton 
+              title="Discover Candidates" 
+              onPress={() => navigation.navigate('PoolSelection')}
+              style={styles.button}
+            />
 
-        <AppButton 
-          title="My Lists" 
-          onPress={() => navigation.navigate('Lists')}
-          style={styles.button}
-        />
+            <AppButton 
+              title="My Lists" 
+              onPress={() => navigation.navigate('Lists')}
+              style={styles.button}
+            />
 
-        <AppButton 
-          title="My Matches" 
-          onPress={() => navigation.navigate('Matches')}
-          style={styles.button}
-        />
+            <AppButton 
+              title="My Matches" 
+              onPress={() => navigation.navigate('Matches')}
+              style={styles.button}
+            />
 
-        <AppButton 
-          title="Complete Basic Profile" 
-          onPress={() => navigation.navigate('BasicProfile')}
-          style={styles.button}
-        />
+            <AppButton 
+              title="Chats" 
+              onPress={() => navigation.navigate('Chats')}
+              style={styles.button}
+            />
 
-        <AppButton 
-          title="Complete Full Profile" 
-          onPress={() => navigation.navigate('FullProfile')}
-          style={styles.button}
-        />
+            <AppButton 
+              title="Complete Basic Profile" 
+              onPress={() => navigation.navigate('BasicProfile')}
+              style={styles.button}
+            />
 
-        <AppButton 
-          title="My Photos" 
-          onPress={() => navigation.navigate('Photos')}
-          style={styles.button}
-        />
+            <AppButton 
+              title="Complete Full Profile" 
+              onPress={() => navigation.navigate('FullProfile')}
+              style={styles.button}
+            />
 
-        <AppButton 
-          title="Join Wedding" 
-          onPress={() => navigation.navigate('JoinWedding')}
-          style={styles.button}
-        />
+            <AppButton 
+              title="My Photos" 
+              onPress={() => navigation.navigate('Photos')}
+              style={styles.button}
+            />
 
-        <AppButton 
-          title="Refresh Profile" 
-          onPress={handleRefresh} 
-          loading={isRefreshing}
-          style={[styles.button, styles.refreshButton]}
-        />
+            <AppButton 
+              title="Join Wedding" 
+              onPress={() => navigation.navigate('JoinWedding')}
+              style={styles.button}
+            />
+
+            <AppButton 
+              title="Refresh Profile" 
+              onPress={handleRefresh} 
+              loading={isRefreshing}
+              style={[styles.button, styles.refreshButton]}
+            />
+          </>
+        )}
+
+        {user.role === 'ADMIN' && (
+          <>
+            <Text style={styles.sectionTitle}>Admin Actions</Text>
+            <AppButton 
+              title="Users" 
+              onPress={() => navigation.navigate('AdminUsers')}
+              style={styles.button}
+            />
+            <AppButton 
+              title="Weddings" 
+              onPress={() => navigation.navigate('AdminWeddings')}
+              style={styles.button}
+            />
+            <AppButton 
+              title="Create Event Manager" 
+              onPress={() => navigation.navigate('CreateEventManager')}
+              style={styles.button}
+            />
+          </>
+        )}
+
+        {user.role === 'EVENT_MANAGER' && (
+          <>
+            <Text style={styles.sectionTitle}>Event Manager Actions</Text>
+            <AppButton 
+              title="My Weddings" 
+              onPress={() => navigation.navigate('EventManagerWeddings')}
+              style={styles.button}
+            />
+            <AppButton 
+              title="Create Wedding" 
+              onPress={() => navigation.navigate('CreateWedding')}
+              style={styles.button}
+            />
+          </>
+        )}
         
         <AppButton 
           title="Logout" 
@@ -162,6 +209,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   button: {
+    marginBottom: theme.spacing.m,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+    marginTop: theme.spacing.m,
     marginBottom: theme.spacing.m,
   },
   logoutButton: {

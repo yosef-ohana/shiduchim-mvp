@@ -453,3 +453,15 @@ No global approval. FULL profile opens global automatically.
 - Event manager managing other wedding: 403 unless ADMIN assigned.
 - User changing gender after creation: 400 or 403.
 - Public profile never exposes email/phone.
+
+---
+
+## 13. Phase 14 MVP Additions
+
+* **Return to Feed / Action Removal**: Supports `DELETE /api/actions/{targetUserId}` to remove an existing action (Like, Dislike, Freeze) so that the user may return to Discover if eligible, provided no active match exists.
+* **Chats List & Conversations Endpoint**: Supports `GET /api/chats/conversations` to list active matches/conversations for the user, sorted newest-first by the latest message timestamp, with a preview of the last message.
+* **Role-Based Home Navigation**: `MeScreen.tsx` dynamically displays navigation options for `USER`, `EVENT_MANAGER`, and `ADMIN` depending on the authenticated user's role.
+* **Minimal Admin Mobile Screens**: Added screens to manage users (list and block/unblock), view weddings list, and create Event Manager accounts.
+* **Minimal Event Manager Mobile Screens**: Added screens to list weddings, create a wedding, view access codes, manage participants (add by email, remove), and view basic stats.
+* **Eligibility Rule Protection**: Stricter validation ensuring users without a primary photo cannot access Discover feeds or appear in other users' pools.
+

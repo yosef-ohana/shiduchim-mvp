@@ -5,8 +5,10 @@ import { AppInput } from '../../components/AppInput';
 import { AppButton } from '../../components/AppButton';
 import { getMyProfile, updateFullProfile } from '../../api/profileApi';
 import { theme } from '../../theme/theme';
+import { useAuth } from '../../context/AuthContext';
 
 export const FullProfileScreen = ({ navigation }: any) => {
+  const { refreshMe } = useAuth();
   const [education, setEducation] = useState('');
   const [occupation, setOccupation] = useState('');
   const [selfDescription, setSelfDescription] = useState('');
@@ -77,6 +79,7 @@ export const FullProfileScreen = ({ navigation }: any) => {
         headCovering: headCovering.trim() || null,
         hasDrivingLicense: hasDrivingLicense,
       });
+      await refreshMe();
       setSuccessInfo(response);
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || err.message || 'Failed to save full profile');

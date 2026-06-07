@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
 import { theme } from '../../theme/theme';
 import { getMatches } from '../../api/matchesApi';
 import { MatchResponse } from '../../types/api';
+import { getImageUrl } from '../../utils/imageUrl';
+
 
 export const MatchesScreen = ({ navigation }: any) => {
   const [matches, setMatches] = useState<MatchResponse[]>([]);
@@ -33,9 +36,11 @@ export const MatchesScreen = ({ navigation }: any) => {
     }
   };
 
-  useEffect(() => {
-    fetchMatches();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchMatches(matches.length === 0);
+    }, [matches.length])
+  );
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -49,8 +54,8 @@ export const MatchesScreen = ({ navigation }: any) => {
         onPress={() => navigation.navigate('MatchDetails', { matchId: item.matchId })}
         activeOpacity={0.8}
       >
-        {item.otherUserPrimaryPhotoUrl ? (
-          <Image source={{ uri: item.otherUserPrimaryPhotoUrl }} style={styles.avatar} />
+        {getImageUrl(item.otherUserPrimaryPhotoUrl) ? (
+          <Image source={{ uri: getImageUrl(item.otherUserPrimaryPhotoUrl) }} style={styles.avatar} />
         ) : (
           <View style={styles.placeholderAvatar}>
             <Text style={styles.placeholderText}>No Photo</Text>
@@ -62,7 +67,9 @@ export const MatchesScreen = ({ navigation }: any) => {
             <Text style={styles.name} numberOfLines={1}>
               {item.otherUserFullName}
             </Text>
-            <Text style={styles.poolTag}>{item.poolType}</Text>
+            <Text style={styles.poolTag}>
+              {item.poolType === 'WEDDING' ? 'Wedding Pool' : item.poolType === 'GLOBAL' ? 'Global Pool' : item.poolType}
+            </Text>
           </View>
           
           <Text style={styles.dateText}>

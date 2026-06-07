@@ -244,6 +244,18 @@ export interface MatchResponse {
 
 export type MatchListItemResponse = MatchResponse;
 
+export interface ConversationResponse {
+  matchId: number;
+  otherUserId: number;
+  otherUserFullName: string;
+  otherUserPrimaryPhotoUrl: string | null;
+  lastMessagePreview: string | null;
+  lastMessageAt: string | null;
+  poolType: PoolType;
+  weddingId: number | null;
+  matchStatus: MatchStatus;
+}
+
 export interface MatchDetailsResponse {
   matchId: number;
   otherUserProfile: MatchUserProfile;
@@ -268,5 +280,70 @@ export interface ChatMessagesResponse {
 
 export interface ChatMessageRequest {
   content: string;
+}
+
+export interface AdminUserResponse {
+  id: number;
+  fullName: string;
+  email: string;
+  gender: 'MALE' | 'FEMALE' | null;
+  role: 'USER' | 'EVENT_MANAGER' | 'ADMIN';
+  profileStatus: ProfileStatus;
+  adminBlocked: boolean;
+  createdAt: string;
+}
+
+export type WeddingStatus = 'OPEN' | 'CLOSED' | 'CANCELLED';
+
+export interface AdminWeddingResponse {
+  id: number;
+  name: string;
+  city: string;
+  weddingDate: string;
+  status: WeddingStatus;
+  ownerUserId: number;
+  participantsCount: number;
+  matchesCount: number;
+}
+
+export interface CreateEventManagerRequest {
+  email: string;
+  password: string;
+  fullName: string;
+}
+
+export interface WeddingCreateRequest {
+  name: string;
+  city: string;
+  weddingDate: string; // YYYY-MM-DD
+  accessCode?: string;
+}
+
+export interface WeddingResponse {
+  id: number;
+  name: string;
+  city: string;
+  weddingDate: string;
+  status: WeddingStatus;
+  accessCode: string;
+  ownerUserId: number;
+  participantsCount: number;
+  matchesCount: number;
+}
+
+export interface AddParticipantRequest {
+  email: string;
+}
+
+export interface ParticipantResponse {
+  userId: number;
+  fullName: string;
+  email: string;
+  gender: 'MALE' | 'FEMALE' | null;
+  profileStatus: ProfileStatus;
+  hasPrimaryPhoto: boolean;
+  participantStatus: ParticipantStatus;
+  joinedAt: string;
+  removedAt: string | null;
 }
 
