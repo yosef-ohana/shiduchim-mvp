@@ -1,0 +1,259 @@
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from 'react-native';
+import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Screen } from '../../components/Screen';
+import { adminApi } from '../../api/adminApi';
+import { MainStackParamList } from '../../navigation/MainStack';
+import { AdminWeddingResponse, WeddingInviteResponse } from '../../types/api';
+import { theme } from '../../theme/theme';
+
+type DetailsRouteProp = RouteProp<MainStackParamList, 'AdminWeddingDetails'>;
+type NavigationProp = NativeStackNavigationProp<MainStackParamList, 'AdminWeddingDetails'>;
+
+export const AdminWeddingDetailsScreen = () => {
+  const route = useRoute<DetailsRouteProp>();
+  const navigation = useNavigation<NavigationProp>();
+  const { weddingId } = route.params;
+
+  const [wedding, setWedding] = useState<AdminWeddingResponse | null>(null);
+  const [invites, setInvites] = useState<WeddingInviteResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [managerIdInput, setManagerIdInput] = useState('');
+
+  const fetchWedding = async () => {
+    setLoading(true);
+    try {
+      const allWeddings = await adminApi.getWeddings();
+      const found = allWeddings.find(w => w.id === weddingId);
+      if (found) {
+        setWedding(found);
+        try {
+          const invitesData = await adminApi.getInvites(weddingId);
+          setInvites(invitesData);
+        } catch (e) {
+          // It's possible the admin doesn't have invites yet, fail silently
+        }
+      } else {
+        Alert.alert('Error', 'Wedding not found');
+        navigation.goBack();
+      }
+    } catch (error) {
+      console.error('Failed to fetch wedding details', error);
+      Alert.alert('Error', 'Failed to fetch wedding details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWedding();
+  }, [weddingId]);
+
+  const handleAssignManager = async () => {
+    if (!managerIdInput) return;
+    try {
+      const updated = await adminApi.assignManager(weddingId, { managerId: parseInt(managerIdInput, 10) });
+      setWedding(updated);
+      setManagerIdInput('');
+      Alert.alert('Success', 'Manager assigned');
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.message || 'Failed to assign manager');
+    }
+  };
+
+  const handleAssignSelf = async () => {
+    try {
+      const updated = await adminApi.assignSelfToWedding(weddingId);
+      setWedding(updated);
+      Alert.alert('Success', 'Assigned to self');
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.message || 'Failed to assign self');
+    }
+  };
+
+  const handleClose = async () => {
+    try {
+      const updated = await adminApi.closeWedding(weddingId);
+      setWedding(updated);
+      Alert.alert('Success', 'Wedding closed');
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.message || 'Failed to close wedding');
+    }
+  };
+
+  const handleCancel = async () => {
+    try {
+      const updated = await adminApi.cancelWedding(weddingId);
+      setWedding(updated);
+      Alert.alert('Success', 'Wedding cancelled');
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.message || 'Failed to cancel wedding');
+    }
+  };
+
+  if (loading) {
+    return (
+      <Screen>
+        <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 20 }} />
+      </Screen>
+    );
+  }
+
+  if (!wedding) return null;
+
+  return (
+    <Screen>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.card}>
+          <Text style={styles.title}>{wedding.name}</Text>
+          <Text style={styles.info}>ID: {wedding.id}</Text>
+          <Text style={styles.info}>City: {wedding.city}</Text>
+          <Text style={styles.info}>Date: {wedding.weddingDate}</Text>
+          <Text style={styles.info}>Status: {wedding.status}</Text>
+          <Text style={styles.info}>Access Code: {wedding.accessCode}</Text>
+          <Text style={styles.info}>
+            Owner: {wedding.ownerName ? `${wedding.ownerName} (${wedding.ownerEmail})` : 'N/A'} (ID: {wedding.ownerUserId || 'None'})
+          </Text>
+          <Text style={styles.info}>Participants: {wedding.participantsCount}</Text>
+          <Text style={styles.info}>Matches: {wedding.matchesCount}</Text>
+        </View>
+
+        <View style={styles.actionsContainer}>
+          <Text style={styles.sectionTitle}>Actions</Text>
+          
+          <View style={styles.row}>
+            <TextInput
+              style={styles.input}
+              placeholder="Manager ID"
+              value={managerIdInput}
+              onChangeText={setManagerIdInput}
+              keyboardType="numeric"
+            />
+            <TouchableOpacity style={styles.actionBtn} onPress={handleAssignManager}>
+              <Text style={styles.btnText}>Assign Manager</Text>
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity style={[styles.fullBtn, { backgroundColor: theme.colors.primary }]} onPress={handleAssignSelf}>
+            <Text style={styles.btnText}>Assign Self</Text>
+          </TouchableOpacity>
+
+          {wedding.status === 'ACTIVE' && (
+            <>
+              <TouchableOpacity style={[styles.fullBtn, { backgroundColor: '#f0ad4e' }]} onPress={handleClose}>
+                <Text style={styles.btnText}>Close Wedding</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.fullBtn, { backgroundColor: '#d9534f' }]} onPress={handleCancel}>
+                <Text style={styles.btnText}>Cancel Wedding</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {invites.length > 0 && (
+            <View style={styles.invitesContainer}>
+              <Text style={styles.sectionTitle}>Invitations ({invites.length})</Text>
+              {invites.map((invite) => (
+                <View key={`invite-${invite.id}`} style={styles.inviteCard}>
+                  <Text style={styles.inviteName}>{invite.fullName}</Text>
+                  <Text style={styles.inviteEmail}>{invite.email}</Text>
+                  <Text style={styles.inviteStatus}>Status: {invite.status}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </Screen>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    padding: theme.spacing.m,
+  },
+  card: {
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.m,
+    marginBottom: theme.spacing.l,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: theme.spacing.s,
+    color: theme.colors.text,
+  },
+  info: {
+    fontSize: 16,
+    marginBottom: 4,
+    color: theme.colors.textSecondary,
+  },
+  actionsContainer: {
+    marginTop: theme.spacing.s,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: theme.spacing.m,
+  },
+  row: {
+    flexDirection: 'row',
+    marginBottom: theme.spacing.m,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.s,
+    borderRadius: theme.borderRadius.s,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginRight: theme.spacing.s,
+  },
+  actionBtn: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.m,
+    justifyContent: 'center',
+    borderRadius: theme.borderRadius.s,
+  },
+  fullBtn: {
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.m,
+    alignItems: 'center',
+    marginBottom: theme.spacing.m,
+  },
+  btnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  invitesContainer: {
+    marginTop: theme.spacing.m,
+  },
+  inviteCard: {
+    backgroundColor: '#FAFAFA',
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.s,
+    marginBottom: theme.spacing.s,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  inviteName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  inviteEmail: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    marginBottom: 4,
+  },
+  inviteStatus: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: theme.colors.primary,
+  },
+});

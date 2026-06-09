@@ -163,3 +163,28 @@ During Phase 14.14 (Final Regression QA), developers must manually verify all co
 * [ ] **Discover**: Confirm opposite-gender filter is enforced, no blocked users appear, and no self-card is displayed.
 * [ ] **Match and Chat**: Mutual like creates an active match, chat messages send and receive over HTTP, post-match dislike blocks the match and disables chat.
 * [ ] **Admin Blocks**: Verify that blocking a user via admin immediately denies access to Discover, Actions, and Chats, and hides their card from other users.
+
+---
+
+## 9. Phase 15 Transition, Planning & Verification Notes
+
+* **Phase 15 Overview**: Phase 15 (Staff Portal + Seed Admin + Event Manager Ownership + Wedding Code Onboarding + Lightweight Invitations) addresses administrative gaps and guest onboarding needs identified during initial QA halts.
+* **Phase 15 Status**:
+  - **Batch 15.0 (Docs + API Contract Lock)**: COMPLETE.
+  - **Batch 15.1 (Seed Admin + Backend Staff Login)**: COMPLETE at code/build level.
+  - **Batch 15.2 (Welcome Screen + Staff Login Mobile)**: COMPLETE.
+  - **Batch 15.3 (Admin API Stabilization + Event Managers Management)**: COMPLETE.
+  - **Batch 15.4 (Admin Weddings: Create + Assign Owner + Details)**: COMPLETE.
+  - **Batch 15.5 (Event Manager Wedding Details Completion)**: COMPLETE.
+  - **Batch 15.6 (Public Wedding Code Validation Backend)**: COMPLETE.
+  - **Batch 15.7 (Mobile Wedding Code Onboarding + Auto Join)**: COMPLETE.
+  - **Batch 15.8 (WeddingInvite Backend)**: COMPLETE.
+  - **Batch 15.9 (WeddingInvite Mobile + Admin/Event Manager Invitations)**: COMPLETE.
+  - **Batch 15.10 (Admin Dashboard + UX Polish)**: COMPLETE.
+  - **Batch 15.11 (Guardrails Regression Audit)**: COMPLETE (no regressions found, no code changes).
+  - **Batch 15.12 (Phase 15 Runtime QA Plan)**: COMPLETE (This batch).
+* **Manual Verification Plan**:
+  - The complete manual verification plan is documented in [PHASE_15_RUNTIME_QA_PLAN.md](file:///c:/Projects/shiduchim-mvp/docs/PHASE_15_RUNTIME_QA_PLAN.md).
+  - This plan contains test scenarios R0 through R9 to manually verify the full Phase 15 product flow.
+  - Implementation has NOT yet been run or verified at runtime in this environment. Manual verification will proceed in the next step.
+

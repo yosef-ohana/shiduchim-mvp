@@ -6,7 +6,8 @@ import { AppButton } from '../../components/AppButton';
 import { useAuth } from '../../context/AuthContext';
 import { theme } from '../../theme/theme';
 
-export const RegisterScreen = ({ navigation }: any) => {
+export const RegisterScreen = ({ route, navigation }: any) => {
+  const pendingWeddingCode = route?.params?.pendingWeddingCode;
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,7 +26,7 @@ export const RegisterScreen = ({ navigation }: any) => {
     
     setIsLoading(true);
     try {
-      await register({ fullName, email, password, gender });
+      await register({ fullName, email, password, gender }, pendingWeddingCode);
     } catch (e: any) {
       const message = e.message || '';
       if (message.toLowerCase().includes('already in use') || message.toLowerCase().includes('already registered') || message.toLowerCase().includes('conflict')) {

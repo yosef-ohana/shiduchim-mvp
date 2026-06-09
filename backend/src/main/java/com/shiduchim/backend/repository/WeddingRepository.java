@@ -14,4 +14,6 @@ public interface WeddingRepository extends JpaRepository<Wedding, Long> {
     boolean existsByAccessCode(String accessCode);
 
     java.util.List<Wedding> findByOwnerUserId(Long ownerUserId);
+
+    long countByStatus(com.shiduchim.backend.enums.WeddingStatus status);
 }

@@ -1,18 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
 import { useAuth } from '../../context/AuthContext';
 import { theme } from '../../theme/theme';
+import { adminApi } from '../../api/adminApi';
+import { AdminDashboardResponse } from '../../types/api';
 
 export const MeScreen = ({ navigation }: any) => {
   const { user, logout, refreshMe } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [dashboardData, setDashboardData] = useState<AdminDashboardResponse | null>(null);
+  const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
+
+  const fetchDashboard = async () => {
+    setIsLoadingDashboard(true);
+    try {
+      const data = await adminApi.getDashboard();
+      setDashboardData(data);
+    } catch (error) {
+      console.error('Error fetching admin dashboard:', error);
+    } finally {
+      setIsLoadingDashboard(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user && user.role === 'ADMIN') {
+      fetchDashboard();
+    }
+  }, [user]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
       await refreshMe();
+      if (user && user.role === 'ADMIN') {
+        const data = await adminApi.getDashboard();
+        setDashboardData(data);
+      }
+    } catch (error) {
+      console.error('Error refreshing data:', error);
     } finally {
       setIsRefreshing(false);
     }
@@ -123,7 +151,33 @@ export const MeScreen = ({ navigation }: any) => {
 
         {user.role === 'ADMIN' && (
           <>
-            <Text style={styles.sectionTitle}>Admin Actions</Text>
+            <Text style={styles.sectionTitle}>Admin Home</Text>
+
+            {isLoadingDashboard ? (
+              <Text style={styles.dashboardStatusText}>Loading dashboard...</Text>
+            ) : dashboardData ? (
+              <View style={styles.dashboardContainer}>
+                <View style={styles.dashboardCard}>
+                  <Text style={styles.dashboardNum}>{dashboardData.usersCount}</Text>
+                  <Text style={styles.dashboardLabel}>Users</Text>
+                </View>
+                <View style={styles.dashboardCard}>
+                  <Text style={styles.dashboardNum}>{dashboardData.eventManagersCount}</Text>
+                  <Text style={styles.dashboardLabel}>Event MGRs</Text>
+                </View>
+                <View style={styles.dashboardCard}>
+                  <Text style={styles.dashboardNum}>{dashboardData.weddingsCount}</Text>
+                  <Text style={styles.dashboardLabel}>Weddings</Text>
+                </View>
+                <View style={styles.dashboardCard}>
+                  <Text style={styles.dashboardNum}>{dashboardData.activeWeddingsCount}</Text>
+                  <Text style={styles.dashboardLabel}>Active Weddings</Text>
+                </View>
+              </View>
+            ) : (
+              <Text style={styles.dashboardErrorText}>Failed to load dashboard statistics</Text>
+            )}
+
             <AppButton 
               title="Users" 
               onPress={() => navigation.navigate('AdminUsers')}
@@ -132,6 +186,11 @@ export const MeScreen = ({ navigation }: any) => {
             <AppButton 
               title="Weddings" 
               onPress={() => navigation.navigate('AdminWeddings')}
+              style={styles.button}
+            />
+            <AppButton 
+              title="Event Managers" 
+              onPress={() => navigation.navigate('AdminEventManagers')}
               style={styles.button}
             />
             <AppButton 
@@ -144,7 +203,7 @@ export const MeScreen = ({ navigation }: any) => {
 
         {user.role === 'EVENT_MANAGER' && (
           <>
-            <Text style={styles.sectionTitle}>Event Manager Actions</Text>
+            <Text style={styles.sectionTitle}>Event Manager Home</Text>
             <AppButton 
               title="My Weddings" 
               onPress={() => navigation.navigate('EventManagerWeddings')}
@@ -223,5 +282,53 @@ const styles = StyleSheet.create({
   },
   refreshButton: {
     backgroundColor: '#4A4A4A',
+  },
+  dashboardContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.l,
+    marginTop: theme.spacing.s,
+  },
+  dashboardCard: {
+    backgroundColor: theme.colors.surface,
+    width: '48%',
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.m,
+    alignItems: 'center',
+    marginBottom: theme.spacing.m,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  dashboardNum: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+  },
+  dashboardLabel: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginTop: 4,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  dashboardStatusText: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    fontStyle: 'italic',
+    marginBottom: theme.spacing.m,
+    textAlign: 'center',
+  },
+  dashboardErrorText: {
+    fontSize: 14,
+    color: theme.colors.error,
+    marginBottom: theme.spacing.m,
+    textAlign: 'center',
+    fontWeight: '500',
   },
 });

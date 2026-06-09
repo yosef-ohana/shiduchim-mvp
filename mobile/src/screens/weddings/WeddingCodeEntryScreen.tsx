@@ -1,0 +1,188 @@
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { Screen } from '../../components/Screen';
+import { AppInput } from '../../components/AppInput';
+import { AppButton } from '../../components/AppButton';
+import { theme } from '../../theme/theme';
+import { validateCode } from '../../api/weddingsApi';
+import { ValidateWeddingCodeResponse } from '../../types/api';
+
+export const WeddingCodeEntryScreen = ({ navigation }: any) => {
+  const [accessCode, setAccessCode] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [weddingDetails, setWeddingDetails] = useState<ValidateWeddingCodeResponse | null>(null);
+
+  const handleValidate = async () => {
+    setErrorMsg('');
+    setWeddingDetails(null);
+    if (!accessCode) {
+      setErrorMsg('Please enter a wedding code');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await validateCode({ accessCode });
+      if (response.valid && response.joinAllowed) {
+        setWeddingDetails(response);
+      } else {
+        if (response.status === 'CLOSED' || response.status === 'CANCELLED') {
+          setWeddingDetails(response);
+          const statusLabel = response.status === 'CLOSED' ? 'closed' : 'cancelled';
+          setErrorMsg(`This wedding has been ${statusLabel} and cannot be joined.`);
+        } else {
+          setErrorMsg(response.message || 'Invalid wedding code. Please verify the code and try again.');
+        }
+      }
+    } catch (e: any) {
+      const status = e.response?.status;
+      const message = e.response?.data?.message || '';
+      if (status === 404 || message.toLowerCase().includes('not found') || message.toLowerCase().includes('invalid')) {
+        setErrorMsg('The wedding code you entered is invalid. Please double check and try again.');
+      } else if (status === 409 || message.toLowerCase().includes('already joined')) {
+        setErrorMsg('You have already joined this wedding.');
+      } else {
+        setErrorMsg(message || 'Failed to validate wedding code. Please check your network connection.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogin = () => {
+    navigation.navigate('Login', { pendingWeddingCode: accessCode });
+  };
+
+  const handleRegister = () => {
+    navigation.navigate('Register', { pendingWeddingCode: accessCode });
+  };
+
+  return (
+    <Screen style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {!weddingDetails || (!weddingDetails.valid && !weddingDetails.weddingId) ? (
+          <View style={styles.content}>
+            <Text style={styles.title}>Enter Wedding Code</Text>
+            <Text style={styles.subtitle}>Enter the 6-character wedding code (e.g., ABC123) provided by your event manager to view the wedding details and join.</Text>
+            
+            {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
+
+            <AppInput
+              label="Wedding Code"
+              placeholder="e.g. WED-123456"
+              value={accessCode}
+              onChangeText={setAccessCode}
+              autoCapitalize="characters"
+            />
+
+            <AppButton
+              title="Continue"
+              onPress={handleValidate}
+              loading={isLoading}
+              style={styles.button}
+            />
+          </View>
+        ) : (
+          <View style={styles.content}>
+            <Text style={styles.title}>Wedding Found</Text>
+            
+            <View style={styles.card}>
+              <Text style={styles.weddingName}>{weddingDetails.weddingName}</Text>
+              <Text style={styles.weddingDetail}>Date: {weddingDetails.weddingDate}</Text>
+              <Text style={styles.weddingDetail}>City: {weddingDetails.city}</Text>
+              <Text style={styles.weddingDetail}>Status: {weddingDetails.status}</Text>
+            </View>
+
+            {errorMsg ? (
+              <Text style={styles.errorText}>{errorMsg}</Text>
+            ) : (
+              <View style={styles.actionContainer}>
+                <Text style={styles.subtitle}>To join this wedding, please log in or create an account.</Text>
+                <AppButton
+                  title="Login"
+                  onPress={handleLogin}
+                  style={styles.actionButton}
+                />
+                <AppButton
+                  title="Create Account"
+                  onPress={handleRegister}
+                  style={[styles.actionButton, styles.secondaryButton]}
+                />
+              </View>
+            )}
+          </View>
+        )}
+      </ScrollView>
+    </Screen>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: theme.spacing.xl,
+    justifyContent: 'center',
+  },
+  content: {
+    width: '100%',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.m,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xl,
+    textAlign: 'center',
+  },
+  button: {
+    marginTop: theme.spacing.l,
+  },
+  errorText: {
+    color: theme.colors.error,
+    marginBottom: theme.spacing.m,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  card: {
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.l,
+    borderRadius: theme.borderRadius.m,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    marginBottom: theme.spacing.xl,
+    alignItems: 'center',
+  },
+  weddingName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: theme.colors.text,
+    marginBottom: theme.spacing.s,
+    textAlign: 'center',
+  },
+  weddingDetail: {
+    fontSize: 16,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.s / 2,
+  },
+  actionContainer: {
+    marginTop: theme.spacing.m,
+  },
+  actionButton: {
+    marginBottom: theme.spacing.m,
+  },
+  secondaryButton: {
+    backgroundColor: theme.colors.background,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+  },
+});

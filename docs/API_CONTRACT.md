@@ -204,6 +204,21 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 - `joinedAt`
 - `removedAt`
 
+`CreateWeddingInviteRequest`
+- `fullName`
+- `email`
+
+`WeddingInviteResponse`
+- `id`
+- `weddingId`
+- `fullName`
+- `email`
+- `invitedByUserId`
+- `acceptedUserId`
+- `status`
+- `createdAt`
+- `acceptedAt`
+
 ---
 
 ### Discover / Actions
@@ -334,6 +349,14 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 - `participantsCount`
 - `matchesCount`
 
+`AdminDashboardResponse`
+- `totalUsers`
+- `totalEventManagers`
+- `totalAdmins`
+- `totalWeddings`
+- `totalActiveMatches`
+- `totalMessages`
+
 ---
 
 ## 3. Endpoints
@@ -344,6 +367,7 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 |---|---|---|---|---|---|---|
 | POST | `/api/auth/register` | Public | `RegisterRequest` | `AuthResponse` | Creates USER; email unique; gender required for USER; no OTP/email verification/device token | 400, 409 |
 | POST | `/api/auth/login` | Public | `LoginRequest` | `AuthResponse` | Validates email/password; returns token | 400, 401 |
+| POST | `/api/auth/staff-login` | Public | `LoginRequest` | `AuthResponse` | [Phase 15 Planned] Validates credentials and returns token; role must be ADMIN or EVENT_MANAGER | 400, 401, 403 |
 | GET | `/api/users/me` | USER / EVENT_MANAGER / ADMIN | — | `MeResponse` | Returns current authenticated user | 401 |
 
 ---
@@ -378,11 +402,13 @@ No Cloudinary. No soft delete. No `deleted` flag.
 | Method | Path | Role | Request | Response | Rules | Errors |
 |---|---|---|---|---|---|---|
 | POST | `/api/event-manager/weddings` | EVENT_MANAGER / ADMIN | `WeddingCreateRequest` | `WeddingResponse` | Create wedding; accessCode manual or auto-generated; unique | 400, 401, 403, 409 |
+| PUT | `/api/event-manager/weddings/{id}` | EVENT_MANAGER / ADMIN | `WeddingCreateRequest` | `WeddingResponse` | [Phase 15 Planned] Edit wedding details (name, city, weddingDate); owner or ADMIN only | 400, 401, 403, 404 |
 | GET | `/api/event-manager/weddings` | EVENT_MANAGER / ADMIN | — | `List<WeddingResponse>` | Manager sees own weddings; admin sees admin list | 401, 403 |
 | GET | `/api/event-manager/weddings/{id}` | EVENT_MANAGER / ADMIN | — | `WeddingResponse` | Owner or ADMIN only | 401, 403, 404 |
 | PATCH | `/api/event-manager/weddings/{id}/close` | EVENT_MANAGER / ADMIN | — | `WeddingResponse` | Owner/Admin; status CLOSED | 401, 403, 404 |
 | PATCH | `/api/event-manager/weddings/{id}/cancel` | EVENT_MANAGER / ADMIN | — | `WeddingResponse` | Owner/Admin; status CANCELLED | 401, 403, 404 |
 | POST | `/api/weddings/join` | USER | `JoinWeddingRequest` | `JoinWeddingResponse` | Join ACTIVE wedding by accessCode; no QR | 400, 401, 403, 404, 409 |
+| POST | `/api/weddings/validate-code` | Public | `ValidateWeddingCodeRequest` | `ValidateWeddingCodeResponse` | Validate wedding access code before auth | 400, 404 |
 
 ---
 
@@ -393,6 +419,16 @@ No Cloudinary. No soft delete. No `deleted` flag.
 | GET | `/api/event-manager/weddings/{id}/participants` | EVENT_MANAGER / ADMIN | — | `List<ParticipantResponse>` | Owner or ADMIN only | 401, 403, 404 |
 | POST | `/api/event-manager/weddings/{id}/participants` | EVENT_MANAGER / ADMIN | `AddParticipantRequest` | `ParticipantResponse` | Add existing user by email; no invitations | 400, 401, 403, 404, 409 |
 | DELETE | `/api/event-manager/weddings/{id}/participants/{userId}` | EVENT_MANAGER / ADMIN | — | `ParticipantResponse` | Sets status REMOVED; no physical delete | 401, 403, 404 |
+
+---
+
+### Wedding Invites
+
+| Method | Path | Role | Request | Response | Rules | Errors |
+|---|---|---|---|---|---|---|
+| POST | `/api/event-manager/weddings/{id}/invites` | EVENT_MANAGER / ADMIN | `CreateWeddingInviteRequest` | `WeddingInviteResponse` | Creates a lightweight invitation; owner or ADMIN only | 400, 401, 403, 404, 409 |
+| GET | `/api/event-manager/weddings/{id}/invites` | EVENT_MANAGER / ADMIN | — | `List<WeddingInviteResponse>` | Lists invitations; owner or ADMIN only | 401, 403, 404 |
+| PATCH | `/api/event-manager/weddings/{id}/invites/{inviteId}/cancel` | EVENT_MANAGER / ADMIN | — | `WeddingInviteResponse` | Cancels the invitation; owner or ADMIN only | 401, 403, 404 |
 
 ---
 
@@ -473,3 +509,5 @@ No WebSocket. No realtime. No unread. No readAt. No attachments.
 | PATCH | `/api/admin/users/{userId}/unblock` | ADMIN | — | `AdminUserResponse` | Sets `adminBlocked=false` | 401, 403, 404 |
 | GET | `/api/admin/weddings` | ADMIN | — | `List<AdminWeddingResponse>` | Basic wedding list | 401, 403 |
 | PATCH | `/api/admin/weddings/{weddingId}/assign-self` | ADMIN | — | `WeddingResponse` | Admin assigns self to manage wedding | 401, 403, 404 |
+| PUT | `/api/admin/weddings/{weddingId}/owner` | ADMIN | `{ "ownerUserId": Long }` | `WeddingResponse` | [Phase 15 Planned] Admin assigns Event Manager to wedding | 400, 401, 403, 404 |
+| GET | `/api/admin/dashboard` | ADMIN | — | `AdminDashboardResponse` | [Phase 15 Planned] Returns basic admin dashboard counters | 401, 403 |

@@ -4,6 +4,8 @@ import {
   WeddingCreateRequest,
   ParticipantResponse,
   AddParticipantRequest,
+  CreateWeddingInviteRequest,
+  WeddingInviteResponse,
 } from '../types/api';
 
 export const getEventManagerWeddings = async (): Promise<WeddingResponse[]> => {
@@ -35,3 +37,29 @@ export const removeParticipant = async (weddingId: number, userId: number): Prom
   const response = await apiClient.delete<ParticipantResponse>(`/event-manager/weddings/${weddingId}/participants/${userId}`);
   return response.data;
 };
+
+export const closeWedding = async (id: number): Promise<WeddingResponse> => {
+  const response = await apiClient.patch<WeddingResponse>(`/event-manager/weddings/${id}/close`);
+  return response.data;
+};
+
+export const cancelWedding = async (id: number): Promise<WeddingResponse> => {
+  const response = await apiClient.patch<WeddingResponse>(`/event-manager/weddings/${id}/cancel`);
+  return response.data;
+};
+
+export const createInvite = async (weddingId: number, data: CreateWeddingInviteRequest): Promise<WeddingInviteResponse> => {
+  const response = await apiClient.post<WeddingInviteResponse>(`/event-manager/weddings/${weddingId}/invites`, data);
+  return response.data;
+};
+
+export const getInvites = async (weddingId: number): Promise<WeddingInviteResponse[]> => {
+  const response = await apiClient.get<WeddingInviteResponse[]>(`/event-manager/weddings/${weddingId}/invites`);
+  return response.data;
+};
+
+export const cancelInvite = async (weddingId: number, inviteId: number): Promise<WeddingInviteResponse> => {
+  const response = await apiClient.patch<WeddingInviteResponse>(`/event-manager/weddings/${weddingId}/invites/${inviteId}/cancel`);
+  return response.data;
+};
+

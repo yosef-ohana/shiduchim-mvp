@@ -3,12 +3,15 @@ package com.shiduchim.backend.service;
 import com.shiduchim.backend.dto.wedding.*;
 import com.shiduchim.backend.entity.User;
 import com.shiduchim.backend.entity.Wedding;
+import com.shiduchim.backend.entity.WeddingInvite;
 import com.shiduchim.backend.entity.WeddingParticipant;
 import com.shiduchim.backend.enums.MatchStatus;
 import com.shiduchim.backend.enums.ParticipantStatus;
 import com.shiduchim.backend.enums.UserRole;
+import com.shiduchim.backend.enums.WeddingInviteStatus;
 import com.shiduchim.backend.enums.WeddingStatus;
 import com.shiduchim.backend.repository.MatchRepository;
+import com.shiduchim.backend.repository.WeddingInviteRepository;
 import com.shiduchim.backend.repository.WeddingParticipantRepository;
 import com.shiduchim.backend.repository.WeddingRepository;
 import org.springframework.http.HttpStatus;
@@ -27,13 +30,16 @@ public class WeddingService {
     private final WeddingRepository weddingRepository;
     private final WeddingParticipantRepository participantRepository;
     private final MatchRepository matchRepository;
+    private final WeddingInviteRepository weddingInviteRepository;
 
     public WeddingService(WeddingRepository weddingRepository,
                           WeddingParticipantRepository participantRepository,
-                          MatchRepository matchRepository) {
+                          MatchRepository matchRepository,
+                          WeddingInviteRepository weddingInviteRepository) {
         this.weddingRepository = weddingRepository;
         this.participantRepository = participantRepository;
         this.matchRepository = matchRepository;
+        this.weddingInviteRepository = weddingInviteRepository;
     }
 
     private void requireEventManagerOrAdmin(User user) {
@@ -127,6 +133,15 @@ public class WeddingService {
             participant = participantRepository.save(participant);
         }
 
+        String normalizedEmail = currentUser.getEmail().trim().toLowerCase();
+        weddingInviteRepository.findByWeddingIdAndEmailAndStatus(wedding.getId(), normalizedEmail, WeddingInviteStatus.PENDING)
+                .ifPresent(invite -> {
+                    invite.setStatus(WeddingInviteStatus.ACCEPTED);
+                    invite.setAcceptedUserId(currentUser.getId());
+                    invite.setAcceptedAt(LocalDateTime.now());
+                    weddingInviteRepository.save(invite);
+                });
+
         JoinWeddingResponse response = new JoinWeddingResponse();
         response.setWeddingId(wedding.getId());
         response.setWeddingName(wedding.getName());
@@ -192,5 +207,42 @@ public class WeddingService {
             }
         }
         throw new RuntimeException("Could not generate unique access code");
+    }
+
+    public ValidateWeddingCodeResponse validateCode(ValidateWeddingCodeRequest request) {
+        ValidateWeddingCodeResponse response = new ValidateWeddingCodeResponse();
+        
+        if (request.getAccessCode() == null || request.getAccessCode().trim().isEmpty()) {
+            response.setValid(false);
+            response.setJoinAllowed(false);
+            response.setMessage("Wedding code not provided");
+            return response;
+        }
+
+        Wedding wedding = weddingRepository.findByAccessCode(request.getAccessCode()).orElse(null);
+
+        if (wedding == null) {
+            response.setValid(false);
+            response.setJoinAllowed(false);
+            response.setMessage("Wedding code not found");
+            return response;
+        }
+
+        response.setValid(true);
+        response.setWeddingId(wedding.getId());
+        response.setWeddingName(wedding.getName());
+        response.setCity(wedding.getCity());
+        response.setWeddingDate(wedding.getWeddingDate());
+        response.setStatus(wedding.getStatus());
+
+        if (wedding.getStatus() == WeddingStatus.ACTIVE) {
+            response.setJoinAllowed(true);
+            response.setMessage("Valid wedding code");
+        } else {
+            response.setJoinAllowed(false);
+            response.setMessage("This wedding is not open for joining");
+        }
+
+        return response;
     }
 }

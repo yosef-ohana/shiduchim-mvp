@@ -18,6 +18,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
 
+    boolean existsByRole(com.shiduchim.backend.enums.UserRole role);
+
+    List<User> findByRole(com.shiduchim.backend.enums.UserRole role);
+
+    long countByRole(com.shiduchim.backend.enums.UserRole role);
+
+    long countByRoleAndAdminBlockedFalse(com.shiduchim.backend.enums.UserRole role);
+
     @Query("SELECT u, up.imageUrl FROM User u " +
            "JOIN UserPhoto up ON up.userId = u.id AND up.isPrimary = true " +
            "WHERE u.role = com.shiduchim.backend.enums.UserRole.USER " +

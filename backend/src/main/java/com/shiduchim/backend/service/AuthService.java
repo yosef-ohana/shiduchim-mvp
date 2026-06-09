@@ -62,6 +62,30 @@ public class AuthService {
         return toAuthResponse(user, token);
     }
 
+    public AuthResponse staffLogin(com.shiduchim.backend.dto.auth.StaffLoginRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+        }
+
+        if (user.getRole() == UserRole.USER) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied. Regular users cannot use staff login.");
+        }
+
+        if (user.getRole() != request.getExpectedRole()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied. Role mismatch.");
+        }
+
+        if (Boolean.TRUE.equals(user.getAdminBlocked())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account is blocked");
+        }
+
+        String token = tokenService.generateToken(user.getId());
+        return toAuthResponse(user, token);
+    }
+
     private AuthResponse toAuthResponse(User user, String token) {
         return new AuthResponse(
                 user.getId(),

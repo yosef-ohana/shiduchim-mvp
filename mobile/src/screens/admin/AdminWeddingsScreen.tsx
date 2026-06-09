@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { MainStackParamList } from '../../navigation/MainStack';
 import { Screen } from '../../components/Screen';
 import { adminApi } from '../../api/adminApi';
 import { AdminWeddingResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
 
+type NavigationProp = NativeStackNavigationProp<MainStackParamList, 'AdminWeddings'>;
+
 export const AdminWeddingsScreen = () => {
+  const navigation = useNavigation<NavigationProp>();
   const [weddings, setWeddings] = useState<AdminWeddingResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,19 +29,26 @@ export const AdminWeddingsScreen = () => {
   };
 
   useEffect(() => {
-    fetchWeddings();
-  }, []);
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchWeddings();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const renderItem = ({ item }: { item: AdminWeddingResponse }) => (
-    <View style={styles.card}>
+    <TouchableOpacity 
+      style={styles.card}
+      onPress={() => navigation.navigate('AdminWeddingDetails', { weddingId: item.id })}
+    >
       <Text style={styles.name}>{item.name || 'No Name'} (ID: {item.id})</Text>
       <Text style={styles.info}>City: {item.city || 'N/A'}</Text>
       <Text style={styles.info}>Date: {item.weddingDate || 'N/A'}</Text>
       <Text style={styles.info}>Status: {item.status}</Text>
+      <Text style={styles.info}>Access Code: {item.accessCode || 'N/A'}</Text>
       <Text style={styles.info}>Owner ID: {item.ownerUserId}</Text>
       <Text style={styles.info}>Participants: {item.participantsCount}</Text>
       <Text style={styles.info}>Matches: {item.matchesCount}</Text>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -54,6 +67,12 @@ export const AdminWeddingsScreen = () => {
             onRefresh={fetchWeddings}
           />
         )}
+        <TouchableOpacity 
+          style={styles.fab}
+          onPress={() => navigation.navigate('CreateAdminWedding')}
+        >
+          <Text style={styles.fabText}>+</Text>
+        </TouchableOpacity>
       </View>
     </Screen>
   );
@@ -93,5 +112,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: theme.spacing.xl,
     color: theme.colors.textSecondary,
+  },
+  fab: {
+    position: 'absolute',
+    right: theme.spacing.m,
+    bottom: theme.spacing.m,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  fabText: {
+    fontSize: 24,
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });

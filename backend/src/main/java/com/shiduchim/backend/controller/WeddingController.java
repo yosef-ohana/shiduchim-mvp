@@ -2,6 +2,8 @@ package com.shiduchim.backend.controller;
 
 import com.shiduchim.backend.dto.wedding.JoinWeddingRequest;
 import com.shiduchim.backend.dto.wedding.JoinWeddingResponse;
+import com.shiduchim.backend.dto.wedding.ValidateWeddingCodeRequest;
+import com.shiduchim.backend.dto.wedding.ValidateWeddingCodeResponse;
 import com.shiduchim.backend.dto.wedding.WeddingCreateRequest;
 import com.shiduchim.backend.dto.wedding.WeddingResponse;
 import com.shiduchim.backend.entity.User;
@@ -54,5 +56,10 @@ public class WeddingController {
     public JoinWeddingResponse joinWedding(@RequestBody JoinWeddingRequest request,
                                            @AuthenticationPrincipal User currentUser) {
         return weddingService.joinWedding(request, currentUser);
+    }
+
+    @PostMapping("/weddings/validate-code")
+    public ValidateWeddingCodeResponse validateCode(@RequestBody ValidateWeddingCodeRequest request) {
+        return weddingService.validateCode(request);
     }
 }

@@ -293,7 +293,7 @@ export interface AdminUserResponse {
   createdAt: string;
 }
 
-export type WeddingStatus = 'OPEN' | 'CLOSED' | 'CANCELLED';
+export type WeddingStatus = 'ACTIVE' | 'CLOSED' | 'CANCELLED';
 
 export interface AdminWeddingResponse {
   id: number;
@@ -301,9 +301,24 @@ export interface AdminWeddingResponse {
   city: string;
   weddingDate: string;
   status: WeddingStatus;
+  accessCode: string;
   ownerUserId: number;
+  ownerName?: string;
+  ownerEmail?: string;
   participantsCount: number;
   matchesCount: number;
+}
+
+export interface AdminCreateWeddingRequest {
+  name: string;
+  city: string;
+  weddingDate: string;
+  accessCode?: string;
+  ownerUserId?: number;
+}
+
+export interface AssignManagerRequest {
+  managerId: number;
 }
 
 export interface CreateEventManagerRequest {
@@ -345,5 +360,50 @@ export interface ParticipantResponse {
   participantStatus: ParticipantStatus;
   joinedAt: string;
   removedAt: string | null;
+}
+
+export interface StaffLoginRequest {
+  email: string;
+  password: string;
+  expectedRole: 'ADMIN' | 'EVENT_MANAGER';
+}
+
+export interface ValidateWeddingCodeRequest {
+  accessCode: string;
+}
+
+export interface ValidateWeddingCodeResponse {
+  valid: boolean;
+  weddingId: number | null;
+  weddingName: string | null;
+  city: string | null;
+  weddingDate: string | null;
+  status: 'ACTIVE' | 'CLOSED' | 'CANCELLED' | null;
+  joinAllowed: boolean;
+  message: string;
+}
+
+export type WeddingInviteStatus = 'PENDING' | 'ACCEPTED' | 'CANCELLED';
+
+export interface CreateWeddingInviteRequest {
+  fullName: string;
+  email: string;
+}
+
+export interface WeddingInviteResponse {
+  id: number;
+  weddingId: number;
+  fullName: string;
+  email: string;
+  status: WeddingInviteStatus;
+  createdAt: string;
+  acceptedAt: string | null;
+}
+
+export interface AdminDashboardResponse {
+  usersCount: number;
+  eventManagersCount: number;
+  weddingsCount: number;
+  activeWeddingsCount: number;
 }
 

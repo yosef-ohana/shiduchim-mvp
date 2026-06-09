@@ -2,7 +2,10 @@ package com.shiduchim.backend.controller;
 
 import com.shiduchim.backend.dto.admin.AdminUserResponse;
 import com.shiduchim.backend.dto.admin.AdminWeddingResponse;
+import com.shiduchim.backend.dto.admin.AdminCreateWeddingRequest;
+import com.shiduchim.backend.dto.admin.AssignManagerRequest;
 import com.shiduchim.backend.dto.admin.CreateEventManagerRequest;
+import com.shiduchim.backend.dto.admin.AdminDashboardResponse;
 import com.shiduchim.backend.entity.User;
 import com.shiduchim.backend.service.AdminService;
 import jakarta.validation.Valid;
@@ -27,6 +30,26 @@ public class AdminController {
         return adminService.createEventManager(request, currentUser);
     }
 
+    @GetMapping("/event-managers")
+    public List<AdminUserResponse> getEventManagers(@AuthenticationPrincipal User currentUser) {
+        return adminService.getEventManagers(currentUser);
+    }
+
+    @PatchMapping("/event-managers/{id}/block")
+    public AdminUserResponse blockEventManager(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
+        return adminService.blockEventManager(id, currentUser);
+    }
+
+    @PatchMapping("/event-managers/{id}/unblock")
+    public AdminUserResponse unblockEventManager(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
+        return adminService.unblockEventManager(id, currentUser);
+    }
+
+    @PatchMapping("/event-managers/{id}/deactivate")
+    public AdminUserResponse deactivateEventManager(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
+        return adminService.deactivateEventManager(id, currentUser);
+    }
+
     @GetMapping("/users")
     public List<AdminUserResponse> getUsers(@AuthenticationPrincipal User currentUser) {
         return adminService.getUsers(currentUser);
@@ -49,9 +72,39 @@ public class AdminController {
         return adminService.getWeddings(currentUser);
     }
 
+    @PostMapping("/weddings")
+    public AdminWeddingResponse createWedding(@RequestBody AdminCreateWeddingRequest request,
+                                              @AuthenticationPrincipal User currentUser) {
+        return adminService.createWedding(request, currentUser);
+    }
+
+    @PatchMapping("/weddings/{weddingId}/assign-manager")
+    public AdminWeddingResponse assignManagerToWedding(@PathVariable Long weddingId,
+                                                       @RequestBody AssignManagerRequest request,
+                                                       @AuthenticationPrincipal User currentUser) {
+        return adminService.assignManagerToWedding(weddingId, request, currentUser);
+    }
+
+    @PatchMapping("/weddings/{weddingId}/close")
+    public AdminWeddingResponse closeWedding(@PathVariable Long weddingId,
+                                             @AuthenticationPrincipal User currentUser) {
+        return adminService.closeWedding(weddingId, currentUser);
+    }
+
+    @PatchMapping("/weddings/{weddingId}/cancel")
+    public AdminWeddingResponse cancelWedding(@PathVariable Long weddingId,
+                                              @AuthenticationPrincipal User currentUser) {
+        return adminService.cancelWedding(weddingId, currentUser);
+    }
+
     @PatchMapping("/weddings/{weddingId}/assign-self")
     public AdminWeddingResponse assignSelfToWedding(@PathVariable Long weddingId,
                                                     @AuthenticationPrincipal User currentUser) {
         return adminService.assignSelfToWedding(weddingId, currentUser);
+    }
+
+    @GetMapping("/dashboard")
+    public AdminDashboardResponse getDashboard(@AuthenticationPrincipal User currentUser) {
+        return adminService.getDashboard(currentUser);
     }
 }

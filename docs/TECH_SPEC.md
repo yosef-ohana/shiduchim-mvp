@@ -279,6 +279,30 @@ Constraints:
 
 ---
 
+### 4.8 WeddingInvite
+
+Lightweight administrative invitation.
+
+Fields:
+- `id: Long`
+- `weddingId: Long`
+- `fullName: String`
+- `email: String`
+- `invitedByUserId: Long`
+- `acceptedUserId: Long?`
+- `status: WeddingInviteStatus`
+- `createdAt: LocalDateTime`
+- `acceptedAt: LocalDateTime?`
+
+Constraints:
+- `email` not blank.
+- `status` default `PENDING`.
+- No real emails are sent. No invite token, magic links, or QR codes.
+- Joining a wedding or registering with the same email updates status to `ACCEPTED`.
+- Any user can join by `accessCode` without a pre-existing invite.
+
+---
+
 ## 5. Final Enums
 
 | Enum | Values |
@@ -291,6 +315,7 @@ Constraints:
 | `MatchStatus` | `ACTIVE`, `BLOCKED` |
 | `WeddingStatus` | `ACTIVE`, `CLOSED`, `CANCELLED` |
 | `ParticipantStatus` | `ACTIVE`, `REMOVED` |
+| `WeddingInviteStatus` | `PENDING`, `ACCEPTED`, `CANCELLED` |
 
 Notes:
 - No role table.
@@ -311,6 +336,8 @@ Notes:
 | Match 1:N ChatMessage | `ChatMessage.matchId` |
 | Wedding context for UserAction | `weddingId` only when `poolType=WEDDING` |
 | Wedding context for Match | `weddingId` only when `poolType=WEDDING` |
+| Wedding 1:N WeddingInvite | `WeddingInvite.weddingId` |
+| User 1:N WeddingInvite (inviter) | `WeddingInvite.invitedByUserId` |
 
 ---
 
@@ -327,6 +354,8 @@ For matchmaking features:
 - suitable `profileStatus`
 - primary photo exists
 - not `FULL_INCOMPLETE_BLOCKED`
+
+*Note on Wedding Code Onboarding*: Joining a wedding via accessCode (either during onboarding or later) only links the user as a participant. It does **not** bypass basic profile completion or primary photo requirements. The user remains ineligible for Discover and Actions until basic profile and primary photo are uploaded.
 
 ### Wedding pool candidate
 
@@ -464,4 +493,18 @@ No global approval. FULL profile opens global automatically.
 * **Minimal Admin Mobile Screens**: Added screens to manage users (list and block/unblock), view weddings list, and create Event Manager accounts.
 * **Minimal Event Manager Mobile Screens**: Added screens to list weddings, create a wedding, view access codes, manage participants (add by email, remove), and view basic stats.
 * **Eligibility Rule Protection**: Stricter validation ensuring users without a primary photo cannot access Discover feeds or appear in other users' pools.
+
+---
+
+## 14. Phase 15 MVP Additions
+
+* **Seed Admin**: An automatic backend seeder creates a default admin account (`admin@shiduchim.com` / `AdminPass123!`) if no users with the `ADMIN` role exist in the database upon startup. Seeder is backend-only, preventing manual SQL setup.
+* **Staff Login & Role Validation**: Staff (Event Managers and Admins) authenticate via `POST /api/auth/staff-login`. The backend strictly validates that the user's role is `ADMIN` or `EVENT_MANAGER`. The mobile app restricts user navigation accordingly.
+* **Welcome Screen / Public Entry Flow**: A mobile-side public entry screen allows users to input a wedding code before logging in or registering.
+* **Event Manager Wedding Ownership**: Event Managers can only manage and edit weddings they own. Enforced strictly at the backend service layer. Admins can manage any wedding.
+* **Wedding Code Onboarding with Auto-Join**: If a user enters a valid wedding code on the Welcome Screen, the mobile app holds the code locally as a `pendingWeddingCode` and automatically executes the join wedding request post-authentication.
+* **Lightweight Invitations (`WeddingInvite`)**: Administrative-only entity tracking invites via email. No real email or SMS transmissions, no magic links, and no QR codes. Any user can join by `accessCode` without a pre-existing invite.
+* **Deactivation / Block Rule**: Do not add `isActive` or new deactivate fields. Default MVP behavior relies on setting `adminBlocked = true` on the `User` entity to block/deactivate both regular users and Event Managers.
+* **Administrative Operations Safety**: Deactivation, cancellation, blocking, and participant removal must be safe and soft operations. No hard deletes of transactional data (users, weddings, matches, chats, actions, participants, or invites) are permitted.
+
 

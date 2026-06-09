@@ -30,4 +30,10 @@ public class AuthController {
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/staff-login")
+    public ResponseEntity<AuthResponse> staffLogin(@Valid @RequestBody com.shiduchim.backend.dto.auth.StaffLoginRequest request) {
+        AuthResponse response = authService.staffLogin(request);
+        return ResponseEntity.ok(response);
+    }
 }

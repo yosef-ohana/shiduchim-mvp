@@ -6,7 +6,8 @@ import { AppButton } from '../../components/AppButton';
 import { useAuth } from '../../context/AuthContext';
 import { theme } from '../../theme/theme';
 
-export const LoginScreen = ({ navigation }: any) => {
+export const LoginScreen = ({ route, navigation }: any) => {
+  const pendingWeddingCode = route?.params?.pendingWeddingCode;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -22,7 +23,7 @@ export const LoginScreen = ({ navigation }: any) => {
     
     setIsLoading(true);
     try {
-      await login({ email, password });
+      await login({ email, password }, pendingWeddingCode);
     } catch (e: any) {
       const message = e.message || '';
       if (message.toLowerCase().includes('invalid credentials') || message.toLowerCase().includes('unauthorized')) {

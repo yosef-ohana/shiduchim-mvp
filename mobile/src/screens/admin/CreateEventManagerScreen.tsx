@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Text } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { AppInput } from '../../components/AppInput';
 import { AppButton } from '../../components/AppButton';
@@ -11,6 +11,7 @@ export const CreateEventManagerScreen = ({ navigation }: any) => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [createdManager, setCreatedManager] = useState<{email: string, pass: string} | null>(null);
 
   const handleCreate = async () => {
     if (!email || !password || !fullName) {
@@ -21,9 +22,7 @@ export const CreateEventManagerScreen = ({ navigation }: any) => {
     setLoading(true);
     try {
       await adminApi.createEventManager({ email, password, fullName });
-      Alert.alert('Success', 'Event Manager created successfully', [
-        { text: 'OK', onPress: () => navigation.goBack() }
-      ]);
+      setCreatedManager({ email, pass: password });
     } catch (error) {
       console.error('Failed to create Event Manager', error);
       Alert.alert('Error', 'Failed to create Event Manager. Please try again.');
@@ -31,6 +30,31 @@ export const CreateEventManagerScreen = ({ navigation }: any) => {
       setLoading(false);
     }
   };
+
+  if (createdManager) {
+    return (
+      <Screen>
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.form}>
+            <Text style={styles.successTitle}>Event Manager Created!</Text>
+            <Text style={styles.instruction}>You can share these login details:</Text>
+            
+            <View style={styles.detailsCard}>
+              <Text style={styles.detailText} selectable>Email: {createdManager.email}</Text>
+              <Text style={styles.detailText} selectable>Password: {createdManager.pass}</Text>
+              <Text style={styles.detailText} selectable>Role: EVENT_MANAGER</Text>
+            </View>
+
+            <AppButton
+              title="Done"
+              onPress={() => navigation.goBack()}
+              style={styles.button}
+            />
+          </View>
+        </ScrollView>
+      </Screen>
+    );
+  }
 
   return (
     <Screen>
@@ -88,5 +112,31 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: theme.spacing.l,
+  },
+  successTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.m,
+    textAlign: 'center',
+  },
+  instruction: {
+    fontSize: 16,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.l,
+    textAlign: 'center',
+  },
+  detailsCard: {
+    backgroundColor: theme.colors.background,
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.m,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  detailText: {
+    fontSize: 16,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.s,
+    fontFamily: 'monospace',
   },
 });
