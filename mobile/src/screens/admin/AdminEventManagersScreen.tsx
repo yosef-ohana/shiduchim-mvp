@@ -5,6 +5,7 @@ import { AppButton } from '../../components/AppButton';
 import { adminApi } from '../../api/adminApi';
 import { AdminUserResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 export const AdminEventManagersScreen = () => {
   const [managers, setManagers] = useState<AdminUserResponse[]>([]);
@@ -17,7 +18,7 @@ export const AdminEventManagersScreen = () => {
       setManagers(data);
     } catch (error) {
       console.error('Failed to fetch event managers', error);
-      Alert.alert('Error', 'Failed to load event managers');
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'טעינת מנהלי האירועים נכשלה.'));
     } finally {
       setLoading(false);
     }
@@ -33,7 +34,7 @@ export const AdminEventManagersScreen = () => {
       fetchManagers();
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'Failed to block manager');
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'חסימת מנהל האירועים נכשלה.'));
     }
   };
 
@@ -43,7 +44,7 @@ export const AdminEventManagersScreen = () => {
       fetchManagers();
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'Failed to unblock manager');
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'ביטול חסימת מנהל האירועים נכשל.'));
     }
   };
 
@@ -53,7 +54,7 @@ export const AdminEventManagersScreen = () => {
       fetchManagers();
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'Failed to deactivate manager');
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'השבתת מנהל האירועים נכשלה.'));
     }
   };
 

@@ -5,6 +5,7 @@ import { AppInput } from '../../components/AppInput';
 import { AppButton } from '../../components/AppButton';
 import { useAuth } from '../../context/AuthContext';
 import { theme } from '../../theme/theme';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 export const LoginScreen = ({ route, navigation }: any) => {
   const pendingWeddingCode = route?.params?.pendingWeddingCode;
@@ -25,14 +26,7 @@ export const LoginScreen = ({ route, navigation }: any) => {
     try {
       await login({ email, password }, pendingWeddingCode);
     } catch (e: any) {
-      const message = e.message || '';
-      if (message.toLowerCase().includes('invalid credentials') || message.toLowerCase().includes('unauthorized')) {
-        setErrorMsg('Email or password is incorrect.');
-      } else if (message.toLowerCase().includes('network') || message.toLowerCase().includes('timeout') || message.toLowerCase().includes('status code 5')) {
-        setErrorMsg('Network error. Please check your connection and try again.');
-      } else {
-        setErrorMsg(message || 'Login failed');
-      }
+      setErrorMsg(getFriendlyErrorMessage(e, 'לא ניתן להתחבר כרגע. נסה שוב.'));
     } finally {
       setIsLoading(false);
     }

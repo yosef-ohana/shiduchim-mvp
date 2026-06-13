@@ -5,6 +5,7 @@ import { AppInput } from '../../components/AppInput';
 import { AppButton } from '../../components/AppButton';
 import { adminApi } from '../../api/adminApi';
 import { theme } from '../../theme/theme';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 export const CreateEventManagerScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState('');
@@ -15,7 +16,7 @@ export const CreateEventManagerScreen = ({ navigation }: any) => {
 
   const handleCreate = async () => {
     if (!email || !password || !fullName) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert('שגיאת אימות', 'אנא מלא את כל השדות');
       return;
     }
 
@@ -25,7 +26,7 @@ export const CreateEventManagerScreen = ({ navigation }: any) => {
       setCreatedManager({ email, pass: password });
     } catch (error) {
       console.error('Failed to create Event Manager', error);
-      Alert.alert('Error', 'Failed to create Event Manager. Please try again.');
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'יצירת מנהל האירועים נכשלה. אנא נסה שוב.'));
     } finally {
       setLoading(false);
     }

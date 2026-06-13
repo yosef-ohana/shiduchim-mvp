@@ -59,8 +59,11 @@ export const ListsScreen = ({ navigation }: any) => {
       setProcessingId(targetUserId);
       setError(null);
       try {
-        await likeUser(targetUserId, { poolType, weddingId });
+        const response = await likeUser(targetUserId, { poolType, weddingId });
         await fetchList(activeTab);
+        if (response.matchCreated) {
+          Alert.alert('Match created!', 'You can now chat.');
+        }
       } catch (err: any) {
         setError(err.response?.data?.message || err.message || `Failed to like user. Please try again.`);
       } finally {
@@ -223,7 +226,6 @@ export const ListsScreen = ({ navigation }: any) => {
                     <>
                       <AppButton title="Like" onPress={() => handleLike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
                       <AppButton title="Dislike" onPress={() => handleDislike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
-                      <AppButton title="Return to Feed" onPress={() => handleRemoveAction(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.returnButton} />
                     </>
                   )}
                 </View>

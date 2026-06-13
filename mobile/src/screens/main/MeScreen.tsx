@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
 import { useAuth } from '../../context/AuthContext';
@@ -25,11 +26,13 @@ export const MeScreen = ({ navigation }: any) => {
     }
   };
 
-  useEffect(() => {
-    if (user && user.role === 'ADMIN') {
-      fetchDashboard();
-    }
-  }, [user]);
+  useFocusEffect(
+    useCallback(() => {
+      if (user && user.role === 'ADMIN') {
+        fetchDashboard();
+      }
+    }, [user])
+  );
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

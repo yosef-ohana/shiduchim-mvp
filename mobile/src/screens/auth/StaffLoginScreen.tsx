@@ -5,6 +5,7 @@ import { AppInput } from '../../components/AppInput';
 import { AppButton } from '../../components/AppButton';
 import { useAuth } from '../../context/AuthContext';
 import { theme } from '../../theme/theme';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 export const StaffLoginScreen = ({ route, navigation }: any) => {
   const { role } = route.params || {};
@@ -32,23 +33,7 @@ export const StaffLoginScreen = ({ route, navigation }: any) => {
       });
       // Context will automatically update state and trigger navigation to MainStack if successful
     } catch (e: any) {
-      const message = e.message || '';
-      const status = e.response?.status;
-      const errorData = e.response?.data?.message || '';
-      
-      const fullErrorText = (message + ' ' + errorData).toLowerCase();
-
-      if (fullErrorText.includes('blocked') || fullErrorText.includes('deactivated')) {
-        setErrorMsg('This staff account has been deactivated or blocked. Please contact system support.');
-      } else if (status === 403 || fullErrorText.includes('forbidden') || fullErrorText.includes('access denied') || fullErrorText.includes('role mismatch') || fullErrorText.includes('not allowed')) {
-        setErrorMsg(`Access denied. Your account does not have the required ${expectedRoleDisplay} permissions.`);
-      } else if (status === 401 || fullErrorText.includes('unauthorized') || fullErrorText.includes('incorrect') || fullErrorText.includes('invalid credentials')) {
-        setErrorMsg('Invalid staff credentials. Please check your email and password and try again.');
-      } else if (fullErrorText.includes('network') || fullErrorText.includes('timeout') || (status && status >= 500)) {
-        setErrorMsg('Network error. Please check your connection and try again.');
-      } else {
-        setErrorMsg(errorData || message || 'Staff login failed. Please try again.');
-      }
+      setErrorMsg(getFriendlyErrorMessage(e, 'לא ניתן להיכנס לפורטל הניהול כרגע.'));
     } finally {
       setIsLoading(false);
     }

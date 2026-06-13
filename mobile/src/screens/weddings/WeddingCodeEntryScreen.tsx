@@ -6,6 +6,7 @@ import { AppButton } from '../../components/AppButton';
 import { theme } from '../../theme/theme';
 import { validateCode } from '../../api/weddingsApi';
 import { ValidateWeddingCodeResponse } from '../../types/api';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 export const WeddingCodeEntryScreen = ({ navigation }: any) => {
   const [accessCode, setAccessCode] = useState('');
@@ -36,15 +37,7 @@ export const WeddingCodeEntryScreen = ({ navigation }: any) => {
         }
       }
     } catch (e: any) {
-      const status = e.response?.status;
-      const message = e.response?.data?.message || '';
-      if (status === 404 || message.toLowerCase().includes('not found') || message.toLowerCase().includes('invalid')) {
-        setErrorMsg('The wedding code you entered is invalid. Please double check and try again.');
-      } else if (status === 409 || message.toLowerCase().includes('already joined')) {
-        setErrorMsg('You have already joined this wedding.');
-      } else {
-        setErrorMsg(message || 'Failed to validate wedding code. Please check your network connection.');
-      }
+      setErrorMsg(getFriendlyErrorMessage(e, 'לא ניתן לבדוק את קוד החתונה כרגע.'));
     } finally {
       setIsLoading(false);
     }
@@ -107,7 +100,8 @@ export const WeddingCodeEntryScreen = ({ navigation }: any) => {
                 <AppButton
                   title="Create Account"
                   onPress={handleRegister}
-                  style={[styles.actionButton, styles.secondaryButton]}
+                  variant="secondary"
+                  style={styles.actionButton}
                 />
               </View>
             )}
@@ -179,10 +173,5 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     marginBottom: theme.spacing.m,
-  },
-  secondaryButton: {
-    backgroundColor: theme.colors.background,
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
   },
 });

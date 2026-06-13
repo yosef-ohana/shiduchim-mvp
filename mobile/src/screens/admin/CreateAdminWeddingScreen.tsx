@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { adminApi } from '../../api/adminApi';
 import { MainStackParamList } from '../../navigation/MainStack';
 import { theme } from '../../theme/theme';
+import { AdminUserResponse } from '../../types/api';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 type NavigationProp = NativeStackNavigationProp<MainStackParamList, 'CreateAdminWedding'>;
 
@@ -17,10 +19,27 @@ export const CreateAdminWeddingScreen = () => {
   const [accessCode, setAccessCode] = useState('');
   const [ownerUserId, setOwnerUserId] = useState('');
   const [loading, setLoading] = useState(false);
+  const [eventManagers, setEventManagers] = useState<AdminUserResponse[]>([]);
+
+  useEffect(() => {
+    const fetchManagers = async () => {
+      try {
+        const managers = await adminApi.getEventManagers();
+        setEventManagers(managers);
+      } catch (err) {
+        console.error('Failed to load event managers', err);
+      }
+    };
+    fetchManagers();
+  }, []);
 
   const handleCreate = async () => {
     if (!name || !city || !weddingDate) {
-      Alert.alert('Validation Error', 'Name, city, and wedding date are required.');
+      Alert.alert('שגיאת אימות', 'שם, עיר ותאריך החתונה הם שדות חובה.');
+      return;
+    }
+    if (!ownerUserId) {
+      Alert.alert('שגיאת אימות', 'אנא בחר מנהל אירועים.');
       return;
     }
 
@@ -38,7 +57,7 @@ export const CreateAdminWeddingScreen = () => {
       navigation.goBack();
     } catch (error: any) {
       console.error('Failed to create wedding:', error);
-      Alert.alert('Error', error.response?.data?.message || 'Failed to create wedding');
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'יצירת החתונה נכשלה.'));
     } finally {
       setLoading(false);
     }
@@ -80,14 +99,28 @@ export const CreateAdminWeddingScreen = () => {
           autoCapitalize="characters"
         />
 
-        <Text style={styles.label}>Owner User ID (Optional)</Text>
-        <TextInput
-          style={styles.input}
-          value={ownerUserId}
-          onChangeText={setOwnerUserId}
-          placeholder="Assign an Event Manager ID"
-          keyboardType="numeric"
-        />
+        <Text style={styles.label}>Assign to Event Manager</Text>
+        <ScrollView style={styles.managerList} nestedScrollEnabled={true}>
+          <TouchableOpacity
+            style={[styles.managerCard, ownerUserId === '' && styles.managerCardSelected]}
+            onPress={() => setOwnerUserId('')}
+          >
+            <Text style={styles.managerName}>None / Admin Temporary Owner</Text>
+          </TouchableOpacity>
+          {eventManagers.map(manager => (
+            <TouchableOpacity
+              key={manager.id}
+              style={[
+                styles.managerCard,
+                ownerUserId === manager.id.toString() && styles.managerCardSelected
+              ]}
+              onPress={() => setOwnerUserId(manager.id.toString())}
+            >
+              <Text style={styles.managerName}>{manager.fullName}</Text>
+              <Text style={styles.managerEmail}>{manager.email}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
         <TouchableOpacity 
           style={[styles.button, loading && styles.buttonDisabled]} 
@@ -133,5 +166,31 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  managerList: {
+    maxHeight: 200,
+    marginBottom: theme.spacing.m,
+  },
+  managerCard: {
+    padding: theme.spacing.m,
+    borderWidth: 1,
+    borderColor: '#e1e1e1',
+    borderRadius: theme.borderRadius.m,
+    marginBottom: theme.spacing.s,
+    backgroundColor: theme.colors.surface,
+  },
+  managerCardSelected: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary + '10',
+  },
+  managerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  managerEmail: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    marginTop: 2,
   },
 });

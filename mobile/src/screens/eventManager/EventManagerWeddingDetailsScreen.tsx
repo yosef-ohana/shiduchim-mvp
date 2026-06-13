@@ -15,6 +15,7 @@ import {
 } from '../../api/eventManagerApi';
 import { WeddingResponse, ParticipantResponse, WeddingInviteResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
   const { weddingId } = route.params;
@@ -44,7 +45,7 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
       setInvites(invitesData);
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'Failed to load wedding details');
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'טעינת פרטי החתונה נכשלה.'));
     } finally {
       setLoading(false);
     }
@@ -52,7 +53,7 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
 
   const handleAddParticipant = async () => {
     if (!newEmail.trim()) {
-      Alert.alert('Validation Error', 'Please enter a valid email address.');
+      Alert.alert('שגיאת אימות', 'אנא הזן כתובת אימייל תקינה.');
       return;
     }
     setActionLoading(true);
@@ -63,8 +64,7 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
       await loadData();
     } catch (error: any) {
       console.error(error);
-      const errorMessage = error?.response?.data?.message || 'Failed to add participant';
-      Alert.alert('Error', errorMessage);
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'הוספת המשתתף נכשלה.'));
     } finally {
       setActionLoading(false);
     }
@@ -72,7 +72,7 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
 
   const handleCreateInvite = async () => {
     if (!newInviteName.trim() || !newInviteEmail.trim()) {
-      Alert.alert('Validation Error', 'Please enter a valid name and email address.');
+      Alert.alert('שגיאת אימות', 'אנא הזן שם וכתובת אימייל תקינים.');
       return;
     }
     setActionLoading(true);
@@ -84,8 +84,7 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
       await loadData();
     } catch (error: any) {
       console.error(error);
-      const errorMessage = error?.response?.data?.message || 'Failed to create invitation';
-      Alert.alert('Error', errorMessage);
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'יצירת ההזמנה נכשלה.'));
     } finally {
       setActionLoading(false);
     }
@@ -108,8 +107,7 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
               await loadData();
             } catch (error: any) {
               console.error(error);
-              const errorMessage = error?.response?.data?.message || 'Failed to cancel invitation';
-              Alert.alert('Error', errorMessage);
+              Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'ביטול ההזמנה נכשל.'));
             } finally {
               setActionLoading(false);
             }
@@ -136,8 +134,7 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
               await loadData();
             } catch (error: any) {
               console.error(error);
-              const errorMessage = error?.response?.data?.message || 'Failed to remove participant';
-              Alert.alert('Error', errorMessage);
+              Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'הסרת המשתתף נכשלה.'));
             } finally {
               setActionLoading(false);
             }
@@ -164,8 +161,7 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
               await loadData();
             } catch (error: any) {
               console.error(error);
-              const errorMessage = error?.response?.data?.message || 'Failed to close wedding';
-              Alert.alert('Error', errorMessage);
+              Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'סגירת החתונה נכשלה.'));
             } finally {
               setActionLoading(false);
             }
@@ -192,8 +188,7 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
               await loadData();
             } catch (error: any) {
               console.error(error);
-              const errorMessage = error?.response?.data?.message || 'Failed to cancel wedding';
-              Alert.alert('Error', errorMessage);
+              Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'ביטול החתונה נכשל.'));
             } finally {
               setActionLoading(false);
             }

@@ -4,6 +4,7 @@ import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
 import { createWedding } from '../../api/eventManagerApi';
 import { theme } from '../../theme/theme';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 export const CreateWeddingScreen = ({ navigation }: any) => {
   const [name, setName] = useState('');
@@ -14,7 +15,7 @@ export const CreateWeddingScreen = ({ navigation }: any) => {
 
   const handleCreate = async () => {
     if (!name.trim() || !city.trim() || !weddingDate.trim()) {
-      Alert.alert('Validation Error', 'Name, City, and Date are required');
+      Alert.alert('שגיאת אימות', 'שם, עיר ותאריך הם שדות חובה.');
       return;
     }
 
@@ -31,7 +32,7 @@ export const CreateWeddingScreen = ({ navigation }: any) => {
       ]);
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'Failed to create wedding');
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'יצירת החתונה נכשלה.'));
     } finally {
       setLoading(false);
     }

@@ -5,6 +5,7 @@ import { AppInput } from '../../components/AppInput';
 import { AppButton } from '../../components/AppButton';
 import { useAuth } from '../../context/AuthContext';
 import { theme } from '../../theme/theme';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 export const RegisterScreen = ({ route, navigation }: any) => {
   const pendingWeddingCode = route?.params?.pendingWeddingCode;
@@ -28,12 +29,7 @@ export const RegisterScreen = ({ route, navigation }: any) => {
     try {
       await register({ fullName, email, password, gender }, pendingWeddingCode);
     } catch (e: any) {
-      const message = e.message || '';
-      if (message.toLowerCase().includes('already in use') || message.toLowerCase().includes('already registered') || message.toLowerCase().includes('conflict')) {
-        setErrorMsg('This email is already registered.');
-      } else {
-        setErrorMsg(message || 'Registration failed');
-      }
+      setErrorMsg(getFriendlyErrorMessage(e, 'לא ניתן ליצור חשבון כרגע. נסה שוב.'));
     } finally {
       setIsLoading(false);
     }

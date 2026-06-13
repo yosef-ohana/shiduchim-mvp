@@ -7,6 +7,7 @@ import { Screen } from '../../components/Screen';
 import { adminApi } from '../../api/adminApi';
 import { AdminWeddingResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 type NavigationProp = NativeStackNavigationProp<MainStackParamList, 'AdminWeddings'>;
 
@@ -22,7 +23,7 @@ export const AdminWeddingsScreen = () => {
       setWeddings(data);
     } catch (error) {
       console.error('Failed to fetch weddings', error);
-      Alert.alert('Error', 'Failed to fetch weddings');
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'טעינת החתונות נכשלה.'));
     } finally {
       setLoading(false);
     }

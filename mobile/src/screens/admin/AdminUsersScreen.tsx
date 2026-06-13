@@ -5,6 +5,7 @@ import { AppButton } from '../../components/AppButton';
 import { adminApi } from '../../api/adminApi';
 import { AdminUserResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 export const AdminUsersScreen = () => {
   const [users, setUsers] = useState<AdminUserResponse[]>([]);
@@ -18,7 +19,7 @@ export const AdminUsersScreen = () => {
       setUsers(data);
     } catch (error) {
       console.error('Failed to fetch users', error);
-      Alert.alert('Error', 'Failed to fetch users');
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'טעינת המשתמשים נכשלה.'));
     } finally {
       setLoading(false);
     }
@@ -39,7 +40,7 @@ export const AdminUsersScreen = () => {
       await fetchUsers(); // Refresh the list
     } catch (error) {
       console.error('Failed to update user block status', error);
-      Alert.alert('Error', 'Failed to update user status');
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'עדכון סטטוס המשתמש נכשל.'));
     } finally {
       setActionLoading(null);
     }

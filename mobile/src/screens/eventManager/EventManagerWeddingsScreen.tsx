@@ -4,6 +4,7 @@ import { Screen } from '../../components/Screen';
 import { getEventManagerWeddings } from '../../api/eventManagerApi';
 import { WeddingResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 export const EventManagerWeddingsScreen = ({ navigation }: any) => {
   const [weddings, setWeddings] = useState<WeddingResponse[]>([]);
@@ -20,7 +21,7 @@ export const EventManagerWeddingsScreen = ({ navigation }: any) => {
       setWeddings(data);
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'Failed to fetch weddings');
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'טעינת החתונות נכשלה.'));
     } finally {
       setLoading(false);
     }

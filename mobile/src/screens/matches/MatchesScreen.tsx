@@ -23,6 +23,13 @@ export const MatchesScreen = ({ navigation }: any) => {
     try {
       const data = await getMatches();
       const activeMatches = data.filter(m => m.status === 'ACTIVE');
+      activeMatches.sort((a, b) => {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        const valA = isNaN(timeA) ? 0 : timeA;
+        const valB = isNaN(timeB) ? 0 : timeB;
+        return valB - valA;
+      });
       setMatches(activeMatches);
     } catch (err: any) {
       setError(

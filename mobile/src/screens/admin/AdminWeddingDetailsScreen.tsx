@@ -5,8 +5,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { adminApi } from '../../api/adminApi';
 import { MainStackParamList } from '../../navigation/MainStack';
-import { AdminWeddingResponse, WeddingInviteResponse } from '../../types/api';
+import { AdminWeddingResponse, WeddingInviteResponse, AdminUserResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 type DetailsRouteProp = RouteProp<MainStackParamList, 'AdminWeddingDetails'>;
 type NavigationProp = NativeStackNavigationProp<MainStackParamList, 'AdminWeddingDetails'>;
@@ -20,11 +21,17 @@ export const AdminWeddingDetailsScreen = () => {
   const [invites, setInvites] = useState<WeddingInviteResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [managerIdInput, setManagerIdInput] = useState('');
+  const [eventManagers, setEventManagers] = useState<AdminUserResponse[]>([]);
 
-  const fetchWedding = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const allWeddings = await adminApi.getWeddings();
+      const [allWeddings, managers] = await Promise.all([
+        adminApi.getWeddings(),
+        adminApi.getEventManagers()
+      ]);
+      setEventManagers(managers);
+
       const found = allWeddings.find(w => w.id === weddingId);
       if (found) {
         setWedding(found);
@@ -35,19 +42,19 @@ export const AdminWeddingDetailsScreen = () => {
           // It's possible the admin doesn't have invites yet, fail silently
         }
       } else {
-        Alert.alert('Error', 'Wedding not found');
+        Alert.alert('שגיאה', 'החתונה לא נמצאה.');
         navigation.goBack();
       }
     } catch (error) {
-      console.error('Failed to fetch wedding details', error);
-      Alert.alert('Error', 'Failed to fetch wedding details');
+      console.error('Failed to fetch data', error);
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'טעינת פרטי החתונה או מנהלי האירועים נכשלה.'));
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchWedding();
+    fetchData();
   }, [weddingId]);
 
   const handleAssignManager = async () => {
@@ -58,7 +65,7 @@ export const AdminWeddingDetailsScreen = () => {
       setManagerIdInput('');
       Alert.alert('Success', 'Manager assigned');
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to assign manager');
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'הקצאת מנהל האירועים נכשלה.'));
     }
   };
 
@@ -68,7 +75,7 @@ export const AdminWeddingDetailsScreen = () => {
       setWedding(updated);
       Alert.alert('Success', 'Assigned to self');
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to assign self');
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'שיוך עצמי לחתונה נכשל.'));
     }
   };
 
@@ -78,7 +85,7 @@ export const AdminWeddingDetailsScreen = () => {
       setWedding(updated);
       Alert.alert('Success', 'Wedding closed');
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to close wedding');
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'סגירת החתונה נכשלה.'));
     }
   };
 
@@ -88,7 +95,7 @@ export const AdminWeddingDetailsScreen = () => {
       setWedding(updated);
       Alert.alert('Success', 'Wedding cancelled');
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to cancel wedding');
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'ביטול החתונה נכשל.'));
     }
   };
 
@@ -120,20 +127,31 @@ export const AdminWeddingDetailsScreen = () => {
         </View>
 
         <View style={styles.actionsContainer}>
-          <Text style={styles.sectionTitle}>Actions</Text>
+          <Text style={styles.sectionTitle}>Assign Manager</Text>
           
-          <View style={styles.row}>
-            <TextInput
-              style={styles.input}
-              placeholder="Manager ID"
-              value={managerIdInput}
-              onChangeText={setManagerIdInput}
-              keyboardType="numeric"
-            />
-            <TouchableOpacity style={styles.actionBtn} onPress={handleAssignManager}>
-              <Text style={styles.btnText}>Assign Manager</Text>
-            </TouchableOpacity>
-          </View>
+          <ScrollView style={styles.managerList} nestedScrollEnabled={true}>
+            {eventManagers.map(manager => (
+              <TouchableOpacity
+                key={manager.id}
+                style={[
+                  styles.managerCard,
+                  managerIdInput === manager.id.toString() && styles.managerCardSelected
+                ]}
+                onPress={() => setManagerIdInput(manager.id.toString())}
+              >
+                <Text style={styles.managerName}>{manager.fullName}</Text>
+                <Text style={styles.managerEmail}>{manager.email}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          <TouchableOpacity 
+            style={[styles.fullBtn, { backgroundColor: theme.colors.primary, opacity: managerIdInput ? 1 : 0.5 }]} 
+            onPress={handleAssignManager}
+            disabled={!managerIdInput}
+          >
+            <Text style={styles.btnText}>Assign Selected Manager</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity style={[styles.fullBtn, { backgroundColor: theme.colors.primary }]} onPress={handleAssignSelf}>
             <Text style={styles.btnText}>Assign Self</Text>
@@ -255,5 +273,31 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: theme.colors.primary,
+  },
+  managerList: {
+    maxHeight: 200,
+    marginBottom: theme.spacing.m,
+  },
+  managerCard: {
+    padding: theme.spacing.m,
+    borderWidth: 1,
+    borderColor: '#e1e1e1',
+    borderRadius: theme.borderRadius.m,
+    marginBottom: theme.spacing.s,
+    backgroundColor: theme.colors.surface,
+  },
+  managerCardSelected: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary + '10',
+  },
+  managerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  managerEmail: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    marginTop: 2,
   },
 });
