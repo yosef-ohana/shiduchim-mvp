@@ -35,7 +35,7 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
       setError(
         err.response?.data?.message ||
           err.message ||
-          'Failed to load discovery candidates. Please try again.'
+          'טעינת המועמדים לחיפוש נכשלה. אנא נסו שוב.'
       );
     } finally {
       setLoading(false);
@@ -59,7 +59,7 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
     return (
       <Screen style={styles.centerContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.stateText}>Finding compatibility matches...</Text>
+        <Text style={styles.stateText}>מחפש התאמות תואמות...</Text>
       </Screen>
     );
   }
@@ -68,7 +68,7 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
     return (
       <Screen style={styles.centerContainer}>
         <Text style={styles.errorText}>{error}</Text>
-        <AppButton title="Retry" onPress={() => fetchCandidates(false)} style={styles.retryButton} />
+        <AppButton title="נסה שוב" onPress={() => fetchCandidates(false)} style={styles.retryButton} />
       </Screen>
     );
   }
@@ -95,7 +95,7 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
                 weddingId={weddingId}
                 onActionCompleted={(matchCreated) => {
                   if (matchCreated) {
-                    setMatchMessage(`It is a match with ${item.fullName}!`);
+                    setMatchMessage(`יש התאמה עם ${item.fullName}!`);
                   }
                   setCandidates((prev) => prev.filter((c) => c.userId !== item.userId));
                 }}
@@ -108,11 +108,11 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
         refreshing={refreshing}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyTitle}>No candidates found</Text>
+            <Text style={styles.emptyTitle}>לא נמצאו מועמדים מתאימים כרגע</Text>
             <Text style={styles.emptySubtitle}>
-              There are currently no compatible candidates in this discovery pool.
+              אין כרגע מועמדים מתאימים במאגר החיפוש הזה.
             </Text>
-            <AppButton title="Refresh" onPress={handleRefresh} style={styles.refreshButton} />
+            <AppButton title="רענן" onPress={handleRefresh} style={styles.refreshButton} />
           </View>
         }
       />
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     marginHorizontal: theme.spacing.m,
     marginTop: theme.spacing.m,
     borderRadius: theme.borderRadius.m,
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
@@ -186,12 +186,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     flex: 1,
+    textAlign: 'right',
   },
   matchBannerClose: {
     color: '#2E7D32',
     fontSize: 18,
     fontWeight: 'bold',
-    marginLeft: theme.spacing.s,
+    marginRight: theme.spacing.s,
     paddingHorizontal: theme.spacing.s,
   },
 });

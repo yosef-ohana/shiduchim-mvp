@@ -6,6 +6,29 @@ import { AppButton } from '../../components/AppButton';
 import { getMyProfile, updateBasicProfile } from '../../api/profileApi';
 import { theme } from '../../theme/theme';
 import { useAuth } from '../../context/AuthContext';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+
+const getProfileStatusLabel = (status: string) => {
+  switch (status) {
+    case 'NONE': return 'לא הוגדר';
+    case 'BASIC': return 'פרופיל בסיסי';
+    case 'FULL': return 'פרופיל מלא';
+    case 'FULL_INCOMPLETE_BLOCKED': return 'פרופיל מלא חסר (חסום)';
+    default: return status;
+  }
+};
+
+const translateFieldName = (field: string) => {
+  switch (field) {
+    case 'education': return 'השכלה';
+    case 'occupation': return 'עיסוק';
+    case 'selfDescription': return 'עליי / תיאור עצמי';
+    case 'hobbies': return 'תחביבים';
+    case 'lookingFor': return 'מה אני מחפש/ת';
+    case 'primaryPhoto': return 'תמונה ראשית';
+    default: return field;
+  }
+};
 
 export const BasicProfileScreen = ({ navigation }: any) => {
   const { refreshMe } = useAuth();
@@ -41,7 +64,7 @@ export const BasicProfileScreen = ({ navigation }: any) => {
       setReligiousLevel(data.religiousLevel || '');
       setPhone(data.phone || '');
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || err.message || 'Failed to load current profile data');
+      setErrorMsg(getFriendlyErrorMessage(err, 'טעינת נתוני הפרופיל נכשלה.'));
     } finally {
       setIsLoading(false);
     }
@@ -53,7 +76,7 @@ export const BasicProfileScreen = ({ navigation }: any) => {
 
     // Local validation
     if (!fullName.trim() || !age.trim() || !heightCm.trim() || !areaOfResidence.trim() || !religiousLevel.trim() || !phone.trim()) {
-      setErrorMsg('All fields are required');
+      setErrorMsg('כל השדות הם שדות חובה');
       return;
     }
 
@@ -61,12 +84,12 @@ export const BasicProfileScreen = ({ navigation }: any) => {
     const parsedHeight = parseInt(heightCm, 10);
 
     if (isNaN(parsedAge) || parsedAge <= 0) {
-      setErrorMsg('Please enter a valid positive number for Age');
+      setErrorMsg('אנא הזן מספר חיובי תקין עבור גיל');
       return;
     }
 
     if (isNaN(parsedHeight) || parsedHeight <= 0) {
-      setErrorMsg('Please enter a valid positive number for Height');
+      setErrorMsg('אנא הזן מספר חיובי תקין עבור גובה');
       return;
     }
 
@@ -83,7 +106,7 @@ export const BasicProfileScreen = ({ navigation }: any) => {
       await refreshMe();
       setSuccessInfo(response);
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || err.message || 'Failed to save basic profile');
+      setErrorMsg(getFriendlyErrorMessage(err, 'שמירת הפרופיל הבסיסי נכשלה.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -93,7 +116,7 @@ export const BasicProfileScreen = ({ navigation }: any) => {
     return (
       <Screen style={styles.centerContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Loading current data...</Text>
+        <Text style={styles.loadingText}>טוען נתונים...</Text>
       </Screen>
     );
   }
@@ -101,7 +124,7 @@ export const BasicProfileScreen = ({ navigation }: any) => {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Basic Profile</Text>
+        <Text style={styles.title}>פרופיל בסיסי</Text>
 
         {errorMsg ? (
           <View style={styles.errorCard}>
@@ -111,29 +134,29 @@ export const BasicProfileScreen = ({ navigation }: any) => {
 
         {successInfo ? (
           <View style={styles.successCard}>
-            <Text style={styles.successText}>Basic profile saved successfully!</Text>
+            <Text style={styles.successText}>הפרופיל הבסיסי נשמר בהצלחה!</Text>
             <Text style={styles.successDetails}>
-              Profile Status: <Text style={styles.boldText}>{successInfo.profileStatus}</Text>
+              סטטוס פרופיל: <Text style={styles.boldText}>{getProfileStatusLabel(successInfo.profileStatus)}</Text>
             </Text>
             {successInfo.missingFields && successInfo.missingFields.length > 0 ? (
               <View style={styles.missingContainer}>
-                <Text style={styles.successDetails}>Missing fields for Full status:</Text>
+                <Text style={styles.successDetails}>שדות חסרים לקבלת סטטוס פרופיל מלא:</Text>
                 {successInfo.missingFields.map((field) => (
                   <Text key={field} style={styles.missingFieldItem}>
-                    • {field}
+                    • {translateFieldName(field)}
                   </Text>
                 ))}
               </View>
             ) : (
-              <Text style={styles.successDetails}>No missing fields for Full status!</Text>
+              <Text style={styles.successDetails}>אין שדות חסרים לקבלת סטטוס פרופיל מלא!</Text>
             )}
             <AppButton
-              title="Go to My Profile"
+              title="מעבר לפרופיל שלי"
               onPress={() => navigation.navigate('Profile')}
               style={styles.successButton}
             />
             <AppButton
-              title="Go back to Home"
+              title="חזרה לדף הבית"
               onPress={() => navigation.navigate('Me')}
               style={[styles.successButton, styles.successButtonSecondary]}
             />
@@ -141,52 +164,52 @@ export const BasicProfileScreen = ({ navigation }: any) => {
         ) : (
           <View style={styles.formCard}>
             <AppInput
-              label="Full Name"
-              placeholder="e.g. John Doe"
+              label="שם מלא"
+              placeholder="לדוגמה: ישראל ישראלי"
               value={fullName}
               onChangeText={setFullName}
             />
 
             <AppInput
-              label="Age"
-              placeholder="e.g. 25"
+              label="גיל"
+              placeholder="לדוגמה: 25"
               keyboardType="number-pad"
               value={age}
               onChangeText={setAge}
             />
 
             <AppInput
-              label="Height (cm)"
-              placeholder="e.g. 175"
+              label="גובה (ס״מ)"
+              placeholder="לדוגמה: 175"
               keyboardType="number-pad"
               value={heightCm}
               onChangeText={setHeightCm}
             />
 
             <AppInput
-              label="Area of Residence"
-              placeholder="e.g. Jerusalem"
+              label="אזור מגורים"
+              placeholder="לדוגמה: ירושלים"
               value={areaOfResidence}
               onChangeText={setAreaOfResidence}
             />
 
             <AppInput
-              label="Religious Level"
-              placeholder="e.g. Modern Orthodox"
+              label="רמה דתית"
+              placeholder="לדוגמה: דתי לאומי"
               value={religiousLevel}
               onChangeText={setReligiousLevel}
             />
 
             <AppInput
-              label="Phone Number"
-              placeholder="e.g. +972501234567"
+              label="מספר טלפון"
+              placeholder="לדוגמה: 0501234567"
               keyboardType="phone-pad"
               value={phone}
               onChangeText={setPhone}
             />
 
             <AppButton
-              title="Save Basic Profile"
+              title="שמירת פרופיל בסיסי"
               onPress={handleSave}
               loading={isSubmitting}
               style={styles.saveButton}
@@ -213,6 +236,7 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.m,
     color: theme.colors.textSecondary,
     fontSize: 16,
+    textAlign: 'center',
   },
   title: {
     fontSize: 26,

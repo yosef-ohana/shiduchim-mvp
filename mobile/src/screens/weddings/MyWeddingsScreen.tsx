@@ -5,6 +5,7 @@ import { getMyWeddings } from '../../api/weddingsApi';
 import { UserWeddingResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+import { getWeddingStatusLabel, getParticipantStatusLabel, formatDisplayDate } from '../../utils/displayLabels';
 
 export const MyWeddingsScreen = () => {
   const [weddings, setWeddings] = useState<UserWeddingResponse[]>([]);
@@ -23,21 +24,17 @@ export const MyWeddingsScreen = () => {
       setWeddings(data);
     } catch (error: any) {
       console.error(error);
-      const friendlyError = getFriendlyErrorMessage(error, 'Failed to load weddings.');
+      const friendlyError = getFriendlyErrorMessage(error, 'טעינת החתונות נכשלה.');
       setErrorMsg(friendlyError);
-      Alert.alert('Error', friendlyError);
+      Alert.alert('שגיאה', friendlyError);
     } finally {
       setLoading(false);
     }
   };
 
   const renderItem = ({ item }: { item: UserWeddingResponse }) => {
-    const formattedDate = item.weddingDate
-      ? new Date(item.weddingDate).toLocaleDateString()
-      : 'N/A';
-    const formattedJoinedDate = item.joinedAt
-      ? new Date(item.joinedAt).toLocaleDateString()
-      : 'N/A';
+    const formattedDate = formatDisplayDate(item.weddingDate);
+    const formattedJoinedDate = formatDisplayDate(item.joinedAt);
 
     return (
       <View style={styles.card}>
@@ -45,38 +42,38 @@ export const MyWeddingsScreen = () => {
         
         {item.city ? (
           <View style={styles.row}>
-            <Text style={styles.label}>City:</Text>
+            <Text style={styles.label}>עיר:</Text>
             <Text style={styles.value}>{item.city}</Text>
           </View>
         ) : null}
 
         {item.weddingDate ? (
           <View style={styles.row}>
-            <Text style={styles.label}>Wedding Date:</Text>
+            <Text style={styles.label}>תאריך החתונה:</Text>
             <Text style={styles.value}>{formattedDate}</Text>
           </View>
         ) : null}
 
         <View style={styles.row}>
-          <Text style={styles.label}>Wedding Status:</Text>
-          <Text style={[styles.value, styles.statusText]}>{item.weddingStatus}</Text>
+          <Text style={styles.label}>סטטוס חתונה:</Text>
+          <Text style={styles.value}>{getWeddingStatusLabel(item.weddingStatus)}</Text>
         </View>
 
         <View style={styles.row}>
-          <Text style={styles.label}>Participant Status:</Text>
-          <Text style={[styles.value, styles.statusText]}>{item.participantStatus}</Text>
+          <Text style={styles.label}>סטטוס משתתף:</Text>
+          <Text style={styles.value}>{getParticipantStatusLabel(item.participantStatus)}</Text>
         </View>
 
         <View style={styles.row}>
-          <Text style={styles.label}>Joined At:</Text>
+          <Text style={styles.label}>תאריך הצטרפות:</Text>
           <Text style={styles.value}>{formattedJoinedDate}</Text>
         </View>
 
         <View style={styles.eligibilityContainer}>
           {item.isWeddingPoolEligible ? (
-            <Text style={styles.eligibleText}>Available for Wedding Pool</Text>
+            <Text style={styles.eligibleText}>זמין למאגר החתונה</Text>
           ) : (
-            <Text style={styles.ineligibleText}>Not currently available for Wedding Pool</Text>
+            <Text style={styles.ineligibleText}>לא זמין כרגע למאגר החתונה</Text>
           )}
         </View>
       </View>
@@ -86,7 +83,7 @@ export const MyWeddingsScreen = () => {
   return (
     <Screen>
       <View style={styles.container}>
-        <Text style={styles.title}>My Weddings</Text>
+        <Text style={styles.title}>החתונות שלי</Text>
         
         {loading ? (
           <View style={styles.center}>
@@ -106,7 +103,7 @@ export const MyWeddingsScreen = () => {
             onRefresh={fetchWeddings}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>You haven't joined any weddings yet.</Text>
+                <Text style={styles.emptyText}>עדיין לא הצטרפת לאף חתונה.</Text>
               </View>
             }
           />
@@ -158,23 +155,22 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
     paddingBottom: 4,
+    textAlign: 'right',
   },
   row: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     paddingVertical: 4,
   },
   label: {
     fontSize: 14,
     color: theme.colors.textSecondary,
+    textAlign: 'right',
   },
   value: {
     fontSize: 14,
     fontWeight: '600',
     color: theme.colors.text,
-  },
-  statusText: {
-    textTransform: 'capitalize',
   },
   eligibilityContainer: {
     marginTop: theme.spacing.s,

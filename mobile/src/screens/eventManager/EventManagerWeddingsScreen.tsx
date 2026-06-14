@@ -5,6 +5,7 @@ import { getEventManagerWeddings } from '../../api/eventManagerApi';
 import { WeddingResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+import { getWeddingStatusLabel, formatDisplayDate } from '../../utils/displayLabels';
 
 export const EventManagerWeddingsScreen = ({ navigation }: any) => {
   const [weddings, setWeddings] = useState<WeddingResponse[]>([]);
@@ -33,12 +34,12 @@ export const EventManagerWeddingsScreen = ({ navigation }: any) => {
       onPress={() => navigation.navigate('EventManagerWeddingDetails', { weddingId: item.id })}
     >
       <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.detail}>City/Date: {item.city} - {item.weddingDate}</Text>
-      <Text style={styles.detail}>Status: {item.status}</Text>
-      <Text style={styles.detail}>Access Code: {item.accessCode}</Text>
+      <Text style={styles.detail}>עיר/תאריך: {item.city} - {formatDisplayDate(item.weddingDate)}</Text>
+      <Text style={styles.detail}>סטטוס: {getWeddingStatusLabel(item.status)}</Text>
+      <Text style={styles.detail}>קוד גישה: {item.accessCode}</Text>
       <View style={styles.statsContainer}>
-        <Text style={styles.stats}>Participants: {item.participantsCount}</Text>
-        <Text style={styles.stats}>Matches: {item.matchesCount}</Text>
+        <Text style={styles.stats}>משתתפים: {item.participantsCount}</Text>
+        <Text style={styles.stats}>שידוכים: {item.matchesCount}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -46,7 +47,7 @@ export const EventManagerWeddingsScreen = ({ navigation }: any) => {
   return (
     <Screen>
       <View style={styles.container}>
-        <Text style={styles.title}>My Weddings</Text>
+        <Text style={styles.title}>החתונות שלי</Text>
         {loading ? (
           <ActivityIndicator size="large" color={theme.colors.primary} />
         ) : (
@@ -57,7 +58,7 @@ export const EventManagerWeddingsScreen = ({ navigation }: any) => {
             contentContainerStyle={styles.list}
             refreshing={loading}
             onRefresh={fetchWeddings}
-            ListEmptyComponent={<Text style={styles.emptyText}>No weddings found.</Text>}
+            ListEmptyComponent={<Text style={styles.emptyText}>לא נמצאו חתונות.</Text>}
           />
         )}
       </View>
@@ -75,6 +76,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.primary,
     marginBottom: theme.spacing.m,
+    textAlign: 'right',
   },
   list: {
     paddingBottom: theme.spacing.xl,
@@ -95,14 +97,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.text,
     marginBottom: theme.spacing.s,
+    textAlign: 'right',
   },
   detail: {
     fontSize: 14,
     color: theme.colors.textSecondary,
     marginBottom: 4,
+    textAlign: 'right',
   },
   statsContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     marginTop: theme.spacing.s,
     borderTopWidth: 1,

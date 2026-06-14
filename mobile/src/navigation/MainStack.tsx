@@ -57,31 +57,31 @@ const Stack = createNativeStackNavigator<MainStackParamList>();
 
 export const MainStack = () => {
   return (
-    <Stack.Navigator screenOptions={{ headerTitle: 'Shiduchim MVP' }}>
-      <Stack.Screen name="Me" component={MeScreen} />
-      <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'My Profile' }} />
-      <Stack.Screen name="BasicProfile" component={BasicProfileScreen} options={{ title: 'Basic Profile' }} />
-      <Stack.Screen name="FullProfile" component={FullProfileScreen} options={{ title: 'Full Profile' }} />
-      <Stack.Screen name="Photos" component={PhotosScreen} options={{ title: 'My Photos' }} />
-      <Stack.Screen name="JoinWedding" component={JoinWeddingScreen} options={{ title: 'Join Wedding' }} />
-      <Stack.Screen name="MyWeddings" component={MyWeddingsScreen} options={{ title: 'My Weddings' }} />
-      <Stack.Screen name="PoolSelection" component={PoolSelectionScreen} options={{ title: 'Select Pool' }} />
-      <Stack.Screen name="Discover" component={DiscoverScreen} options={{ title: 'Candidates' }} />
-      <Stack.Screen name="CandidateProfile" component={CandidateProfileScreen} options={{ title: 'Candidate Profile' }} />
-      <Stack.Screen name="Lists" component={ListsScreen} options={{ title: 'My Lists' }} />
-      <Stack.Screen name="Matches" component={MatchesScreen} options={{ title: 'My Matches' }} />
-      <Stack.Screen name="MatchDetails" component={MatchDetailsScreen} options={{ title: 'Match Details' }} />
-      <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'Chat' }} />
-      <Stack.Screen name="Chats" component={ChatsScreen} options={{ title: 'Chats' }} />
-      <Stack.Screen name="AdminUsers" component={AdminUsersScreen} options={{ title: 'Manage Users' }} />
-      <Stack.Screen name="AdminWeddings" component={AdminWeddingsScreen} options={{ title: 'Manage Weddings' }} />
-      <Stack.Screen name="AdminEventManagers" component={AdminEventManagersScreen} options={{ title: 'Event Managers' }} />
-      <Stack.Screen name="CreateEventManager" component={CreateEventManagerScreen} options={{ title: 'New Event Manager' }} />
-      <Stack.Screen name="EventManagerWeddings" component={EventManagerWeddingsScreen} options={{ title: 'My Weddings' }} />
-      <Stack.Screen name="CreateWedding" component={CreateWeddingScreen} options={{ title: 'Create Wedding' }} />
-      <Stack.Screen name="EventManagerWeddingDetails" component={EventManagerWeddingDetailsScreen} options={{ title: 'Wedding Details' }} />
-      <Stack.Screen name="CreateAdminWedding" component={CreateAdminWeddingScreen} options={{ title: 'Create Admin Wedding' }} />
-      <Stack.Screen name="AdminWeddingDetails" component={AdminWeddingDetailsScreen} options={{ title: 'Admin Wedding Details' }} />
+    <Stack.Navigator screenOptions={{ headerTitle: 'שידוכים MVP' }}>
+      <Stack.Screen name="Me" component={MeScreen} options={{ title: 'האזור שלי' }} />
+      <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'הפרופיל שלי' }} />
+      <Stack.Screen name="BasicProfile" component={BasicProfileScreen} options={{ title: 'פרופיל בסיסי' }} />
+      <Stack.Screen name="FullProfile" component={FullProfileScreen} options={{ title: 'פרופיל מלא' }} />
+      <Stack.Screen name="Photos" component={PhotosScreen} options={{ title: 'התמונות שלי' }} />
+      <Stack.Screen name="JoinWedding" component={JoinWeddingScreen} options={{ title: 'הצטרפות לחתונה' }} />
+      <Stack.Screen name="MyWeddings" component={MyWeddingsScreen} options={{ title: 'החתונות שלי' }} />
+      <Stack.Screen name="PoolSelection" component={PoolSelectionScreen} options={{ title: 'בחירת מאגר' }} />
+      <Stack.Screen name="Discover" component={DiscoverScreen} options={{ title: 'מועמדים' }} />
+      <Stack.Screen name="CandidateProfile" component={CandidateProfileScreen} options={{ title: 'פרופיל מועמד' }} />
+      <Stack.Screen name="Lists" component={ListsScreen} options={{ title: 'הרשימות שלי' }} />
+      <Stack.Screen name="Matches" component={MatchesScreen} options={{ title: 'השידוכים שלי' }} />
+      <Stack.Screen name="MatchDetails" component={MatchDetailsScreen} options={{ title: 'פרטי השידוך' }} />
+      <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'צ׳אט' }} />
+      <Stack.Screen name="Chats" component={ChatsScreen} options={{ title: 'צ׳אטים' }} />
+      <Stack.Screen name="AdminUsers" component={AdminUsersScreen} options={{ title: 'ניהול משתמשים' }} />
+      <Stack.Screen name="AdminWeddings" component={AdminWeddingsScreen} options={{ title: 'ניהול חתונות' }} />
+      <Stack.Screen name="AdminEventManagers" component={AdminEventManagersScreen} options={{ title: 'מנהלי אירועים' }} />
+      <Stack.Screen name="CreateEventManager" component={CreateEventManagerScreen} options={{ title: 'מנהל אירוע חדש' }} />
+      <Stack.Screen name="EventManagerWeddings" component={EventManagerWeddingsScreen} options={{ title: 'החתונות שלי' }} />
+      <Stack.Screen name="CreateWedding" component={CreateWeddingScreen} options={{ title: 'יצירת חתונה' }} />
+      <Stack.Screen name="EventManagerWeddingDetails" component={EventManagerWeddingDetailsScreen} options={{ title: 'פרטי החתונה' }} />
+      <Stack.Screen name="CreateAdminWedding" component={CreateAdminWeddingScreen} options={{ title: 'יצירת חתונה (מנהל)' }} />
+      <Stack.Screen name="AdminWeddingDetails" component={AdminWeddingDetailsScreen} options={{ title: 'פרטי החתונה (מנהל)' }} />
     </Stack.Navigator>
   );
 };

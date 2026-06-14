@@ -7,6 +7,7 @@ import { DiscoverPool, UserWeddingResponse } from '../../types/api';
 import { useAuth } from '../../context/AuthContext';
 import { getMyWeddings } from '../../api/weddingsApi';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+import { formatDisplayDate } from '../../utils/displayLabels';
 
 export const PoolSelectionScreen = ({ navigation }: any) => {
   const { user } = useAuth();
@@ -30,7 +31,7 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
         setSelectedWeddingId(eligible[0].weddingId);
       }
     } catch (err: any) {
-      setErrorText(getFriendlyErrorMessage(err, 'Failed to load joined weddings.'));
+      setErrorText(getFriendlyErrorMessage(err, 'טעינת החתונות שנרשמת אליהן נכשלה.'));
     } finally {
       setLoadingWeddings(false);
     }
@@ -51,30 +52,30 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
 
     // 1. Primary photo check
     if (!user?.hasPrimaryPhoto) {
-      setErrorText("Please upload a primary photo before using Discover.");
+      setErrorText("אנא העלה/י תמונה ראשית לפני השימוש בחיפוש מועמדים.");
       return;
     }
 
     if (selectedPool === 'GLOBAL') {
       // 2. Global Pool eligibility checks
       if (!user?.profileStatus || user.profileStatus === 'NONE' || user.profileStatus === 'FULL_INCOMPLETE_BLOCKED') {
-        setErrorText("Please complete your basic profile before using the discovery pool.");
+        setErrorText("אנא השלם/י את הפרופיל הבסיסי לפני השימוש במאגר החיפוש.");
         return;
       }
       if (user.profileStatus === 'BASIC') {
-        setErrorText("Global Pool is available only after completing your full profile.");
+        setErrorText("המאגר הכללי זמין רק לאחר השלמת הפרופיל המלא שלך.");
         return;
       }
       navigation.navigate('Discover', { pool: 'GLOBAL' });
     } else {
       // 3. Wedding Pool eligibility checks
       if (!user?.profileStatus || user.profileStatus === 'NONE' || user.profileStatus === 'FULL_INCOMPLETE_BLOCKED') {
-        setErrorText("Please complete your basic profile before using the wedding pool.");
+        setErrorText("אנא השלם/י את הפרופיל הבסיסי לפני השימוש במאגר החתונה.");
         return;
       }
       
       if (!selectedWeddingId) {
-        setErrorText('Please select a wedding from the list.');
+        setErrorText('אנא בחר/י חתונה מהרשימה.');
         return;
       }
       navigation.navigate('Discover', { pool: 'WEDDING', weddingId: selectedWeddingId });
@@ -84,8 +85,8 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Discovery Pool</Text>
-        <Text style={styles.subtitle}>Select which pool of candidates you would like to search.</Text>
+        <Text style={styles.title}>בחירת מאגר</Text>
+        <Text style={styles.subtitle}>אנא בחר/י את מאגר המועמדים שברצונך לחפש.</Text>
 
         <View style={styles.optionsContainer}>
           <TouchableOpacity
@@ -104,10 +105,10 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
                 selectedPool === 'GLOBAL' && styles.selectedOptionTitle,
               ]}
             >
-              Global Pool
+              מאגר כללי
             </Text>
             <Text style={styles.optionDescription}>
-              Discover compatible matches from the global network of participants.
+              חיפוש מועמדים מתאימים מתוך הרשת הכללית של המשתמשים.
             </Text>
           </TouchableOpacity>
 
@@ -127,10 +128,10 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
                 selectedPool === 'WEDDING' && styles.selectedOptionTitle,
               ]}
             >
-              Wedding Pool
+              מאגר חתונה
             </Text>
             <Text style={styles.optionDescription}>
-              Discover compatible matches specifically from a particular wedding event.
+              חיפוש מועמדים מתאימים במיוחד מתוך אירוע חתונה ספציפי.
             </Text>
           </TouchableOpacity>
         </View>
@@ -141,12 +142,12 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
               <ActivityIndicator size="small" color={theme.colors.primary} style={styles.loader} />
             ) : eligibleWeddings.length === 0 ? (
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>You haven't joined any eligible weddings yet.</Text>
-                <Text style={styles.emptySubText}>Please join a wedding with an access code first.</Text>
+                <Text style={styles.emptyText}>לא הצטרפת לאף חתונה פעילה זמינה כרגע.</Text>
+                <Text style={styles.emptySubText}>אנא הצטרף/י לחתונה באמצעות קוד גישה תחילה.</Text>
               </View>
             ) : (
               <View style={styles.weddingsListContainer}>
-                <Text style={styles.sectionTitle}>Select a Wedding:</Text>
+                <Text style={styles.sectionTitle}>בחירת חתונה:</Text>
                 {eligibleWeddings.map((w) => {
                   const isSelected = selectedWeddingId === w.weddingId;
                   return (
@@ -166,7 +167,7 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
                       </Text>
                       {w.city || w.weddingDate ? (
                         <Text style={styles.weddingDetailsText}>
-                          {[w.city, w.weddingDate ? new Date(w.weddingDate).toLocaleDateString() : null]
+                          {[w.city, w.weddingDate ? formatDisplayDate(w.weddingDate) : null]
                             .filter(Boolean)
                             .join(' - ')}
                         </Text>
@@ -181,7 +182,7 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
 
         {errorText ? <Text style={styles.errorText}>{errorText}</Text> : null}
         <AppButton
-          title="Discover Candidates"
+          title="חיפוש מועמדים"
           onPress={handleDiscover}
           style={styles.actionButton}
         />
@@ -229,6 +230,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.text,
     marginBottom: theme.spacing.s,
+    textAlign: 'right',
   },
   selectedOptionTitle: {
     color: theme.colors.primary,
@@ -237,6 +239,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.textSecondary,
     lineHeight: 20,
+    textAlign: 'right',
   },
   weddingInputContainer: {
     backgroundColor: theme.colors.surface,
@@ -273,6 +276,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.text,
     marginBottom: theme.spacing.m,
+    textAlign: 'right',
   },
   weddingCard: {
     backgroundColor: theme.colors.background,
@@ -290,6 +294,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: theme.colors.text,
+    textAlign: 'right',
   },
   selectedWeddingNameText: {
     color: theme.colors.primary,
@@ -298,6 +303,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textSecondary,
     marginTop: 4,
+    textAlign: 'right',
   },
   actionButton: {
     marginTop: 'auto',

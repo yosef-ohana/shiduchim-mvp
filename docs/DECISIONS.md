@@ -375,3 +375,26 @@ Phase 17 is officially defined as: **"QA Notes Completion and Missing Feature Co
 - Endpoint: `PATCH /api/event-manager/weddings/{id}/invites/{inviteId}/restore`.
 - Restrictions: Restore only to `PENDING` (do not create a new invite, do not hard delete, do not send real emails, do not add QR/magic links/invite tokens).
 - Prevention rules: Do not allow restore if the wedding is `CLOSED` or `CANCELLED`, if a `PENDING` or `ACCEPTED` invite already exists for the same email/wedding, or if the email owner is already an `ACTIVE` participant.
+
+---
+
+## 18. Phase 18 Decisions (Hebrew UI Localization & RTL Polish)
+
+Phase 18 is officially defined as: **"Hebrew UI Localization & RTL Polish"**
+
+### 18.1 Mobile-Only UI Scope
+- Localization is strictly restricted to the mobile frontend UI.
+- No backend API endpoints, database schemas, entities, or DTO structures were changed.
+
+### 18.2 UI Localization & Translation Mappings
+- Translation mappings are stored in a new untracked local file `mobile/src/utils/displayLabels.ts` containing display helpers to map roles, statuses, gender, yes/no values, and dates to Hebrew.
+- Exception and network error strings are caught and mapped locally in the frontend utilizing `mobile/src/utils/errorMessage.ts` to convert technical messages to friendly Hebrew notifications.
+- Technical enums, status strings (e.g. `'ACTIVE'`, `'USER'`, `'MALE'`), and route keys remain in English at the code/API level.
+
+### 18.3 Text Alignments & Copy-Paste Integrity
+- Hebrew text and labels are right-aligned (`textAlign: 'right'`) and formatted using row-reverse wrappers where appropriate.
+- Crucial technical values such as email addresses, password fields, and wedding access codes retain left-alignment (`textAlign: 'left'`) to maintain copy-paste usability and standard mobile interface aesthetics.
+
+### 18.4 No External Internationalization Libraries
+- No heavy internationalization packages (e.g., `i18n`, `react-i18next`) or global `I18nManager.forceRTL(true)` logic were introduced, keeping mobile styling lean and using vanilla CSS attributes.
+

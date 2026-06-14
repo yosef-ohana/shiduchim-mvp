@@ -6,6 +6,17 @@ import { adminApi } from '../../api/adminApi';
 import { AdminUserResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+import { getUserRoleLabel } from '../../utils/displayLabels';
+
+const getProfileStatusLabel = (status: string) => {
+  switch (status) {
+    case 'NONE': return 'לא הוגדר';
+    case 'BASIC': return 'פרופיל בסיסי';
+    case 'FULL': return 'פרופיל מלא';
+    case 'FULL_INCOMPLETE_BLOCKED': return 'פרופיל מלא חסר (חסום)';
+    default: return status;
+  }
+};
 
 export const AdminUsersScreen = () => {
   const [users, setUsers] = useState<AdminUserResponse[]>([]);
@@ -48,14 +59,14 @@ export const AdminUsersScreen = () => {
 
   const renderItem = ({ item }: { item: AdminUserResponse }) => (
     <View style={styles.card}>
-      <Text style={styles.name}>{item.fullName || 'No Name'} (ID: {item.id})</Text>
-      <Text style={styles.info}>Email: {item.email || 'N/A'}</Text>
-      <Text style={styles.info}>Role: {item.role}</Text>
-      <Text style={styles.info}>Profile Status: {item.profileStatus}</Text>
-      <Text style={styles.info}>Status: {item.adminBlocked ? 'Blocked' : 'Active'}</Text>
+      <Text style={styles.name}>{item.fullName || 'לא צוין'} (מזהה: {item.id})</Text>
+      <Text style={styles.info}>אימייל: {item.email || 'לא צוין'}</Text>
+      <Text style={styles.info}>תפקיד: {getUserRoleLabel(item.role)}</Text>
+      <Text style={styles.info}>סטטוס פרופיל: {getProfileStatusLabel(item.profileStatus)}</Text>
+      <Text style={styles.info}>סטטוס: {item.adminBlocked ? 'חסום' : 'פעיל'}</Text>
 
       <AppButton
-        title={item.adminBlocked ? 'Unblock User' : 'Block User'}
+        title={item.adminBlocked ? 'שחרור חסימה' : 'חסימה'}
         onPress={() => handleToggleBlock(item)}
         loading={actionLoading === item.id}
         style={[styles.button, item.adminBlocked ? styles.unblockButton : styles.blockButton]}
@@ -74,7 +85,7 @@ export const AdminUsersScreen = () => {
             keyExtractor={(item) => item.id.toString()}
             renderItem={renderItem}
             contentContainerStyle={styles.list}
-            ListEmptyComponent={<Text style={styles.emptyText}>No users found.</Text>}
+            ListEmptyComponent={<Text style={styles.emptyText}>לא נמצאו משתמשים.</Text>}
             refreshing={loading}
             onRefresh={fetchUsers}
           />
@@ -108,11 +119,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.text,
     marginBottom: theme.spacing.s,
+    textAlign: 'right',
   },
   info: {
     fontSize: 14,
     color: theme.colors.textSecondary,
     marginBottom: 2,
+    textAlign: 'right',
   },
   button: {
     marginTop: theme.spacing.m,

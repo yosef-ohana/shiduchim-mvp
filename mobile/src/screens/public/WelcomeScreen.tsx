@@ -18,8 +18,8 @@ export const WelcomeScreen = ({ navigation }: any) => {
           <Text style={styles.logoText}>ש</Text>
         </View>
 
-        <Text style={styles.title}>Shiduchim</Text>
-        <Text style={styles.tagline}>Connecting Hearts, Building Families</Text>
+        <Text style={styles.title}>שידוכים</Text>
+        <Text style={styles.tagline}>חיבור לבבות, בניית משפחות</Text>
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity
@@ -27,7 +27,7 @@ export const WelcomeScreen = ({ navigation }: any) => {
             onPress={() => navigation.navigate('Login')}
             activeOpacity={0.8}
           >
-            <Text style={styles.primaryButtonText}>I want to meet someone</Text>
+            <Text style={styles.primaryButtonText}>אני רוצה להכיר</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -35,7 +35,7 @@ export const WelcomeScreen = ({ navigation }: any) => {
             onPress={handleWeddingCode}
             activeOpacity={0.8}
           >
-            <Text style={styles.secondaryButtonText}>I have a wedding code</Text>
+            <Text style={styles.secondaryButtonText}>יש לי קוד חתונה</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -43,7 +43,7 @@ export const WelcomeScreen = ({ navigation }: any) => {
             onPress={() => navigation.navigate('StaffLoginChoice')}
             activeOpacity={0.7}
           >
-            <Text style={styles.linkButtonText}>Staff Portal (Admin / Event Manager)</Text>
+            <Text style={styles.linkButtonText}>כניסת מנהל מערכת / מנהל אירוע</Text>
           </TouchableOpacity>
         </View>
       </View>

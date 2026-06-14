@@ -6,6 +6,18 @@ import { AppButton } from '../../components/AppButton';
 import { getMyProfile } from '../../api/profileApi';
 import { ProfileMeResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
+import { getGenderLabel, getUserRoleLabel } from '../../utils/displayLabels';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+
+const getProfileStatusLabel = (status: string) => {
+  switch (status) {
+    case 'NONE': return 'לא הוגדר';
+    case 'BASIC': return 'פרופיל בסיסי';
+    case 'FULL': return 'פרופיל מלא';
+    case 'FULL_INCOMPLETE_BLOCKED': return 'פרופיל מלא חסר (חסום)';
+    default: return status;
+  }
+};
 
 export const ProfileScreen = ({ navigation }: any) => {
   const [profile, setProfile] = useState<ProfileMeResponse | null>(null);
@@ -18,7 +30,7 @@ export const ProfileScreen = ({ navigation }: any) => {
       const data = await getMyProfile();
       setProfile(data);
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Failed to load profile');
+      setError(getFriendlyErrorMessage(err, 'טעינת הפרופיל נכשלה.'));
     } finally {
       setLoading(false);
     }
@@ -34,7 +46,7 @@ export const ProfileScreen = ({ navigation }: any) => {
     return (
       <Screen style={styles.centerContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Loading profile...</Text>
+        <Text style={styles.loadingText}>טוען פרופיל...</Text>
       </Screen>
     );
   }
@@ -42,14 +54,32 @@ export const ProfileScreen = ({ navigation }: any) => {
   if (error || !profile) {
     return (
       <Screen style={styles.centerContainer}>
-        <Text style={styles.errorText}>{error || 'Profile could not be loaded'}</Text>
-        <AppButton title="Retry" onPress={fetchProfile} style={styles.retryButton} />
+        <Text style={styles.errorText}>{error || 'טעינת הפרופיל נכשלה.'}</Text>
+        <AppButton title="נסה שוב" onPress={fetchProfile} style={styles.retryButton} />
       </Screen>
     );
   }
 
   const renderRow = (label: string, value: any, isLongText = false) => {
-    const displayValue = value === null || value === undefined || value === '' ? 'Not specified' : String(value);
+    let displayValue = 'לא צוין';
+    if (value !== null && value !== undefined && value !== '') {
+      const stringVal = String(value);
+      if (stringVal === 'MALE' || stringVal === 'FEMALE') {
+        displayValue = getGenderLabel(stringVal);
+      } else if (stringVal === 'USER' || stringVal === 'EVENT_MANAGER' || stringVal === 'ADMIN') {
+        displayValue = getUserRoleLabel(stringVal);
+      } else if (stringVal === 'NONE' || stringVal === 'BASIC' || stringVal === 'FULL' || stringVal === 'FULL_INCOMPLETE_BLOCKED') {
+        displayValue = getProfileStatusLabel(stringVal);
+      } else if (stringVal === 'Yes' || stringVal === 'true' || value === true) {
+        displayValue = 'כן';
+      } else if (stringVal === 'No' || stringVal === 'false' || value === false) {
+        displayValue = 'לא';
+      } else if (stringVal === 'Not specified') {
+        displayValue = 'לא צוין';
+      } else {
+        displayValue = stringVal;
+      }
+    }
     
     if (isLongText) {
       return (
@@ -71,71 +101,71 @@ export const ProfileScreen = ({ navigation }: any) => {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Profile Details</Text>
+        <Text style={styles.title}>פרטי הפרופיל שלי</Text>
 
         {/* Account Info Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account Info</Text>
+          <Text style={styles.sectionTitle}>פרטי החשבון</Text>
           <View style={styles.card}>
-            {renderRow('Full Name', profile.fullName)}
-            {renderRow('Email', profile.email)}
-            {renderRow('Gender', profile.gender)}
-            {renderRow('Role', profile.role)}
-            {renderRow('Profile Status', profile.profileStatus)}
-            {renderRow('Admin Blocked', profile.adminBlocked ? 'Yes' : 'No')}
+            {renderRow('שם מלא', profile.fullName)}
+            {renderRow('אימייל', profile.email)}
+            {renderRow('מגדר', profile.gender)}
+            {renderRow('תפקיד', profile.role)}
+            {renderRow('סטטוס פרופיל', profile.profileStatus)}
+            {renderRow('חסום על ידי מנהל', profile.adminBlocked)}
           </View>
         </View>
 
         {/* Basic Profile Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Basic Profile Info</Text>
+          <Text style={styles.sectionTitle}>פרטי פרופיל בסיסי</Text>
           <View style={styles.card}>
-            {renderRow('Age', profile.age)}
-            {renderRow('Height (cm)', profile.heightCm)}
-            {renderRow('Area of Residence', profile.areaOfResidence)}
-            {renderRow('Religious Level', profile.religiousLevel)}
-            {renderRow('Phone', profile.phone)}
+            {renderRow('גיל', profile.age)}
+            {renderRow('גובה (ס״מ)', profile.heightCm)}
+            {renderRow('אזור מגורים', profile.areaOfResidence)}
+            {renderRow('רמה דתית', profile.religiousLevel)}
+            {renderRow('טלפון', profile.phone)}
           </View>
         </View>
 
         {/* Full Profile Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Full Profile Info</Text>
+          <Text style={styles.sectionTitle}>פרטי פרופיל מלא</Text>
           <View style={styles.card}>
-            {renderRow('Education', profile.education)}
-            {renderRow('Occupation', profile.occupation)}
-            {renderRow('Head Covering', profile.headCovering)}
-            {renderRow('Has Driving License', profile.hasDrivingLicense !== null ? (profile.hasDrivingLicense ? 'Yes' : 'No') : 'Not specified')}
-            {renderRow('Self Description', profile.selfDescription, true)}
-            {renderRow('Hobbies', profile.hobbies, true)}
-            {renderRow('Looking For', profile.lookingFor, true)}
-            {renderRow('Family Description', profile.familyDescription, true)}
+            {renderRow('השכלה', profile.education)}
+            {renderRow('עיסוק', profile.occupation)}
+            {renderRow('כיסוי ראש', profile.headCovering)}
+            {renderRow('רישיון נהיגה', profile.hasDrivingLicense)}
+            {renderRow('עליי (תיאור עצמי)', profile.selfDescription, true)}
+            {renderRow('תחביבים', profile.hobbies, true)}
+            {renderRow('מה אני מחפש/ת', profile.lookingFor, true)}
+            {renderRow('רקע משפחתי', profile.familyDescription, true)}
           </View>
         </View>
 
         {/* Photos Info Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Photos Info</Text>
+          <Text style={styles.sectionTitle}>מידע על תמונות</Text>
           <View style={styles.card}>
-            {renderRow('Primary Photo Set', profile.hasPrimaryPhoto ? 'Yes' : 'No')}
-            {renderRow('Photo Count', profile.photoCount)}
+            {renderRow('תמונה ראשית הוגדרה', profile.hasPrimaryPhoto)}
+            {renderRow('כמות תמונות', profile.photoCount)}
           </View>
         </View>
 
         <AppButton 
-          title="Discover Candidates" 
+          title="חיפוש מועמדים" 
           onPress={() => navigation.navigate('PoolSelection')}
           style={styles.button}
         />
 
         <AppButton 
-          title="Edit Basic Profile" 
+          title="עריכת פרופיל בסיסי" 
           onPress={() => navigation.navigate('BasicProfile')}
           style={styles.button}
         />
 
         <AppButton 
-          title="Edit Full Profile" 
+          title="עריכת פרופיל מלא" 
           onPress={() => navigation.navigate('FullProfile')}
           style={[styles.button, styles.secondaryButton]}
         />
@@ -159,6 +189,7 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.m,
     color: theme.colors.textSecondary,
     fontSize: 16,
+    textAlign: 'center',
   },
   errorText: {
     color: theme.colors.error,
@@ -184,7 +215,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.text,
     marginBottom: theme.spacing.s,
-    paddingLeft: theme.spacing.s,
+    paddingRight: theme.spacing.s,
+    textAlign: 'right',
   },
   card: {
     backgroundColor: theme.colors.surface,
@@ -200,7 +232,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
   },
   row: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     paddingVertical: theme.spacing.m,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -210,14 +242,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.textSecondary,
     fontWeight: '600',
+    textAlign: 'right',
   },
   rowValue: {
     fontSize: 14,
     color: theme.colors.text,
     fontWeight: '500',
-    textAlign: 'right',
+    textAlign: 'left',
     flex: 1,
-    marginLeft: theme.spacing.m,
+    marginRight: theme.spacing.m,
   },
   longTextContainer: {
     paddingVertical: theme.spacing.m,
@@ -229,6 +262,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     marginTop: theme.spacing.s,
     lineHeight: 20,
+    textAlign: 'right',
   },
   button: {
     marginTop: theme.spacing.m,

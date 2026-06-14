@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
@@ -8,6 +8,17 @@ import { theme } from '../../theme/theme';
 import { adminApi } from '../../api/adminApi';
 import { getUnreadCount } from '../../api/chatsApi';
 import { AdminDashboardResponse } from '../../types/api';
+import { getYesNoLabel, getUserRoleLabel } from '../../utils/displayLabels';
+
+const getProfileStatusLabel = (status: string) => {
+  switch (status) {
+    case 'NONE': return 'לא הוגדר';
+    case 'BASIC': return 'פרופיל בסיסי';
+    case 'FULL': return 'פרופיל מלא';
+    case 'FULL_INCOMPLETE_BLOCKED': return 'פרופיל מלא חסר (חסום)';
+    default: return status;
+  }
+};
 
 export const MeScreen = ({ navigation }: any) => {
   const { user, logout, refreshMe } = useAuth();
@@ -71,35 +82,35 @@ export const MeScreen = ({ navigation }: any) => {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>My Account</Text>
+        <Text style={styles.title}>החשבון שלי</Text>
 
         <View style={styles.card}>
           <View style={styles.row}>
-            <Text style={styles.label}>Name:</Text>
+            <Text style={styles.label}>שם מלא:</Text>
             <Text style={styles.value}>{user.fullName}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Email:</Text>
+            <Text style={styles.label}>אימייל:</Text>
             <Text style={styles.value}>{user.email}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Role:</Text>
-            <Text style={styles.value}>{user.role}</Text>
+            <Text style={styles.label}>תפקיד:</Text>
+            <Text style={styles.value}>{getUserRoleLabel(user.role)}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Status:</Text>
-            <Text style={styles.value}>{user.profileStatus}</Text>
+            <Text style={styles.label}>סטטוס:</Text>
+            <Text style={styles.value}>{getProfileStatusLabel(user.profileStatus)}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Blocked:</Text>
-            <Text style={styles.value}>{user.adminBlocked ? 'Yes' : 'No'}</Text>
+            <Text style={styles.label}>חסום:</Text>
+            <Text style={styles.value}>{getYesNoLabel(user.adminBlocked)}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Primary Photo:</Text>
-            <Text style={styles.value}>{user.hasPrimaryPhoto ? 'Yes' : 'No'}</Text>
+            <Text style={styles.label}>תמונה ראשית:</Text>
+            <Text style={styles.value}>{getYesNoLabel(user.hasPrimaryPhoto)}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Photo Count:</Text>
+            <Text style={styles.label}>כמות תמונות:</Text>
             <Text style={styles.value}>{user.photoCount}</Text>
           </View>
         </View>
@@ -107,67 +118,67 @@ export const MeScreen = ({ navigation }: any) => {
         {user.role === 'USER' && (
           <>
             <AppButton 
-              title="My Profile Details" 
+              title="פרטי הפרופיל שלי" 
               onPress={() => navigation.navigate('Profile')}
               style={styles.button}
             />
 
             <AppButton 
-              title="Discover Candidates" 
+              title="חיפוש מועמדים" 
               onPress={() => navigation.navigate('PoolSelection')}
               style={styles.button}
             />
 
             <AppButton 
-              title="My Lists" 
+              title="הרשימות שלי" 
               onPress={() => navigation.navigate('Lists')}
               style={styles.button}
             />
 
             <AppButton 
-              title="My Matches" 
+              title="השידוכים שלי" 
               onPress={() => navigation.navigate('Matches')}
               style={styles.button}
             />
 
             <AppButton 
-              title={totalUnreadCount > 0 ? `Chats (${totalUnreadCount})` : 'Chats'} 
+              title={totalUnreadCount > 0 ? `צ׳אטים (${totalUnreadCount})` : 'צ׳אטים'} 
               onPress={() => navigation.navigate('Chats')}
               style={styles.button}
             />
 
             <AppButton 
-              title="Complete Basic Profile" 
+              title="השלמת פרופיל בסיסי" 
               onPress={() => navigation.navigate('BasicProfile')}
               style={styles.button}
             />
 
             <AppButton 
-              title="Complete Full Profile" 
+              title="השלמת פרופיל מלא" 
               onPress={() => navigation.navigate('FullProfile')}
               style={styles.button}
             />
 
             <AppButton 
-              title="My Photos" 
+              title="התמונות שלי" 
               onPress={() => navigation.navigate('Photos')}
               style={styles.button}
             />
 
             <AppButton 
-              title="My Weddings" 
+              title="החתונות שלי" 
               onPress={() => navigation.navigate('MyWeddings')}
               style={styles.button}
             />
 
             <AppButton 
-              title="Join Wedding" 
+              title="הצטרפות לחתונה" 
               onPress={() => navigation.navigate('JoinWedding')}
               style={styles.button}
             />
 
             <AppButton 
-              title="Refresh Profile" 
+              title="רענון פרופיל" 
               onPress={handleRefresh} 
               loading={isRefreshing}
               style={[styles.button, styles.refreshButton]}
@@ -177,50 +188,50 @@ export const MeScreen = ({ navigation }: any) => {
 
         {user.role === 'ADMIN' && (
           <>
-            <Text style={styles.sectionTitle}>Admin Home</Text>
+            <Text style={styles.sectionTitle}>דף בית מנהל</Text>
 
             {isLoadingDashboard ? (
-              <Text style={styles.dashboardStatusText}>Loading dashboard...</Text>
+              <Text style={styles.dashboardStatusText}>טוען נתוני לוח בקרה...</Text>
             ) : dashboardData ? (
               <View style={styles.dashboardContainer}>
                 <View style={styles.dashboardCard}>
                   <Text style={styles.dashboardNum}>{dashboardData.usersCount}</Text>
-                  <Text style={styles.dashboardLabel}>Users</Text>
+                  <Text style={styles.dashboardLabel}>משתמשים</Text>
                 </View>
                 <View style={styles.dashboardCard}>
                   <Text style={styles.dashboardNum}>{dashboardData.eventManagersCount}</Text>
-                  <Text style={styles.dashboardLabel}>Event MGRs</Text>
+                  <Text style={styles.dashboardLabel}>מנהלי אירועים</Text>
                 </View>
                 <View style={styles.dashboardCard}>
                   <Text style={styles.dashboardNum}>{dashboardData.weddingsCount}</Text>
-                  <Text style={styles.dashboardLabel}>Weddings</Text>
+                  <Text style={styles.dashboardLabel}>חתונות</Text>
                 </View>
                 <View style={styles.dashboardCard}>
                   <Text style={styles.dashboardNum}>{dashboardData.activeWeddingsCount}</Text>
-                  <Text style={styles.dashboardLabel}>Active Weddings</Text>
+                  <Text style={styles.dashboardLabel}>חתונות פעילות</Text>
                 </View>
               </View>
             ) : (
-              <Text style={styles.dashboardErrorText}>Failed to load dashboard statistics</Text>
+              <Text style={styles.dashboardErrorText}>טעינת נתוני לוח הבקרה נכשלה</Text>
             )}
 
             <AppButton 
-              title="Users" 
+              title="משתמשים" 
               onPress={() => navigation.navigate('AdminUsers')}
               style={styles.button}
             />
             <AppButton 
-              title="Weddings" 
+              title="חתונות" 
               onPress={() => navigation.navigate('AdminWeddings')}
               style={styles.button}
             />
             <AppButton 
-              title="Event Managers" 
+              title="מנהלי אירועים" 
               onPress={() => navigation.navigate('AdminEventManagers')}
               style={styles.button}
             />
             <AppButton 
-              title="Create Event Manager" 
+              title="יצירת מנהל אירוע" 
               onPress={() => navigation.navigate('CreateEventManager')}
               style={styles.button}
             />
@@ -229,14 +240,14 @@ export const MeScreen = ({ navigation }: any) => {
 
         {user.role === 'EVENT_MANAGER' && (
           <>
-            <Text style={styles.sectionTitle}>Event Manager Home</Text>
+            <Text style={styles.sectionTitle}>דף בית מנהל אירוע</Text>
             <AppButton 
-              title="My Weddings" 
+              title="החתונות שלי" 
               onPress={() => navigation.navigate('EventManagerWeddings')}
               style={styles.button}
             />
             <AppButton 
-              title="Create Wedding" 
+              title="יצירת חתונה" 
               onPress={() => navigation.navigate('CreateWedding')}
               style={styles.button}
             />
@@ -244,7 +255,7 @@ export const MeScreen = ({ navigation }: any) => {
         )}
         
         <AppButton 
-          title="Logout" 
+          title="התנתקות" 
           onPress={logout} 
           style={[styles.button, styles.logoutButton]}
         />
@@ -277,7 +288,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
   },
   row: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     paddingVertical: theme.spacing.s,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -302,6 +313,7 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     marginTop: theme.spacing.m,
     marginBottom: theme.spacing.m,
+    textAlign: 'right',
   },
   logoutButton: {
     backgroundColor: theme.colors.error,
@@ -310,7 +322,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#4A4A4A',
   },
   dashboardContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginBottom: theme.spacing.l,

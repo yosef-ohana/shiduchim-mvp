@@ -17,6 +17,7 @@ import { theme } from '../../theme/theme';
 import { getChatMessages, sendChatMessage, markMessagesAsRead } from '../../api/chatApi';
 import { ChatMessageResponse } from '../../types/api';
 import { ChatMessageBubble } from '../../components/ChatMessageBubble';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 export const ChatScreen = ({ route, navigation }: any) => {
   const { matchId } = route.params || {};
@@ -58,9 +59,7 @@ export const ChatScreen = ({ route, navigation }: any) => {
       }, 100);
     } catch (err: any) {
       setError(
-        err.response?.data?.message ||
-        err.message ||
-        'Failed to load chat messages.'
+        getFriendlyErrorMessage(err, 'טעינת הודעות הצ׳אט נכשלה.')
       );
     } finally {
       setLoading(false);
@@ -94,9 +93,7 @@ export const ChatScreen = ({ route, navigation }: any) => {
       fetchMessages(false);
     } catch (err: any) {
       setError(
-        err.response?.data?.message ||
-        err.message ||
-        'Failed to send message.'
+        getFriendlyErrorMessage(err, 'שליחת ההודעה נכשלה.')
       );
     } finally {
       setSending(false);
@@ -107,7 +104,7 @@ export const ChatScreen = ({ route, navigation }: any) => {
     return (
       <Screen style={styles.centerContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.stateText}>Opening chat...</Text>
+        <Text style={styles.stateText}>פותח צ׳אט...</Text>
       </Screen>
     );
   }
@@ -121,7 +118,7 @@ export const ChatScreen = ({ route, navigation }: any) => {
       >
         <View style={styles.header}>
           <TouchableOpacity onPress={() => fetchMessages()} style={styles.refreshButton}>
-            <Text style={styles.refreshButtonText}>🔄 Refresh Chat</Text>
+            <Text style={styles.refreshButtonText}>🔄 רענון צ׳אט</Text>
           </TouchableOpacity>
         </View>
 
@@ -142,8 +139,8 @@ export const ChatScreen = ({ route, navigation }: any) => {
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyTitle}>No messages yet</Text>
-              <Text style={styles.emptySubtitle}>Say hello to start the conversation!</Text>
+              <Text style={styles.emptyTitle}>עדיין אין הודעות</Text>
+              <Text style={styles.emptySubtitle}>שלח/י הודעה כדי להתחיל בשיחה!</Text>
             </View>
           }
         />
@@ -153,14 +150,14 @@ export const ChatScreen = ({ route, navigation }: any) => {
             <AppInput
               value={inputText}
               onChangeText={setInputText}
-              placeholder="Type a message..."
+              placeholder="כתוב/כתבי הודעה..."
               style={styles.input}
               multiline
               maxLength={1000}
             />
           </View>
           <AppButton
-            title="Send"
+            title="שליחה"
             onPress={handleSend}
             loading={sending}
             disabled={!inputText.trim()}
@@ -192,7 +189,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
   },
   refreshButton: {
     paddingVertical: 6,
@@ -238,7 +235,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   inputContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'flex-end',
     padding: theme.spacing.s,
     borderTopWidth: 1,
@@ -256,10 +253,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7F7F7',
   },
   sendButton: {
-    marginLeft: theme.spacing.s,
+    marginRight: theme.spacing.s,
     height: 45,
     justifyContent: 'center',
     paddingHorizontal: theme.spacing.m,
-    marginBottom: 4, // Align with input
+    marginBottom: 4,
   },
 });

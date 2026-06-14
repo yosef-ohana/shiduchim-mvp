@@ -37,17 +37,17 @@ export const CreateEventManagerScreen = ({ navigation }: any) => {
       <Screen>
         <ScrollView contentContainerStyle={styles.container}>
           <View style={styles.form}>
-            <Text style={styles.successTitle}>Event Manager Created!</Text>
-            <Text style={styles.instruction}>You can share these login details:</Text>
+            <Text style={styles.successTitle}>מנהל אירוע נוצר בהצלחה!</Text>
+            <Text style={styles.instruction}>באפשרותך לשתף את פרטי ההתחברות הבאים:</Text>
             
             <View style={styles.detailsCard}>
-              <Text style={styles.detailText} selectable>Email: {createdManager.email}</Text>
-              <Text style={styles.detailText} selectable>Password: {createdManager.pass}</Text>
-              <Text style={styles.detailText} selectable>Role: EVENT_MANAGER</Text>
+              <Text style={styles.detailText} selectable>אימייל: {createdManager.email}</Text>
+              <Text style={styles.detailText} selectable>סיסמה: {createdManager.pass}</Text>
+              <Text style={styles.detailText} selectable>תפקיד: EVENT_MANAGER</Text>
             </View>
 
             <AppButton
-              title="Done"
+              title="סיום"
               onPress={() => navigation.goBack()}
               style={styles.button}
             />
@@ -62,14 +62,14 @@ export const CreateEventManagerScreen = ({ navigation }: any) => {
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.form}>
           <AppInput
-            label="Full Name"
+            label="שם מלא"
             value={fullName}
             onChangeText={setFullName}
-            placeholder="John Doe"
+            placeholder="לדוגמה: ישראל ישראלי"
             autoCapitalize="words"
           />
           <AppInput
-            label="Email"
+            label="אימייל"
             value={email}
             onChangeText={setEmail}
             placeholder="manager@example.com"
@@ -77,15 +77,15 @@ export const CreateEventManagerScreen = ({ navigation }: any) => {
             autoCapitalize="none"
           />
           <AppInput
-            label="Password"
+            label="סיסמה"
             value={password}
             onChangeText={setPassword}
-            placeholder="Enter a secure password"
+            placeholder="הזן סיסמה מאובטחת"
             secureTextEntry
           />
 
           <AppButton
-            title="Create Event Manager"
+            title="יצירת מנהל אירוע"
             onPress={handleCreate}
             loading={loading}
             style={styles.button}
@@ -139,5 +139,6 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     marginBottom: theme.spacing.s,
     fontFamily: 'monospace',
+    textAlign: 'right',
   },
 });

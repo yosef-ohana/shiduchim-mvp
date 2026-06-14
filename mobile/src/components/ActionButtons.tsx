@@ -4,6 +4,7 @@ import { AppButton } from './AppButton';
 import { theme } from '../theme/theme';
 import { PoolType } from '../types/api';
 import { likeUser, dislikeUser, freezeUser } from '../api/actionsApi';
+import { getFriendlyErrorMessage } from '../utils/errorMessage';
 
 interface ActionButtonsProps {
   targetUserId: number;
@@ -40,11 +41,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
 
         onActionCompleted(response.matchCreated);
       } catch (err: any) {
-        setError(
-          err.response?.data?.message ||
-            err.message ||
-            `Failed to perform action. Please try again.`
-        );
+        setError(getFriendlyErrorMessage(err, 'ביצוע הפעולה נכשל. נסה שוב.'));
       } finally {
         setLoadingAction(null);
       }
@@ -52,29 +49,29 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
 
     if (action === 'LIKE') {
       Alert.alert(
-        'Like Candidate',
-        'If the other side also likes you, a Match will be created and you will be able to chat.',
+        'סימון לייק',
+        'אם גם הצד השני יסמן לייק, ייווצר שידוך ותוכלו להתכתב.',
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Like', onPress: execute },
+          { text: 'ביטול', style: 'cancel' },
+          { text: 'לייק', onPress: execute },
         ]
       );
     } else if (action === 'DISLIKE') {
       Alert.alert(
-        'Dislike Candidate',
-        'This user will move to Dislikes and will not be shown again in your feed.',
+        'לא מתאים',
+        'משתמש זה יועבר לרשימת הלא מתאימים ולא יופיע שוב בפיד שלך.',
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Dislike', style: 'destructive', onPress: execute },
+          { text: 'ביטול', style: 'cancel' },
+          { text: 'לא מתאים', style: 'destructive', onPress: execute },
         ]
       );
     } else if (action === 'FREEZE') {
       Alert.alert(
-        'Freeze Candidate',
-        'This user will be saved aside and will not appear in your feed until you remove them from Freeze.',
+        'שמור בצד',
+        'משתמש זה יישמר בצד ולא יופיע בפיד שלך עד שתסיר אותו מרשימת השמורים בצד.',
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Freeze', onPress: execute },
+          { text: 'ביטול', style: 'cancel' },
+          { text: 'שמור בצד', onPress: execute },
         ]
       );
     }
@@ -86,21 +83,21 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
     <View style={styles.wrapper}>
       <View style={styles.container}>
         <AppButton
-          title="Dislike"
+          title="לא מתאים"
           onPress={() => handleAction('DISLIKE')}
           loading={loadingAction === 'DISLIKE'}
           disabled={isAnyLoading}
           style={[styles.button, styles.dislikeButton]}
         />
         <AppButton
-          title="Freeze"
+          title="שמור בצד"
           onPress={() => handleAction('FREEZE')}
           loading={loadingAction === 'FREEZE'}
           disabled={isAnyLoading}
           style={[styles.button, styles.freezeButton]}
         />
         <AppButton
-          title="Like"
+          title="לייק"
           onPress={() => handleAction('LIKE')}
           loading={loadingAction === 'LIKE'}
           disabled={isAnyLoading}

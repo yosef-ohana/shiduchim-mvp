@@ -7,6 +7,7 @@ import { theme } from '../../theme/theme';
 import { validateCode } from '../../api/weddingsApi';
 import { ValidateWeddingCodeResponse } from '../../types/api';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+import { formatDisplayDate, getWeddingStatusLabel } from '../../utils/displayLabels';
 
 export const WeddingCodeEntryScreen = ({ navigation }: any) => {
   const [accessCode, setAccessCode] = useState('');
@@ -18,7 +19,7 @@ export const WeddingCodeEntryScreen = ({ navigation }: any) => {
     setErrorMsg('');
     setWeddingDetails(null);
     if (!accessCode) {
-      setErrorMsg('Please enter a wedding code');
+      setErrorMsg('אנא הזן קוד חתונה');
       return;
     }
 
@@ -30,10 +31,10 @@ export const WeddingCodeEntryScreen = ({ navigation }: any) => {
       } else {
         if (response.status === 'CLOSED' || response.status === 'CANCELLED') {
           setWeddingDetails(response);
-          const statusLabel = response.status === 'CLOSED' ? 'closed' : 'cancelled';
-          setErrorMsg(`This wedding has been ${statusLabel} and cannot be joined.`);
+          const statusLabel = response.status === 'CLOSED' ? 'נסגרה' : 'בוטלה';
+          setErrorMsg(`חתונה זו ${statusLabel} ולא ניתן להצטרף אליה.`);
         } else {
-          setErrorMsg(response.message || 'Invalid wedding code. Please verify the code and try again.');
+          setErrorMsg(response.message || 'קוד חתונה לא תקין. אנא ודא שהקוד נכון ונסה שוב.');
         }
       }
     } catch (e: any) {
@@ -56,21 +57,21 @@ export const WeddingCodeEntryScreen = ({ navigation }: any) => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {!weddingDetails || (!weddingDetails.valid && !weddingDetails.weddingId) ? (
           <View style={styles.content}>
-            <Text style={styles.title}>Enter Wedding Code</Text>
-            <Text style={styles.subtitle}>Enter the 6-character wedding code (e.g., ABC123) provided by your event manager to view the wedding details and join.</Text>
+            <Text style={styles.title}>הזן קוד חתונה</Text>
+            <Text style={styles.subtitle}>הזן את קוד החתונה שקיבלת ממנהל האירוע כדי לצפות בפרטי החתונה ולהצטרף.</Text>
             
             {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
 
             <AppInput
-              label="Wedding Code"
-              placeholder="e.g. WED-123456"
+              label="קוד חתונה"
+              placeholder="לדוגמה: ABC123"
               value={accessCode}
               onChangeText={setAccessCode}
               autoCapitalize="characters"
             />
 
             <AppButton
-              title="Continue"
+              title="המשך"
               onPress={handleValidate}
               loading={isLoading}
               style={styles.button}
@@ -78,27 +79,27 @@ export const WeddingCodeEntryScreen = ({ navigation }: any) => {
           </View>
         ) : (
           <View style={styles.content}>
-            <Text style={styles.title}>Wedding Found</Text>
+            <Text style={styles.title}>החתונה נמצאה!</Text>
             
             <View style={styles.card}>
               <Text style={styles.weddingName}>{weddingDetails.weddingName}</Text>
-              <Text style={styles.weddingDetail}>Date: {weddingDetails.weddingDate}</Text>
-              <Text style={styles.weddingDetail}>City: {weddingDetails.city}</Text>
-              <Text style={styles.weddingDetail}>Status: {weddingDetails.status}</Text>
+              <Text style={styles.weddingDetail}>תאריך: {formatDisplayDate(weddingDetails.weddingDate)}</Text>
+              <Text style={styles.weddingDetail}>עיר: {weddingDetails.city}</Text>
+              <Text style={styles.weddingDetail}>סטטוס: {getWeddingStatusLabel(weddingDetails.status)}</Text>
             </View>
 
             {errorMsg ? (
               <Text style={styles.errorText}>{errorMsg}</Text>
             ) : (
               <View style={styles.actionContainer}>
-                <Text style={styles.subtitle}>To join this wedding, please log in or create an account.</Text>
+                <Text style={styles.subtitle}>כדי להצטרף לחתונה הזו, יש להתחבר או ליצור חשבון.</Text>
                 <AppButton
-                  title="Login"
+                  title="התחברות"
                   onPress={handleLogin}
                   style={styles.actionButton}
                 />
                 <AppButton
-                  title="Create Account"
+                  title="יצירת חשבון"
                   onPress={handleRegister}
                   variant="secondary"
                   style={styles.actionButton}

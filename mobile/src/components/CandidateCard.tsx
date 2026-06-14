@@ -4,6 +4,7 @@ import { theme } from '../theme/theme';
 import { AppButton } from './AppButton';
 import { PublicUserCardResponse } from '../types/api';
 import { getImageUrl } from '../utils/imageUrl';
+import { getEmptyLabel } from '../utils/displayLabels';
 
 
 interface CandidateCardProps {
@@ -33,47 +34,47 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewP
         <Image source={{ uri: resolvedPhotoUrl }} style={styles.image} resizeMode="cover" />
       ) : (
         <View style={styles.placeholderImage}>
-          <Text style={styles.placeholderText}>No Photo Provided</Text>
+          <Text style={styles.placeholderText}>לא סופקה תמונה</Text>
         </View>
       )}
 
       <View style={styles.content}>
         <Text style={styles.name}>{fullName}</Text>
-        <Text style={styles.subtitle}>{age} yrs • {heightCm} cm</Text>
+        <Text style={styles.subtitle}>{age} שנים • {heightCm} ס״מ</Text>
 
         <View style={styles.divider} />
 
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Residence:</Text>
-          <Text style={styles.infoValue}>{areaOfResidence}</Text>
+          <Text style={styles.infoLabel}>מגורים:</Text>
+          <Text style={styles.infoValue}>{getEmptyLabel(areaOfResidence)}</Text>
         </View>
 
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Religious Level:</Text>
-          <Text style={styles.infoValue}>{religiousLevel}</Text>
+          <Text style={styles.infoLabel}>רמה דתית:</Text>
+          <Text style={styles.infoValue}>{getEmptyLabel(religiousLevel)}</Text>
         </View>
 
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Education:</Text>
-          <Text style={styles.infoValue}>{education}</Text>
+          <Text style={styles.infoLabel}>השכלה:</Text>
+          <Text style={styles.infoValue}>{getEmptyLabel(education)}</Text>
         </View>
 
         {occupation ? (
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Occupation:</Text>
-            <Text style={styles.infoValue}>{occupation}</Text>
+            <Text style={styles.infoLabel}>עיסוק:</Text>
+            <Text style={styles.infoValue}>{getEmptyLabel(occupation)}</Text>
           </View>
         ) : null}
 
         {lookingForShort ? (
           <View style={styles.lookingForContainer}>
-            <Text style={styles.lookingForTitle}>Looking For:</Text>
+            <Text style={styles.lookingForTitle}>מחפש/ת:</Text>
             <Text style={styles.lookingForText} numberOfLines={2}>{lookingForShort}</Text>
           </View>
         ) : null}
 
         <AppButton
-          title="View Profile"
+          title="צפייה בפרופיל"
           onPress={onViewProfile}
           style={styles.button}
         />
@@ -122,12 +123,14 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: theme.colors.text,
+    textAlign: 'right',
   },
   subtitle: {
     fontSize: 15,
     color: theme.colors.primary,
     fontWeight: '600',
     marginTop: 2,
+    textAlign: 'right',
   },
   divider: {
     height: StyleSheet.hairlineWidth,
@@ -135,7 +138,7 @@ const styles = StyleSheet.create({
     marginVertical: theme.spacing.s,
   },
   infoRow: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     paddingVertical: 4,
   },
@@ -143,14 +146,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.textSecondary,
     fontWeight: '500',
+    textAlign: 'right',
   },
   infoValue: {
     fontSize: 14,
     color: theme.colors.text,
     fontWeight: '500',
-    textAlign: 'right',
+    textAlign: 'left',
     flex: 1,
-    marginLeft: theme.spacing.s,
+    marginRight: theme.spacing.s,
   },
   lookingForContainer: {
     marginTop: theme.spacing.s,
@@ -165,12 +169,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.primary,
     marginBottom: 2,
+    textAlign: 'right',
   },
   lookingForText: {
     fontSize: 13,
     color: theme.colors.text,
     fontStyle: 'italic',
     lineHeight: 18,
+    textAlign: 'right',
   },
   button: {
     marginTop: theme.spacing.m,

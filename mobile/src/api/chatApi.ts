@@ -9,7 +9,7 @@ export const getChatMessages = async (matchId: number): Promise<ChatMessagesResp
 export const sendChatMessage = async (matchId: number, content: string): Promise<ChatMessageResponse> => {
   const trimmed = content.trim();
   if (!trimmed) {
-    throw new Error('Message content cannot be empty');
+    throw new Error('תוכן ההודעה לא יכול להיות ריק');
   }
   const response = await apiClient.post<ChatMessageResponse>(`/matches/${matchId}/messages`, {
     content: trimmed,

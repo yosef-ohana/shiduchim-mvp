@@ -18,7 +18,7 @@ export const LoginScreen = ({ route, navigation }: any) => {
   const handleLogin = async () => {
     setErrorMsg('');
     if (!email || !password) {
-      setErrorMsg('Please fill in all fields');
+      setErrorMsg('אנא מלא את כל השדות');
       return;
     }
     
@@ -34,13 +34,13 @@ export const LoginScreen = ({ route, navigation }: any) => {
 
   return (
     <Screen style={styles.container}>
-      <Text style={styles.title}>Welcome Back</Text>
+      <Text style={styles.title}>ברוכים השבים</Text>
       
       {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
 
       <AppInput
-        label="Email"
-        placeholder="Enter your email"
+        label="אימייל"
+        placeholder="הזן את כתובת האימייל"
         keyboardType="email-address"
         autoCapitalize="none"
         value={email}
@@ -48,22 +48,22 @@ export const LoginScreen = ({ route, navigation }: any) => {
       />
       
       <AppInput
-        label="Password"
-        placeholder="Enter your password"
+        label="סיסמה"
+        placeholder="הזן את הסיסמה"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
       />
 
       <AppButton
-        title="Login"
+        title="התחברות"
         onPress={handleLogin}
         loading={isLoading}
         style={styles.button}
       />
 
       <TouchableOpacity onPress={() => navigation.navigate('Register')} style={styles.linkContainer}>
-        <Text style={styles.linkText}>Don't have an account? Register</Text>
+        <Text style={styles.linkText}>אין לך חשבון? להרשמה</Text>
       </TouchableOpacity>
     </Screen>
   );

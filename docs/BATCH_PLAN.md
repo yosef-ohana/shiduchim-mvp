@@ -891,3 +891,34 @@ DoD:
 
 Required checks:
 - Backend build + Mobile TypeScript check + Git status check.
+
+---
+
+## Phase 18 — Hebrew UI Localization & RTL Polish
+
+Goal: Localize the mobile UI screens, error messages, and status/role values to Hebrew, supporting right-to-left layout alignment where appropriate. Note: This work was mobile UI only; no backend, API, DTO, entity, or DB changes were made.
+
+### Batch 18.0 — Hebrew Display & Error Helpers
+Goal: Create Hebrew display helper displayLabels.ts and error helper errorMessage.ts mapping values and exceptions.
+
+### Batch 18.1 — Entry & Public Screens Localization
+Goal: Localize welcome, login, register, staff login, and wedding code screens.
+
+### Batch 18.2 — User Home & Profile Localization
+Goal: Localize home, profile screens (basic, full, photos).
+
+### Batch 18.3 — Pool Selection & Discover Localization
+Goal: Localize candidate profile, discover feeds, and pool selectors.
+
+### Batch 18.4 — Lists, Matches & Chat Localization
+Goal: Localize lists, likes, matches, match details, chat screens, and action buttons.
+
+### Batch 18.5 — User & Event Manager Wedding Screens
+Goal: Localize weddings listing and wedding detail management flows.
+
+### Batch 18.6 — Admin UI Screens Localization
+Goal: Localize administrative views (users, event managers, weddings).
+
+### Batch 18.7 — Localization QA & Wrap-up
+Goal: Run mobile TypeScript checks, perform English user-visible text scans, check RTL/punctuation, clean up, and push verified changes.
+

@@ -8,6 +8,7 @@ import { MainStackParamList } from '../../navigation/MainStack';
 import { AdminWeddingResponse, WeddingInviteResponse, AdminUserResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+import { getWeddingStatusLabel, getInviteStatusLabel, formatDisplayDate } from '../../utils/displayLabels';
 
 type DetailsRouteProp = RouteProp<MainStackParamList, 'AdminWeddingDetails'>;
 type NavigationProp = NativeStackNavigationProp<MainStackParamList, 'AdminWeddingDetails'>;
@@ -63,7 +64,7 @@ export const AdminWeddingDetailsScreen = () => {
       const updated = await adminApi.assignManager(weddingId, { managerId: parseInt(managerIdInput, 10) });
       setWedding(updated);
       setManagerIdInput('');
-      Alert.alert('Success', 'Manager assigned');
+      Alert.alert('הצלחה', 'מנהל האירוע שויך בהצלחה');
     } catch (error: any) {
       Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'הקצאת מנהל האירועים נכשלה.'));
     }
@@ -73,7 +74,7 @@ export const AdminWeddingDetailsScreen = () => {
     try {
       const updated = await adminApi.assignSelfToWedding(weddingId);
       setWedding(updated);
-      Alert.alert('Success', 'Assigned to self');
+      Alert.alert('הצלחה', 'החתונה שויכה אליך בהצלחה');
     } catch (error: any) {
       Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'שיוך עצמי לחתונה נכשל.'));
     }
@@ -83,7 +84,7 @@ export const AdminWeddingDetailsScreen = () => {
     try {
       const updated = await adminApi.closeWedding(weddingId);
       setWedding(updated);
-      Alert.alert('Success', 'Wedding closed');
+      Alert.alert('הצלחה', 'החתונה נסגרה בהצלחה');
     } catch (error: any) {
       Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'סגירת החתונה נכשלה.'));
     }
@@ -93,7 +94,7 @@ export const AdminWeddingDetailsScreen = () => {
     try {
       const updated = await adminApi.cancelWedding(weddingId);
       setWedding(updated);
-      Alert.alert('Success', 'Wedding cancelled');
+      Alert.alert('הצלחה', 'החתונה בוטלה בהצלחה');
     } catch (error: any) {
       Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'ביטול החתונה נכשל.'));
     }
@@ -101,17 +102,17 @@ export const AdminWeddingDetailsScreen = () => {
 
   const handleRestoreInvite = async (inviteId: number) => {
     Alert.alert(
-      'Restore Invitation',
-      'Are you sure you want to restore this invitation?',
+      'שחזור הזמנה',
+      'האם אתה בטוח שברצונך לשחזר הזמנה זו?',
       [
-        { text: 'No', style: 'cancel' },
+        { text: 'ביטול', style: 'cancel' },
         { 
-          text: 'Yes, Restore', 
+          text: 'כן, שחזר', 
           onPress: async () => {
             setLoading(true);
             try {
               await adminApi.restoreInvite(weddingId, inviteId);
-              Alert.alert('Success', 'Invitation restored.');
+              Alert.alert('הצלחה', 'ההזמנה שוחזרה בהצלחה.');
               await fetchData();
             } catch (error: any) {
               console.error(error);
@@ -140,20 +141,20 @@ export const AdminWeddingDetailsScreen = () => {
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.card}>
           <Text style={styles.title}>{wedding.name}</Text>
-          <Text style={styles.info}>ID: {wedding.id}</Text>
-          <Text style={styles.info}>City: {wedding.city}</Text>
-          <Text style={styles.info}>Date: {wedding.weddingDate}</Text>
-          <Text style={styles.info}>Status: {wedding.status}</Text>
-          <Text style={styles.info}>Access Code: {wedding.accessCode}</Text>
+          <Text style={styles.info}>מזהה חתונה: {wedding.id}</Text>
+          <Text style={styles.info}>עיר: {wedding.city || 'לא צוין'}</Text>
+          <Text style={styles.info}>תאריך החתונה: {formatDisplayDate(wedding.weddingDate)}</Text>
+          <Text style={styles.info}>סטטוס: {getWeddingStatusLabel(wedding.status)}</Text>
+          <Text style={styles.info}>קוד גישה: {wedding.accessCode || 'לא צוין'}</Text>
           <Text style={styles.info}>
-            Owner: {wedding.ownerName ? `${wedding.ownerName} (${wedding.ownerEmail})` : 'N/A'} (ID: {wedding.ownerUserId || 'None'})
+            בעלים: {wedding.ownerName ? `${wedding.ownerName} (${wedding.ownerEmail})` : 'לא צוין'} (מזהה: {wedding.ownerUserId || 'לא צוין'})
           </Text>
-          <Text style={styles.info}>Participants: {wedding.participantsCount}</Text>
-          <Text style={styles.info}>Matches: {wedding.matchesCount}</Text>
+          <Text style={styles.info}>משתתפים: {wedding.participantsCount}</Text>
+          <Text style={styles.info}>שידוכים: {wedding.matchesCount}</Text>
         </View>
 
         <View style={styles.actionsContainer}>
-          <Text style={styles.sectionTitle}>Assign Manager</Text>
+          <Text style={styles.sectionTitle}>שיוך מנהל אירוע</Text>
           
           <ScrollView style={styles.managerList} nestedScrollEnabled={true}>
             {eventManagers.map(manager => (
@@ -176,40 +177,40 @@ export const AdminWeddingDetailsScreen = () => {
             onPress={handleAssignManager}
             disabled={!managerIdInput}
           >
-            <Text style={styles.btnText}>Assign Selected Manager</Text>
+            <Text style={styles.btnText}>שיוך מנהל אירוע שנבחר</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.fullBtn, { backgroundColor: theme.colors.primary }]} onPress={handleAssignSelf}>
-            <Text style={styles.btnText}>Assign Self</Text>
+            <Text style={styles.btnText}>שיוך עצמי</Text>
           </TouchableOpacity>
 
           {wedding.status === 'ACTIVE' && (
             <>
               <TouchableOpacity style={[styles.fullBtn, { backgroundColor: '#f0ad4e' }]} onPress={handleClose}>
-                <Text style={styles.btnText}>Close Wedding</Text>
+                <Text style={styles.btnText}>סגירת חתונה</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.fullBtn, { backgroundColor: '#d9534f' }]} onPress={handleCancel}>
-                <Text style={styles.btnText}>Cancel Wedding</Text>
+                <Text style={styles.btnText}>ביטול חתונה</Text>
               </TouchableOpacity>
             </>
           )}
 
           {invites.length > 0 && (
             <View style={styles.invitesContainer}>
-              <Text style={styles.sectionTitle}>Invitations ({invites.length})</Text>
+              <Text style={styles.sectionTitle}>הזמנות ({invites.length})</Text>
               {invites.map((invite) => (
                 <View key={`invite-${invite.id}`} style={styles.inviteCard}>
                   <View style={{ flex: 1, marginRight: theme.spacing.s }}>
                     <Text style={styles.inviteName}>{invite.fullName}</Text>
                     <Text style={styles.inviteEmail}>{invite.email}</Text>
-                    <Text style={styles.inviteStatus}>Status: {invite.status}</Text>
+                    <Text style={styles.inviteStatus}>סטטוס: {getInviteStatusLabel(invite.status)}</Text>
                   </View>
                   {invite.status === 'CANCELLED' && wedding.status === 'ACTIVE' && (
                     <TouchableOpacity
                       style={styles.restoreBtn}
                       onPress={() => handleRestoreInvite(invite.id)}
                     >
-                      <Text style={styles.restoreBtnText}>Restore</Text>
+                      <Text style={styles.restoreBtnText}>החזרת הזמנה</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -242,11 +243,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: theme.spacing.s,
     color: theme.colors.text,
+    textAlign: 'right',
   },
   info: {
     fontSize: 16,
     marginBottom: 4,
     color: theme.colors.textSecondary,
+    textAlign: 'right',
   },
   actionsContainer: {
     marginTop: theme.spacing.s,
@@ -255,6 +258,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: theme.spacing.m,
+    textAlign: 'right',
   },
   row: {
     flexDirection: 'row',
@@ -313,16 +317,19 @@ const styles = StyleSheet.create({
   inviteName: {
     fontSize: 16,
     fontWeight: 'bold',
+    textAlign: 'right',
   },
   inviteEmail: {
     fontSize: 14,
     color: theme.colors.textSecondary,
     marginBottom: 4,
+    textAlign: 'right',
   },
   inviteStatus: {
     fontSize: 13,
     fontWeight: '600',
     color: theme.colors.primary,
+    textAlign: 'right',
   },
   managerList: {
     maxHeight: 200,
@@ -344,10 +351,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: theme.colors.text,
+    textAlign: 'right',
   },
   managerEmail: {
     fontSize: 14,
     color: theme.colors.textSecondary,
     marginTop: 2,
+    textAlign: 'right',
   },
 });

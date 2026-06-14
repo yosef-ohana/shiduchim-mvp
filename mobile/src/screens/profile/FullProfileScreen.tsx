@@ -6,6 +6,30 @@ import { AppButton } from '../../components/AppButton';
 import { getMyProfile, updateFullProfile } from '../../api/profileApi';
 import { theme } from '../../theme/theme';
 import { useAuth } from '../../context/AuthContext';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+import { getYesNoLabel } from '../../utils/displayLabels';
+
+const getProfileStatusLabel = (status: string) => {
+  switch (status) {
+    case 'NONE': return 'לא הוגדר';
+    case 'BASIC': return 'פרופיל בסיסי';
+    case 'FULL': return 'פרופיל מלא';
+    case 'FULL_INCOMPLETE_BLOCKED': return 'פרופיל מלא חסר (חסום)';
+    default: return status;
+  }
+};
+
+const translateFieldName = (field: string) => {
+  switch (field) {
+    case 'education': return 'השכלה';
+    case 'occupation': return 'עיסוק';
+    case 'selfDescription': return 'עליי / תיאור עצמי';
+    case 'hobbies': return 'תחביבים';
+    case 'lookingFor': return 'מה אני מחפש/ת';
+    case 'primaryPhoto': return 'תמונה ראשית';
+    default: return field;
+  }
+};
 
 export const FullProfileScreen = ({ navigation }: any) => {
   const { refreshMe } = useAuth();
@@ -45,7 +69,7 @@ export const FullProfileScreen = ({ navigation }: any) => {
       setHeadCovering(data.headCovering || '');
       setHasDrivingLicense(data.hasDrivingLicense ?? false);
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || err.message || 'Failed to load current profile data');
+      setErrorMsg(getFriendlyErrorMessage(err, 'טעינת נתוני הפרופיל נכשלה.'));
     } finally {
       setIsLoading(false);
     }
@@ -63,7 +87,7 @@ export const FullProfileScreen = ({ navigation }: any) => {
       !hobbies.trim() ||
       !lookingFor.trim()
     ) {
-      setErrorMsg('Education, Occupation, Self Description, Hobbies, and Looking For are required');
+      setErrorMsg('השדות השכלה, עיסוק, תיאור עצמי, תחביבים ומה אני מחפש/ת הם שדות חובה');
       return;
     }
 
@@ -82,7 +106,7 @@ export const FullProfileScreen = ({ navigation }: any) => {
       await refreshMe();
       setSuccessInfo(response);
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || err.message || 'Failed to save full profile');
+      setErrorMsg(getFriendlyErrorMessage(err, 'שמירת הפרופיל המלא נכשלה.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -92,7 +116,7 @@ export const FullProfileScreen = ({ navigation }: any) => {
     return (
       <Screen style={styles.centerContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Loading current data...</Text>
+        <Text style={styles.loadingText}>טוען נתונים...</Text>
       </Screen>
     );
   }
@@ -100,7 +124,7 @@ export const FullProfileScreen = ({ navigation }: any) => {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Full Profile</Text>
+        <Text style={styles.title}>פרופיל מלא</Text>
 
         {errorMsg ? (
           <View style={styles.errorCard}>
@@ -110,36 +134,36 @@ export const FullProfileScreen = ({ navigation }: any) => {
 
         {successInfo ? (
           <View style={styles.successCard}>
-            <Text style={styles.successText}>Full profile saved successfully!</Text>
+            <Text style={styles.successText}>הפרופיל המלא נשמר בהצלחה!</Text>
             
             <Text style={styles.successDetails}>
-              Profile Status: <Text style={styles.boldText}>{successInfo.profileStatus}</Text>
+              סטטוס פרופיל: <Text style={styles.boldText}>{getProfileStatusLabel(successInfo.profileStatus)}</Text>
             </Text>
             
             <Text style={styles.successDetails}>
-              Global Pool Enabled: <Text style={styles.boldText}>{successInfo.globalPoolEnabled ? 'Yes' : 'No'}</Text>
+              מאגר כללי פעיל: <Text style={styles.boldText}>{getYesNoLabel(successInfo.globalPoolEnabled)}</Text>
             </Text>
 
             {successInfo.missingFields && successInfo.missingFields.length > 0 ? (
               <View style={styles.missingContainer}>
-                <Text style={styles.successDetails}>Remaining missing fields:</Text>
+                <Text style={styles.successDetails}>שדות חסרים שנותרו:</Text>
                 {successInfo.missingFields.map((field) => (
                   <Text key={field} style={styles.missingFieldItem}>
-                    • {field}
+                    • {translateFieldName(field)}
                   </Text>
                 ))}
               </View>
             ) : (
-              <Text style={styles.successDetails}>All fields complete!</Text>
+              <Text style={styles.successDetails}>כל השדות הושלמו!</Text>
             )}
 
             <AppButton
-              title="Go to My Profile"
+              title="מעבר לפרופיל שלי"
               onPress={() => navigation.navigate('Profile')}
               style={styles.successButton}
             />
             <AppButton
-              title="Go back to Home"
+              title="חזרה לדף הבית"
               onPress={() => navigation.navigate('Me')}
               style={[styles.successButton, styles.successButtonSecondary]}
             />
@@ -147,28 +171,28 @@ export const FullProfileScreen = ({ navigation }: any) => {
         ) : (
           <View style={styles.formCard}>
             <AppInput
-              label="Education"
-              placeholder="e.g. Yeshiva / College / Degree"
+              label="השכלה"
+              placeholder="לדוגמה: ישיבה / מדרשה / תואר אקדמי"
               value={education}
               onChangeText={setEducation}
             />
 
             <AppInput
-              label="Occupation"
-              placeholder="e.g. Software Engineer"
+              label="עיסוק"
+              placeholder="לדוגמה: מהנדס תוכנה"
               value={occupation}
               onChangeText={setOccupation}
             />
 
             <AppInput
-              label="Head Covering (Optional)"
-              placeholder="e.g. Kippah / None"
+              label="כיסוי ראש (אופציונלי)"
+              placeholder="לדוגמה: כיפה / מטפחת / ללא"
               value={headCovering}
               onChangeText={setHeadCovering}
             />
 
             <View style={styles.switchRow}>
-              <Text style={styles.switchLabel}>Has Driving License</Text>
+              <Text style={styles.switchLabel}>יש רישיון נהיגה</Text>
               <Switch
                 value={hasDrivingLicense}
                 onValueChange={setHasDrivingLicense}
@@ -178,8 +202,8 @@ export const FullProfileScreen = ({ navigation }: any) => {
             </View>
 
             <AppInput
-              label="Self Description"
-              placeholder="Tell us about yourself..."
+              label="עליי (תיאור עצמי)"
+              placeholder="ספר/י לנו קצת על עצמך..."
               multiline
               numberOfLines={4}
               style={styles.textArea}
@@ -188,8 +212,8 @@ export const FullProfileScreen = ({ navigation }: any) => {
             />
 
             <AppInput
-              label="Hobbies"
-              placeholder="Your hobbies and interests..."
+              label="תחביבים"
+              placeholder="תחביבים ותחומי עניין..."
               multiline
               numberOfLines={3}
               style={styles.textArea}
@@ -198,8 +222,8 @@ export const FullProfileScreen = ({ navigation }: any) => {
             />
 
             <AppInput
-              label="Looking For"
-              placeholder="What are you looking for in a partner?"
+              label="מה אני מחפש/ת"
+              placeholder="מה את/ה מחפש/ת בבן/בת הזוג?"
               multiline
               numberOfLines={4}
               style={styles.textArea}
@@ -208,8 +232,8 @@ export const FullProfileScreen = ({ navigation }: any) => {
             />
 
             <AppInput
-              label="Family Description (Optional)"
-              placeholder="Describe your family background..."
+              label="רקע משפחתי (אופציונלי)"
+              placeholder="מתאר/ת את הרקע המשפחתי שלך..."
               multiline
               numberOfLines={3}
               style={styles.textArea}
@@ -218,7 +242,7 @@ export const FullProfileScreen = ({ navigation }: any) => {
             />
 
             <AppButton
-              title="Save Full Profile"
+              title="שמירת פרופיל מלא"
               onPress={handleSave}
               loading={isSubmitting}
               style={styles.saveButton}
@@ -245,6 +269,7 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.m,
     color: theme.colors.textSecondary,
     fontSize: 16,
+    textAlign: 'center',
   },
   title: {
     fontSize: 26,
@@ -267,7 +292,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
   },
   switchRow: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: theme.spacing.m,
@@ -279,6 +304,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.text,
     fontWeight: '600',
+    textAlign: 'right',
   },
   textArea: {
     height: 80,

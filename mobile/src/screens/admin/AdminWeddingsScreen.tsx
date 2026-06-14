@@ -8,6 +8,7 @@ import { adminApi } from '../../api/adminApi';
 import { AdminWeddingResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+import { getWeddingStatusLabel, formatDisplayDate } from '../../utils/displayLabels';
 
 type NavigationProp = NativeStackNavigationProp<MainStackParamList, 'AdminWeddings'>;
 
@@ -41,14 +42,14 @@ export const AdminWeddingsScreen = () => {
       style={styles.card}
       onPress={() => navigation.navigate('AdminWeddingDetails', { weddingId: item.id })}
     >
-      <Text style={styles.name}>{item.name || 'No Name'} (ID: {item.id})</Text>
-      <Text style={styles.info}>City: {item.city || 'N/A'}</Text>
-      <Text style={styles.info}>Date: {item.weddingDate || 'N/A'}</Text>
-      <Text style={styles.info}>Status: {item.status}</Text>
-      <Text style={styles.info}>Access Code: {item.accessCode || 'N/A'}</Text>
-      <Text style={styles.info}>Owner ID: {item.ownerUserId}</Text>
-      <Text style={styles.info}>Participants: {item.participantsCount}</Text>
-      <Text style={styles.info}>Matches: {item.matchesCount}</Text>
+      <Text style={styles.name}>{item.name || 'לא צוין'} (מזהה: {item.id})</Text>
+      <Text style={styles.info}>עיר: {item.city || 'לא צוין'}</Text>
+      <Text style={styles.info}>תאריך החתונה: {formatDisplayDate(item.weddingDate)}</Text>
+      <Text style={styles.info}>סטטוס: {getWeddingStatusLabel(item.status)}</Text>
+      <Text style={styles.info}>קוד גישה: {item.accessCode || 'לא צוין'}</Text>
+      <Text style={styles.info}>מזהה משתמש בעלים: {item.ownerUserId || 'לא צוין'}</Text>
+      <Text style={styles.info}>משתתפים: {item.participantsCount}</Text>
+      <Text style={styles.info}>שידוכים: {item.matchesCount}</Text>
     </TouchableOpacity>
   );
 
@@ -63,7 +64,7 @@ export const AdminWeddingsScreen = () => {
             keyExtractor={(item) => item.id.toString()}
             renderItem={renderItem}
             contentContainerStyle={styles.list}
-            ListEmptyComponent={<Text style={styles.emptyText}>No weddings found.</Text>}
+            ListEmptyComponent={<Text style={styles.emptyText}>לא נמצאו חתונות.</Text>}
             refreshing={loading}
             onRefresh={fetchWeddings}
           />
@@ -103,11 +104,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.text,
     marginBottom: theme.spacing.s,
+    textAlign: 'right',
   },
   info: {
     fontSize: 14,
     color: theme.colors.textSecondary,
     marginBottom: 2,
+    textAlign: 'right',
   },
   emptyText: {
     textAlign: 'center',

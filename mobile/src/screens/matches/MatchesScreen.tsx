@@ -7,7 +7,8 @@ import { theme } from '../../theme/theme';
 import { getMatches } from '../../api/matchesApi';
 import { MatchResponse } from '../../types/api';
 import { getImageUrl } from '../../utils/imageUrl';
-
+import { getPoolTypeLabel, formatDisplayDate } from '../../utils/displayLabels';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 export const MatchesScreen = ({ navigation }: any) => {
   const [matches, setMatches] = useState<MatchResponse[]>([]);
@@ -33,9 +34,7 @@ export const MatchesScreen = ({ navigation }: any) => {
       setMatches(activeMatches);
     } catch (err: any) {
       setError(
-        err.response?.data?.message ||
-        err.message ||
-        'Failed to load matches. Please try again.'
+        getFriendlyErrorMessage(err, 'טעינת ההתאמות נכשלה. אנא נסה שוב.')
       );
     } finally {
       setLoading(false);
@@ -65,7 +64,7 @@ export const MatchesScreen = ({ navigation }: any) => {
           <Image source={{ uri: getImageUrl(item.otherUserPrimaryPhotoUrl) }} style={styles.avatar} />
         ) : (
           <View style={styles.placeholderAvatar}>
-            <Text style={styles.placeholderText}>No Photo</Text>
+            <Text style={styles.placeholderText}>אין תמונה</Text>
           </View>
         )}
 
@@ -75,15 +74,15 @@ export const MatchesScreen = ({ navigation }: any) => {
               {item.otherUserFullName}
             </Text>
             <Text style={styles.poolTag}>
-              {item.poolType === 'WEDDING' ? 'Wedding Pool' : item.poolType === 'GLOBAL' ? 'Global Pool' : item.poolType}
+              {getPoolTypeLabel(item.poolType)}
             </Text>
           </View>
           
           <Text style={styles.dateText}>
-            Matched on {new Date(item.createdAt).toLocaleDateString()}
+            נוצרה התאמה ב-{formatDisplayDate(item.createdAt)}
           </Text>
           
-          <Text style={styles.actionText}>Tap to view details & chat →</Text>
+          <Text style={styles.actionText}>לחץ לצפייה בפרטים וצ׳אט ←</Text>
         </View>
       </TouchableOpacity>
     );
@@ -93,7 +92,7 @@ export const MatchesScreen = ({ navigation }: any) => {
     return (
       <Screen style={styles.centerContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Loading matches...</Text>
+        <Text style={styles.loadingText}>טוען התאמות...</Text>
       </Screen>
     );
   }
@@ -102,7 +101,7 @@ export const MatchesScreen = ({ navigation }: any) => {
     return (
       <Screen style={styles.centerContainer}>
         <Text style={styles.errorText}>{error}</Text>
-        <AppButton title="Retry" onPress={() => fetchMatches()} style={styles.retryButton} />
+        <AppButton title="נסה שוב" onPress={() => fetchMatches()} style={styles.retryButton} />
       </Screen>
     );
   }
@@ -110,9 +109,9 @@ export const MatchesScreen = ({ navigation }: any) => {
   return (
     <Screen>
       <View style={styles.header}>
-        <Text style={styles.title}>My Matches</Text>
+        <Text style={styles.title}>ההתאמות שלי</Text>
         <TouchableOpacity onPress={() => fetchMatches()} style={styles.refreshIconContainer}>
-          <Text style={styles.refreshIconText}>🔄 Refresh</Text>
+          <Text style={styles.refreshIconText}>🔄 רענון</Text>
         </TouchableOpacity>
       </View>
       
@@ -125,9 +124,9 @@ export const MatchesScreen = ({ navigation }: any) => {
         onRefresh={handleRefresh}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyTitle}>No Matches Yet</Text>
+            <Text style={styles.emptyTitle}>עדיין אין התאמות</Text>
             <Text style={styles.emptySubtitle}>
-              Keep active in discovery! When you like someone and they like you back, you'll see your matches here.
+              המשך להיות פעיל בגילוי! כשאתה עושה לייק למישהו והוא מחזיר לך לייק, תראה את ההתאמות שלך כאן.
             </Text>
           </View>
         }
@@ -159,7 +158,7 @@ const styles = StyleSheet.create({
     width: '60%',
   },
   header: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: theme.spacing.m,
@@ -186,7 +185,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   card: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.m,
     padding: theme.spacing.m,
@@ -222,10 +221,10 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flex: 1,
-    marginLeft: theme.spacing.m,
+    marginRight: theme.spacing.m,
   },
   headerRow: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
@@ -234,6 +233,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.text,
     flex: 1,
+    textAlign: 'right',
   },
   poolTag: {
     fontSize: 11,
@@ -245,18 +245,20 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     borderWidth: 1,
     borderColor: 'rgba(212, 175, 55, 0.3)',
-    marginLeft: theme.spacing.s,
+    marginRight: theme.spacing.s,
   },
   dateText: {
     fontSize: 13,
     color: theme.colors.textSecondary,
     marginTop: 2,
+    textAlign: 'right',
   },
   actionText: {
     fontSize: 12,
     color: theme.colors.primary,
     fontWeight: '500',
     marginTop: 6,
+    textAlign: 'right',
   },
   emptyContainer: {
     flex: 1,

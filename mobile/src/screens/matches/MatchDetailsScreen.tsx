@@ -7,7 +7,8 @@ import { getMatchDetails } from '../../api/matchesApi';
 import { dislikeUser } from '../../api/actionsApi';
 import { MatchDetailsResponse } from '../../types/api';
 import { getImageUrl } from '../../utils/imageUrl';
-
+import { getYesNoLabel, getEmptyLabel } from '../../utils/displayLabels';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 export const MatchDetailsScreen = ({ route, navigation }: any) => {
   const { matchId } = route.params || {};
@@ -24,9 +25,7 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
       setDetails(data);
     } catch (err: any) {
       setError(
-        err.response?.data?.message ||
-        err.message ||
-        'Failed to load match details. Please try again.'
+        getFriendlyErrorMessage(err, 'טעינת פרטי ההתאמה נכשלה. אנא נסה שוב.')
       );
     } finally {
       setLoading(false);
@@ -48,11 +47,11 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
       });
 
       Alert.alert(
-        'Match Cancelled',
-        'You have successfully cancelled this match.',
+        'ההתאמה בוטלה',
+        'ההתאמה בוטלה בהצלחה.',
         [
           {
-            text: 'OK',
+            text: 'אישור',
             onPress: () => {
               navigation.goBack();
             },
@@ -61,8 +60,8 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
       );
     } catch (err: any) {
       Alert.alert(
-        'Error',
-        err.response?.data?.message || err.message || 'Failed to cancel match. Please try again.'
+        'שגיאה',
+        getFriendlyErrorMessage(err, 'ביטול ההתאמה נכשל. אנא נסה שוב.')
       );
     } finally {
       setDislikeLoading(false);
@@ -71,11 +70,11 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
 
   const handleCancelMatchPress = () => {
     Alert.alert(
-      'Cancel Match',
-      'This Match and chat will be cancelled, and the user will move to your Dislikes.',
+      'ביטול התאמה',
+      'התאמה זו והצ׳אט יבוטלו, והמשתמש יועבר לרשימת הלא מתאימים.',
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Yes, Cancel Match', style: 'destructive', onPress: handleCancelMatch },
+        { text: 'ביטול', style: 'cancel' },
+        { text: 'כן, ביטול התאמה', style: 'destructive', onPress: handleCancelMatch },
       ]
     );
   };
@@ -84,7 +83,7 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
     return (
       <Screen style={styles.centerContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.stateText}>Loading match details...</Text>
+        <Text style={styles.stateText}>טוען פרטי התאמה...</Text>
       </Screen>
     );
   }
@@ -92,8 +91,8 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
   if (error || !details) {
     return (
       <Screen style={styles.centerContainer}>
-        <Text style={styles.errorText}>{error || 'Match details could not be loaded'}</Text>
-        <AppButton title="Retry" onPress={fetchDetails} style={styles.retryButton} />
+        <Text style={styles.errorText}>{error || 'לא ניתן לטעון את פרטי ההתאמה'}</Text>
+        <AppButton title="נסה שוב" onPress={fetchDetails} style={styles.retryButton} />
       </Screen>
     );
   }
@@ -102,7 +101,7 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
 
   const renderRow = (label: string, value: any, isLongText = false) => {
     const displayValue =
-      value === null || value === undefined || value === '' ? 'Not specified' : String(value);
+      value === null || value === undefined || value === '' ? 'לא צוין' : String(value);
 
     if (isLongText) {
       return (
@@ -131,7 +130,7 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
               <Image source={{ uri: getImageUrl(profile.primaryPhotoUrl) }} style={styles.mainImage} />
             ) : (
               <View style={[styles.mainImage, styles.placeholderImage]}>
-                <Text style={styles.placeholderText}>No Photo</Text>
+                <Text style={styles.placeholderText}>אין תמונה</Text>
               </View>
             )}
           </View>
@@ -141,26 +140,26 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
         <View style={styles.headerInfo}>
           <Text style={styles.name}>{profile.fullName}</Text>
           <Text style={styles.subtitle}>
-            {profile.age} yrs • {profile.heightCm} cm
+            {profile.age} שנים • {profile.heightCm} ס״מ
           </Text>
         </View>
 
         {/* Button Actions Section */}
         <View style={styles.actionsSection}>
           <AppButton
-            title="💬 Open Chat"
+            title="💬 פתיחת צ׳אט"
             onPress={() => navigation.navigate('Chat', { matchId: details.matchId })}
             style={styles.chatButton}
           />
           {profile.userId ? (
             <AppButton
-              title="👤 View Full Candidate Profile"
+              title="👤 צפייה בפרופיל מועמד מלא"
               onPress={() => navigation.navigate('CandidateProfile', { userId: profile.userId })}
               style={styles.profileButton}
             />
           ) : null}
           <AppButton
-            title="💔 Dislike / Cancel Match"
+            title="💔 ביטול התאמה"
             onPress={handleCancelMatchPress}
             style={styles.dislikeButton}
             loading={dislikeLoading}
@@ -170,39 +169,32 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
 
         {/* Basic Info Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Profile Details</Text>
+          <Text style={styles.sectionTitle}>פרטי הפרופיל</Text>
           <View style={styles.card}>
-            {renderRow('Residence', profile.areaOfResidence)}
-            {renderRow('Religious Level', profile.religiousLevel)}
-            {renderRow('Head Covering', profile.headCovering)}
-            {renderRow(
-              'Driving License',
-              profile.hasDrivingLicense !== null
-                ? profile.hasDrivingLicense
-                  ? 'Yes'
-                  : 'No'
-                : 'Not specified'
-            )}
+            {renderRow('מגורים', getEmptyLabel(profile.areaOfResidence))}
+            {renderRow('רמה דתית', getEmptyLabel(profile.religiousLevel))}
+            {renderRow('כיסוי ראש', getEmptyLabel(profile.headCovering))}
+            {renderRow('רישיון נהיגה', getYesNoLabel(profile.hasDrivingLicense))}
           </View>
         </View>
 
         {/* Education & Occupation Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Education & Career</Text>
+          <Text style={styles.sectionTitle}>השכלה וקריירה</Text>
           <View style={styles.card}>
-            {renderRow('Education', profile.education)}
-            {renderRow('Occupation', profile.occupation)}
+            {renderRow('השכלה', getEmptyLabel(profile.education))}
+            {renderRow('עיסוק', getEmptyLabel(profile.occupation))}
           </View>
         </View>
 
         {/* Written Description Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About Me</Text>
+          <Text style={styles.sectionTitle}>קצת עליי</Text>
           <View style={styles.card}>
-            {renderRow('Self Description', profile.selfDescription, true)}
-            {renderRow('Hobbies & Interests', profile.hobbies, true)}
-            {renderRow('Family Background', profile.familyDescription, true)}
-            {renderRow('What I am Looking For', profile.lookingFor, true)}
+            {renderRow('תיאור עצמי', getEmptyLabel(profile.selfDescription), true)}
+            {renderRow('תחביבים ותחומי עניין', getEmptyLabel(profile.hobbies), true)}
+            {renderRow('רקע משפחתי', getEmptyLabel(profile.familyDescription), true)}
+            {renderRow('מה שאני מחפש/ת', getEmptyLabel(profile.lookingFor), true)}
           </View>
         </View>
 
@@ -297,7 +289,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.text,
     marginBottom: theme.spacing.s,
-    paddingLeft: theme.spacing.s,
+    paddingRight: theme.spacing.s,
+    textAlign: 'right',
   },
   card: {
     backgroundColor: theme.colors.surface,
@@ -313,7 +306,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   row: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     paddingVertical: theme.spacing.m,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -323,14 +316,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.textSecondary,
     fontWeight: '600',
+    textAlign: 'right',
   },
   rowValue: {
     fontSize: 14,
     color: theme.colors.text,
     fontWeight: '500',
-    textAlign: 'right',
+    textAlign: 'left',
     flex: 1,
-    marginLeft: theme.spacing.m,
+    marginRight: theme.spacing.m,
   },
   longTextContainer: {
     paddingVertical: theme.spacing.m,
@@ -342,6 +336,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     marginTop: theme.spacing.s,
     lineHeight: 20,
+    textAlign: 'right',
   },
   spacing: {
     height: theme.spacing.xl,

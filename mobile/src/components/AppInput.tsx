@@ -8,11 +8,21 @@ interface AppInputProps extends TextInputProps {
 }
 
 export const AppInput: React.FC<AppInputProps> = ({ label, error, style, ...props }) => {
+  const isTechnicalInput = 
+    props.secureTextEntry || 
+    props.keyboardType === 'email-address' || 
+    props.keyboardType === 'numeric' ||
+    props.keyboardType === 'number-pad' ||
+    props.autoComplete === 'password' || 
+    props.autoComplete === 'email';
+
+  const textAlignStyle = isTechnicalInput ? styles.inputLeft : styles.inputRight;
+
   return (
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
       <TextInput
-        style={[styles.input, error ? styles.inputError : null, style]}
+        style={[styles.input, textAlignStyle, error ? styles.inputError : null, style]}
         placeholderTextColor={theme.colors.textSecondary}
         {...props}
       />
@@ -31,6 +41,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     fontSize: 14,
     fontWeight: '600',
+    textAlign: 'right',
   },
   input: {
     borderWidth: 1,
@@ -41,6 +52,12 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     backgroundColor: theme.colors.surface,
   },
+  inputLeft: {
+    textAlign: 'left',
+  },
+  inputRight: {
+    textAlign: 'right',
+  },
   inputError: {
     borderColor: theme.colors.error,
   },
@@ -48,5 +65,6 @@ const styles = StyleSheet.create({
     color: theme.colors.error,
     fontSize: 12,
     marginTop: 4,
+    textAlign: 'right',
   },
 });

@@ -21,7 +21,7 @@ export const RegisterScreen = ({ route, navigation }: any) => {
   const handleRegister = async () => {
     setErrorMsg('');
     if (!fullName || !email || !password) {
-      setErrorMsg('Please fill in all fields');
+      setErrorMsg('אנא מלא את כל השדות');
       return;
     }
     
@@ -38,20 +38,20 @@ export const RegisterScreen = ({ route, navigation }: any) => {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Create Account</Text>
+        <Text style={styles.title}>יצירת חשבון</Text>
         
         {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
 
         <AppInput
-          label="Full Name"
-          placeholder="Enter your full name"
+          label="שם מלא"
+          placeholder="הזן את שמך המלא"
           value={fullName}
           onChangeText={setFullName}
         />
 
         <AppInput
-          label="Email"
-          placeholder="Enter your email"
+          label="אימייל"
+          placeholder="הזן את כתובת האימייל"
           keyboardType="email-address"
           autoCapitalize="none"
           value={email}
@@ -59,38 +59,38 @@ export const RegisterScreen = ({ route, navigation }: any) => {
         />
         
         <AppInput
-          label="Password"
-          placeholder="Enter your password"
+          label="סיסמה"
+          placeholder="הזן את הסיסמה"
           secureTextEntry
           value={password}
           onChangeText={setPassword}
         />
 
-        <Text style={styles.label}>Gender</Text>
+        <Text style={styles.label}>מגדר</Text>
         <View style={styles.genderContainer}>
           <TouchableOpacity 
             style={[styles.genderButton, gender === 'MALE' && styles.genderSelected]} 
             onPress={() => setGender('MALE')}
           >
-            <Text style={[styles.genderText, gender === 'MALE' && styles.genderTextSelected]}>Male</Text>
+            <Text style={[styles.genderText, gender === 'MALE' && styles.genderTextSelected]}>זכר</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.genderButton, gender === 'FEMALE' && styles.genderSelected]} 
             onPress={() => setGender('FEMALE')}
           >
-            <Text style={[styles.genderText, gender === 'FEMALE' && styles.genderTextSelected]}>Female</Text>
+            <Text style={[styles.genderText, gender === 'FEMALE' && styles.genderTextSelected]}>נקבה</Text>
           </TouchableOpacity>
         </View>
 
         <AppButton
-          title="Register"
+          title="הרשמה"
           onPress={handleRegister}
           loading={isLoading}
           style={styles.button}
         />
 
         <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.linkContainer}>
-          <Text style={styles.linkText}>Already have an account? Login</Text>
+          <Text style={styles.linkText}>כבר יש לך חשבון? להתחברות</Text>
         </TouchableOpacity>
       </ScrollView>
     </Screen>
@@ -131,9 +131,10 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     fontSize: 14,
     fontWeight: '600',
+    textAlign: 'right',
   },
   genderContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     marginBottom: theme.spacing.m,
   },
   genderButton: {

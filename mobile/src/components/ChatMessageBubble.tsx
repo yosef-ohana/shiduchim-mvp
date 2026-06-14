@@ -65,6 +65,7 @@ const styles = StyleSheet.create({
   content: {
     fontSize: 16,
     lineHeight: 20,
+    textAlign: 'right',
   },
   myText: {
     color: theme.colors.surface,

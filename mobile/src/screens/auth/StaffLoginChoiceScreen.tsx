@@ -11,8 +11,8 @@ export const StaffLoginChoiceScreen = ({ navigation }: any) => {
   return (
     <Screen style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Staff Portal</Text>
-        <Text style={styles.subtitle}>Select your staff portal to log in</Text>
+        <Text style={styles.title}>פורטל צוות</Text>
+        <Text style={styles.subtitle}>בחר את פורטל הצוות שלך להתחברות</Text>
 
         <View style={styles.cardContainer}>
           <TouchableOpacity
@@ -23,8 +23,8 @@ export const StaffLoginChoiceScreen = ({ navigation }: any) => {
             <View style={styles.iconCircle}>
               <Text style={styles.iconText}>🔑</Text>
             </View>
-            <Text style={styles.cardTitle}>Admin Portal</Text>
-            <Text style={styles.cardDesc}>Manage users, weddings, and global system operations.</Text>
+            <Text style={styles.cardTitle}>פורטל מנהל מערכת</Text>
+            <Text style={styles.cardDesc}>ניהול משתמשים, חתונות ופעולות מערכת גלובליות.</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -35,8 +35,8 @@ export const StaffLoginChoiceScreen = ({ navigation }: any) => {
             <View style={styles.iconCircle}>
               <Text style={styles.iconText}>📅</Text>
             </View>
-            <Text style={styles.cardTitle}>Event Manager Portal</Text>
-            <Text style={styles.cardDesc}>Manage your weddings, access codes, and participants.</Text>
+            <Text style={styles.cardTitle}>פורטל מנהל אירוע</Text>
+            <Text style={styles.cardDesc}>ניהול חתונות, קודי גישה ומשתתפים באירוע.</Text>
           </TouchableOpacity>
         </View>
       </View>

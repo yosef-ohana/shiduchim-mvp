@@ -7,6 +7,8 @@ import { theme } from '../../theme/theme';
 import { getConversations } from '../../api/chatsApi';
 import { ConversationResponse } from '../../types/api';
 import { getImageUrl } from '../../utils/imageUrl';
+import { getPoolTypeLabel } from '../../utils/displayLabels';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 const formatLastMessageTime = (isoString?: string | null) => {
   if (!isoString) return '';
@@ -50,9 +52,7 @@ export const ChatsScreen = ({ navigation }: any) => {
       // Only set error during full loading or manual refresh, not silent polling
       if (showLoadingIndicator || refreshing) {
         setError(
-          err.response?.data?.message ||
-          err.message ||
-          'Failed to load chats. Please try again.'
+          getFriendlyErrorMessage(err, 'טעינת השיחות נכשלה. אנא נסה שוב.')
         );
       }
     } finally {
@@ -84,7 +84,7 @@ export const ChatsScreen = ({ navigation }: any) => {
 
   const renderItem = ({ item }: { item: ConversationResponse }) => {
     const avatarUrl = getImageUrl(item.otherUserPrimaryPhotoUrl);
-    const contextText = item.poolType === 'WEDDING' ? 'Wedding Pool' : 'Global Pool';
+    const contextText = getPoolTypeLabel(item.poolType);
     const messageTime = formatLastMessageTime(item.lastMessageAt);
 
     return (
@@ -94,7 +94,7 @@ export const ChatsScreen = ({ navigation }: any) => {
             <Image source={{ uri: avatarUrl }} style={styles.avatar} />
           ) : (
             <View style={styles.placeholderAvatar}>
-              <Text style={styles.placeholderText}>No Photo</Text>
+              <Text style={styles.placeholderText}>אין תמונה</Text>
             </View>
           )}
 
@@ -109,7 +109,7 @@ export const ChatsScreen = ({ navigation }: any) => {
             </View>
 
             <Text style={styles.lastMessage} numberOfLines={1}>
-              {item.lastMessagePreview || 'No messages yet'}
+              {item.lastMessagePreview || 'עדיין אין הודעות'}
             </Text>
 
             <View style={styles.badgeContainer}>
@@ -125,12 +125,12 @@ export const ChatsScreen = ({ navigation }: any) => {
 
         <View style={styles.actionsContainer}>
           <AppButton
-            title="💬 Open Chat"
+            title="💬 פתיחת צ׳אט"
             onPress={() => navigation.navigate('Chat', { matchId: item.matchId })}
             style={styles.chatButton}
           />
           <AppButton
-            title="👤 View Profile"
+            title="👤 צפייה בפרופיל"
             onPress={() => navigation.navigate('MatchDetails', { matchId: item.matchId })}
             style={styles.profileButton}
           />
@@ -143,7 +143,7 @@ export const ChatsScreen = ({ navigation }: any) => {
     return (
       <Screen style={styles.centerContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Loading chats...</Text>
+        <Text style={styles.loadingText}>טוען שיחות...</Text>
       </Screen>
     );
   }
@@ -152,7 +152,7 @@ export const ChatsScreen = ({ navigation }: any) => {
     return (
       <Screen style={styles.centerContainer}>
         <Text style={styles.errorText}>{error}</Text>
-        <AppButton title="Retry" onPress={() => fetchChats()} style={styles.retryButton} />
+        <AppButton title="נסה שוב" onPress={() => fetchChats()} style={styles.retryButton} />
       </Screen>
     );
   }
@@ -160,9 +160,9 @@ export const ChatsScreen = ({ navigation }: any) => {
   return (
     <Screen>
       <View style={styles.header}>
-        <Text style={styles.title}>Chats</Text>
+        <Text style={styles.title}>שיחות</Text>
         <TouchableOpacity onPress={() => fetchChats()} style={styles.refreshIconContainer}>
-          <Text style={styles.refreshIconText}>🔄 Refresh</Text>
+          <Text style={styles.refreshIconText}>🔄 רענון</Text>
         </TouchableOpacity>
       </View>
 
@@ -175,9 +175,9 @@ export const ChatsScreen = ({ navigation }: any) => {
         onRefresh={handleRefresh}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyTitle}>No Chats Yet</Text>
+            <Text style={styles.emptyTitle}>עדיין אין שיחות</Text>
             <Text style={styles.emptySubtitle}>
-              You don't have any active chats. Go to discovery, like other profiles, and start chatting when you get a match!
+              אין לך שיחות פעילות. כנס לגילוי, סמן לייק לפרופילים אחרים, ותוכל להתכתב ברגע שתיווצר התאמה!
             </Text>
           </View>
         }
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
     width: '60%',
   },
   header: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: theme.spacing.m,
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   cardHeader: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
   },
   avatar: {
@@ -274,17 +274,17 @@ const styles = StyleSheet.create({
   },
   headerInfo: {
     flex: 1,
-    marginLeft: theme.spacing.m,
+    marginRight: theme.spacing.m,
   },
   name: {
     fontSize: 18,
     fontWeight: 'bold',
     color: theme.colors.text,
     flex: 1,
-    marginRight: theme.spacing.s,
+    textAlign: 'right',
   },
   nameTimeRow: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
@@ -292,16 +292,19 @@ const styles = StyleSheet.create({
   timeText: {
     fontSize: 12,
     color: theme.colors.textSecondary,
+    textAlign: 'left',
   },
   lastMessage: {
     fontSize: 14,
     color: theme.colors.textSecondary,
     marginTop: 4,
+    textAlign: 'right',
   },
   badgeContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     marginTop: 4,
     alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   contextLabel: {
     fontSize: 11,
@@ -321,7 +324,7 @@ const styles = StyleSheet.create({
     height: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: theme.spacing.s,
+    marginRight: theme.spacing.s,
     paddingHorizontal: 6,
   },
   unreadBadgeText: {
@@ -330,19 +333,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   actionsContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     marginTop: theme.spacing.m,
+    gap: theme.spacing.m,
   },
   chatButton: {
     flex: 1,
-    marginRight: theme.spacing.s,
     backgroundColor: theme.colors.primary,
     paddingVertical: theme.spacing.s,
   },
   profileButton: {
     flex: 1,
-    marginLeft: theme.spacing.s,
     backgroundColor: '#4A4A4A',
     paddingVertical: theme.spacing.s,
   },

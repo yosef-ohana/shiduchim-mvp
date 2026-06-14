@@ -182,6 +182,31 @@ export const getFriendlyErrorMessage = (error: unknown, fallback?: string): stri
       return 'כבר קיימת הזמנה לאימייל הזה.';
     }
 
+    // Invite restoration / status conflicts
+    if (containsAny(backendMessage, [
+      'cannot restore',
+      'cannot be restored'
+    ])) {
+      return 'לא ניתן לשחזר את ההזמנה במצב הנוכחי.';
+    }
+    if (containsAny(backendMessage, [
+      'already accepted',
+      'already been accepted'
+    ])) {
+      return 'ההזמנה כבר התקבלה.';
+    }
+    if (containsAny(backendMessage, [
+      'already pending'
+    ])) {
+      return 'ההזמנה כבר ממתינה.';
+    }
+    if (containsAny(backendMessage, [
+      'invite is not cancelled',
+      'is not cancelled'
+    ])) {
+      return 'רק הזמנות מבוטלות ניתן לשחזר.';
+    }
+
     // Duplicate email / account already exists
     if (containsAny(backendMessage, [
       'email already exists',

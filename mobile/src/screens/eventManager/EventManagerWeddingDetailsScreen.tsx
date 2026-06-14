@@ -17,6 +17,12 @@ import {
 import { WeddingResponse, ParticipantResponse, WeddingInviteResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+import { 
+  getWeddingStatusLabel, 
+  getParticipantStatusLabel, 
+  getInviteStatusLabel, 
+  formatDisplayDate 
+} from '../../utils/displayLabels';
 
 export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
   const { weddingId } = route.params;
@@ -60,7 +66,7 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
     setActionLoading(true);
     try {
       await addParticipant(weddingId, { email: newEmail.trim() });
-      Alert.alert('Success', `Participant ${newEmail.trim()} has been added to the wedding.`);
+      Alert.alert('הצלחה', `המשתתף ${newEmail.trim()} נוסף לחתונה.`);
       setNewEmail('');
       await loadData();
     } catch (error: any) {
@@ -79,7 +85,7 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
     setActionLoading(true);
     try {
       await createInvite(weddingId, { fullName: newInviteName.trim(), email: newInviteEmail.trim() });
-      Alert.alert('Success', `Invitation created for ${newInviteEmail.trim()}`);
+      Alert.alert('הצלחה', `נוצרה הזמנה עבור ${newInviteEmail.trim()}`);
       setNewInviteName('');
       setNewInviteEmail('');
       await loadData();
@@ -93,18 +99,18 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
 
   const handleCancelInvite = async (inviteId: number) => {
     Alert.alert(
-      'Cancel Invitation',
-      'Are you sure you want to cancel this invitation?',
+      'ביטול הזמנה',
+      'האם אתה בטוח שברצונך לבטל הזמנה זו?',
       [
-        { text: 'No', style: 'cancel' },
+        { text: 'לא', style: 'cancel' },
         { 
-          text: 'Yes, Cancel', 
+          text: 'כן, ביטול', 
           style: 'destructive',
           onPress: async () => {
             setActionLoading(true);
             try {
               await cancelInvite(weddingId, inviteId);
-              Alert.alert('Success', 'Invitation cancelled.');
+              Alert.alert('הצלחה', 'ההזמנה בוטלה.');
               await loadData();
             } catch (error: any) {
               console.error(error);
@@ -120,17 +126,17 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
 
   const handleRestoreInvite = async (inviteId: number) => {
     Alert.alert(
-      'Restore Invitation',
-      'Are you sure you want to restore this invitation?',
+      'החזרת הזמנה',
+      'האם אתה בטוח שברצונך להחזיר הזמנה זו?',
       [
-        { text: 'No', style: 'cancel' },
+        { text: 'לא', style: 'cancel' },
         { 
-          text: 'Yes, Restore', 
+          text: 'כן, החזרה', 
           onPress: async () => {
             setActionLoading(true);
             try {
               await restoreInvite(weddingId, inviteId);
-              Alert.alert('Success', 'Invitation restored.');
+              Alert.alert('הצלחה', 'ההזמנה הוחזרה.');
               await loadData();
             } catch (error: any) {
               console.error(error);
@@ -147,18 +153,18 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
 
   const handleRemoveParticipant = async (userId: number, email: string) => {
     Alert.alert(
-      'Remove Participant',
-      `Are you sure you want to remove participant ${email} from this wedding?`,
+      'הסרת משתתף',
+      `האם אתה בטוח שברצונך להסיר את המשתתף ${email} מחתונה זו?`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'ביטול', style: 'cancel' },
         { 
-          text: 'Remove', 
+          text: 'הסרה', 
           style: 'destructive',
           onPress: async () => {
             setActionLoading(true);
             try {
               await removeParticipant(weddingId, userId);
-              Alert.alert('Success', `Participant ${email} has been removed.`);
+              Alert.alert('הצלחה', `המשתתף ${email} הוסר.`);
               await loadData();
             } catch (error: any) {
               console.error(error);
@@ -174,18 +180,18 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
 
   const handleCloseWedding = async () => {
     Alert.alert(
-      'Close Wedding',
-      'Are you sure you want to close this wedding? New participants will not be able to join. Existing matches and chats will remain active.',
+      'סגירת חתונה',
+      'האם אתה בטוח שברצונך לסגור חתונה זו? משתתפים חדשים לא יוכלו להצטרף. שידוכים וצ׳אטים קיימים יישארו פעילים.',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'ביטול', style: 'cancel' },
         {
-          text: 'Close Wedding',
+          text: 'סגירת חתונה',
           style: 'destructive',
           onPress: async () => {
             setActionLoading(true);
             try {
               await closeWedding(weddingId);
-              Alert.alert('Success', 'Wedding has been closed successfully.');
+              Alert.alert('הצלחה', 'החתונה נסגרה בהצלחה.');
               await loadData();
             } catch (error: any) {
               console.error(error);
@@ -201,18 +207,18 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
 
   const handleCancelWedding = async () => {
     Alert.alert(
-      'Cancel Wedding',
-      'Are you sure you want to cancel this wedding? New participants will not be able to join, and the wedding status will be set to CANCELLED.',
+      'ביטול חתונה',
+      'האם אתה בטוח שברצונך לבטל חתונה זו? משתתפים חדשים לא יוכלו להצטרף, וסטטוס החתונה ישונה למבוטל.',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'ביטול', style: 'cancel' },
         {
-          text: 'Cancel Wedding',
+          text: 'ביטול חתונה',
           style: 'destructive',
           onPress: async () => {
             setActionLoading(true);
             try {
               await cancelWedding(weddingId);
-              Alert.alert('Success', 'Wedding has been cancelled successfully.');
+              Alert.alert('הצלחה', 'החתונה בוטלה בהצלחה.');
               await loadData();
             } catch (error: any) {
               console.error(error);
@@ -228,29 +234,29 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
 
   const renderParticipant = ({ item }: { item: ParticipantResponse }) => (
     <View style={styles.participantCard}>
-      <View style={styles.participantInfo}>
-        <Text style={styles.participantName}>{item.fullName}</Text>
-        <Text style={styles.participantDetail}>{item.email}</Text>
-        <View style={styles.participantStatusContainer}>
-          <Text style={[
-            styles.statusLabel,
-            item.participantStatus === 'ACTIVE' ? styles.statusActive : styles.statusRemoved
-          ]}>
-            Status: {item.participantStatus}
-          </Text>
-          <Text style={styles.profileLabel}>
-            Profile: {item.profileStatus}
-          </Text>
-        </View>
-      </View>
       {item.participantStatus === 'ACTIVE' && wedding?.status === 'ACTIVE' && (
         <TouchableOpacity 
           style={styles.removeButton}
           onPress={() => handleRemoveParticipant(item.userId, item.email)}
         >
-          <Text style={styles.removeButtonText}>Remove</Text>
+          <Text style={styles.removeButtonText}>הסרה</Text>
         </TouchableOpacity>
       )}
+      <View style={styles.participantInfo}>
+        <Text style={styles.participantName}>{item.fullName}</Text>
+        <Text style={styles.participantDetail}>{item.email}</Text>
+        <View style={styles.participantStatusContainer}>
+          <Text style={styles.profileLabel}>
+            פרופיל: {item.profileStatus}
+          </Text>
+          <Text style={[
+            styles.statusLabel,
+            item.participantStatus === 'ACTIVE' ? styles.statusActive : styles.statusRemoved
+          ]}>
+            סטטוס: {getParticipantStatusLabel(item.participantStatus)}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 
@@ -278,7 +284,7 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
   }
 
   const invitationText = wedding 
-    ? `Join our wedding pool on Shiduchim!\nWedding: ${wedding.name}\nAccess Code: ${wedding.accessCode}\n\nDownload the app, register/login, select "Join Wedding" on the main page, and enter the Access Code above to participate.`
+    ? `שלום, הוזמנת להצטרף לחתונה במערכת Shiduchim.\nשם החתונה: ${wedding.name}\nקוד החתונה שלך: ${wedding.accessCode}\nפתח/י את האפליקציה, לחצ/י על "יש לי קוד חתונה", והזן/י את הקוד.`
     : '';
 
   return (
@@ -295,28 +301,28 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
             {wedding && (
               <View style={styles.detailsCard}>
                 <View style={styles.titleRow}>
-                  <Text style={styles.title}>{wedding.name}</Text>
                   <View style={[styles.statusBadge, getStatusBadgeStyle(wedding.status)]}>
-                    <Text style={styles.statusText}>{wedding.status}</Text>
+                    <Text style={styles.statusText}>{getWeddingStatusLabel(wedding.status)}</Text>
                   </View>
+                  <Text style={styles.title}>{wedding.name}</Text>
                 </View>
 
-                <Text style={styles.detail}>City: <Text style={styles.detailValue}>{wedding.city}</Text></Text>
-                <Text style={styles.detail}>Date: <Text style={styles.detailValue}>{wedding.weddingDate}</Text></Text>
+                <Text style={styles.detail}>עיר: <Text style={styles.detailValue}>{wedding.city}</Text></Text>
+                <Text style={styles.detail}>תאריך: <Text style={styles.detailValue}>{formatDisplayDate(wedding.weddingDate)}</Text></Text>
                 {wedding.ownerUserId && (
-                  <Text style={styles.detail}>Owner User ID: <Text style={styles.detailValue}>{wedding.ownerUserId}</Text></Text>
+                  <Text style={styles.detail}>מזהה משתמש בעלים: <Text style={styles.detailValue}>{wedding.ownerUserId}</Text></Text>
                 )}
 
                 <View style={styles.accessCodeBox}>
-                  <Text style={styles.accessCodeLabel}>ACCESS CODE</Text>
+                  <Text style={styles.accessCodeLabel}>קוד גישה</Text>
                   <Text style={styles.accessCodeValue} selectable={true}>{wedding.accessCode}</Text>
-                  <Text style={styles.accessCodeHint}>(Press and hold to copy)</Text>
+                  <Text style={styles.accessCodeHint}>(לחץ לחיצה ארוכה להעתקה)</Text>
                 </View>
 
                 <View style={styles.statsContainer}>
                   <View style={styles.statBox}>
                     <Text style={styles.statNum}>{wedding.participantsCount ?? participants.length}</Text>
-                    <Text style={styles.statLabel}>Participants</Text>
+                    <Text style={styles.statLabel}>משתתפים</Text>
                   </View>
                   <View style={styles.statBox}>
                     <Text style={styles.statNum}>
@@ -324,20 +330,20 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
                         ? wedding.matchesCount 
                         : 'N/A'}
                     </Text>
-                    <Text style={styles.statLabel}>Active Matches</Text>
+                    <Text style={styles.statLabel}>שידוכים פעילים</Text>
                   </View>
                 </View>
 
                 {wedding.status === 'ACTIVE' && (
                   <View style={styles.actionsRow}>
                     <AppButton
-                      title="Close Wedding"
+                      title="סגירת חתונה"
                       onPress={handleCloseWedding}
                       loading={actionLoading}
                       style={styles.closeButton}
                     />
                     <AppButton
-                      title="Cancel Wedding"
+                      title="ביטול חתונה"
                       onPress={handleCancelWedding}
                       loading={actionLoading}
                       style={styles.cancelButton}
@@ -349,43 +355,43 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
 
             {wedding && wedding.status === 'ACTIVE' && (
               <View style={styles.inviteCard}>
-                <Text style={styles.inviteTitle}>Manual Invitation Text</Text>
+                <Text style={styles.inviteTitle}>טקסט הזמנה ידנית</Text>
                 <Text style={styles.inviteDescription}>
-                  You can copy the message template below and share it with potential participants:
+                  באפשרותך להעתיק את תבנית ההודעה להלן ולשתף אותה עם משתתפים פוטנציאליים:
                 </Text>
                 <View style={styles.inviteTextBox}>
                   <Text style={styles.inviteText} selectable={true}>
                     {invitationText}
                   </Text>
                 </View>
-                <Text style={styles.copyHint}>Note: Double-tap or long-press the text above to copy it.</Text>
+                <Text style={styles.copyHint}>הערה: לחץ לחיצה כפולה או לחיצה ארוכה על הטקסט לעיל כדי להעתיק אותו.</Text>
               </View>
             )}
 
             {wedding && wedding.status === 'ACTIVE' && (
               <View style={styles.addParticipantContainer}>
-                <Text style={styles.sectionTitle}>Create Invitation</Text>
+                <Text style={styles.sectionTitle}>הזמנת משתמש חדש</Text>
                 <Text style={styles.addParticipantSubtitle}>
-                  Invite someone to the wedding. They will receive an email if implemented.
+                  הזמן משתמש חדש להצטרף לחתונה.
                 </Text>
                 <View style={styles.addFormCol}>
                   <TextInput
                     style={[styles.input, { marginBottom: theme.spacing.s, width: '100%' }]}
                     value={newInviteName}
                     onChangeText={setNewInviteName}
-                    placeholder="Full Name"
+                    placeholder="שם מלא"
                     autoCapitalize="words"
                   />
                   <TextInput
                     style={[styles.input, { marginBottom: theme.spacing.s, width: '100%' }]}
                     value={newInviteEmail}
                     onChangeText={setNewInviteEmail}
-                    placeholder="Email address"
+                    placeholder="כתובת אימייל"
                     autoCapitalize="none"
                     keyboardType="email-address"
                   />
                   <AppButton 
-                    title="Create Invite" 
+                    title="יצירת הזמנה" 
                     onPress={handleCreateInvite} 
                     loading={actionLoading}
                     style={styles.addButton}
@@ -397,11 +403,27 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
             {invites.length > 0 && (
               <View style={styles.addParticipantContainer}>
                 <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.sectionTitle}>Invitations</Text>
+                  <Text style={styles.sectionTitle}>הזמנות</Text>
                   <Text style={styles.listCount}>({invites.length})</Text>
                 </View>
                 {invites.map(invite => (
                   <View key={`invite-${invite.id}`} style={styles.participantCard}>
+                    {invite.status === 'PENDING' && wedding?.status === 'ACTIVE' && (
+                      <TouchableOpacity 
+                        style={styles.removeButton}
+                        onPress={() => handleCancelInvite(invite.id)}
+                      >
+                        <Text style={styles.removeButtonText}>ביטול</Text>
+                      </TouchableOpacity>
+                    )}
+                    {invite.status === 'CANCELLED' && wedding?.status === 'ACTIVE' && (
+                      <TouchableOpacity 
+                        style={styles.restoreButton}
+                        onPress={() => handleRestoreInvite(invite.id)}
+                      >
+                        <Text style={styles.restoreButtonText}>החזרת הזמנה</Text>
+                      </TouchableOpacity>
+                    )}
                     <View style={styles.participantInfo}>
                       <Text style={styles.participantName}>{invite.fullName}</Text>
                       <Text style={styles.participantDetail}>{invite.email}</Text>
@@ -411,26 +433,10 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
                           invite.status === 'ACCEPTED' ? styles.statusActive : 
                           invite.status === 'CANCELLED' ? styles.statusRemoved : { color: '#FF9800', fontWeight: '600' }
                         ]}>
-                          Status: {invite.status}
+                          סטטוס: {getInviteStatusLabel(invite.status)}
                         </Text>
                       </View>
                     </View>
-                    {invite.status === 'PENDING' && wedding?.status === 'ACTIVE' && (
-                      <TouchableOpacity 
-                        style={styles.removeButton}
-                        onPress={() => handleCancelInvite(invite.id)}
-                      >
-                        <Text style={styles.removeButtonText}>Cancel</Text>
-                      </TouchableOpacity>
-                    )}
-                    {invite.status === 'CANCELLED' && wedding?.status === 'ACTIVE' && (
-                      <TouchableOpacity 
-                        style={styles.restoreButton}
-                        onPress={() => handleRestoreInvite(invite.id)}
-                      >
-                        <Text style={styles.restoreButtonText}>Restore</Text>
-                      </TouchableOpacity>
-                    )}
                   </View>
                 ))}
               </View>
@@ -438,21 +444,21 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
 
             {wedding && wedding.status === 'ACTIVE' && (
               <View style={styles.addParticipantContainer}>
-                <Text style={styles.sectionTitle}>Add Existing Participant</Text>
+                <Text style={styles.sectionTitle}>הוספת משתמש קיים לפי אימייל</Text>
                 <Text style={styles.addParticipantSubtitle}>
-                  Add an existing registered user by their email address.
+                  הוספת משתמש רשום קיים באמצעות כתובת האימייל שלו.
                 </Text>
                 <View style={styles.addFormRow}>
                   <TextInput
                     style={styles.input}
                     value={newEmail}
                     onChangeText={setNewEmail}
-                    placeholder="User's email address"
+                    placeholder="כתובת אימייל של המשתמש"
                     autoCapitalize="none"
                     keyboardType="email-address"
                   />
                   <AppButton 
-                    title="Add" 
+                    title="הוספה" 
                     onPress={handleAddParticipant} 
                     loading={actionLoading}
                     style={styles.addButton}
@@ -462,14 +468,14 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
             )}
 
             <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>Participants List</Text>
+              <Text style={styles.sectionTitle}>רשימת משתתפים</Text>
               <Text style={styles.listCount}>({participants.length})</Text>
             </View>
           </View>
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No participants found for this wedding yet.</Text>
+            <Text style={styles.emptyText}>עדיין לא נמצאו משתתפים לחתונה זו.</Text>
           </View>
         }
       />
@@ -504,7 +510,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   titleRow: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: theme.spacing.m,
@@ -514,6 +520,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.text,
     flex: 1,
+    textAlign: 'right',
   },
   statusBadge: {
     paddingHorizontal: theme.spacing.s,
@@ -541,6 +548,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: theme.colors.textSecondary,
     marginBottom: 6,
+    textAlign: 'right',
   },
   detailValue: {
     fontWeight: '500',
@@ -574,7 +582,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   statsContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-around',
     borderTopWidth: 1,
     borderBottomWidth: 1,
@@ -596,20 +604,20 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   actionsRow: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     marginTop: theme.spacing.m,
   },
   closeButton: {
     flex: 1,
     backgroundColor: '#757575',
-    marginRight: theme.spacing.s,
+    marginLeft: theme.spacing.s,
     paddingVertical: 12,
   },
   cancelButton: {
     flex: 1,
     backgroundColor: theme.colors.error,
-    marginLeft: theme.spacing.s,
+    marginRight: theme.spacing.s,
     paddingVertical: 12,
   },
   inviteCard: {
@@ -625,12 +633,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.text,
     marginBottom: 4,
+    textAlign: 'right',
   },
   inviteDescription: {
     fontSize: 13,
     color: theme.colors.textSecondary,
     marginBottom: theme.spacing.m,
     lineHeight: 18,
+    textAlign: 'right',
   },
   inviteTextBox: {
     backgroundColor: '#F5F5F5',
@@ -644,12 +654,14 @@ const styles = StyleSheet.create({
     color: '#333333',
     lineHeight: 20,
     fontFamily: 'System',
+    textAlign: 'right',
   },
   copyHint: {
     fontSize: 11,
     color: theme.colors.textSecondary,
     marginTop: theme.spacing.s,
     fontStyle: 'italic',
+    textAlign: 'right',
   },
   addParticipantContainer: {
     backgroundColor: theme.colors.surface,
@@ -663,9 +675,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: theme.colors.text,
+    textAlign: 'right',
   },
   sectionHeaderRow: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     marginTop: theme.spacing.s,
     marginBottom: theme.spacing.s,
@@ -673,15 +686,16 @@ const styles = StyleSheet.create({
   listCount: {
     fontSize: 16,
     color: theme.colors.textSecondary,
-    marginLeft: 6,
+    marginRight: 6,
   },
   addParticipantSubtitle: {
     fontSize: 13,
     color: theme.colors.textSecondary,
     marginBottom: theme.spacing.m,
+    textAlign: 'right',
   },
   addFormRow: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
   },
   addFormCol: {
@@ -695,10 +709,11 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.m,
     paddingVertical: 10,
     paddingHorizontal: theme.spacing.m,
-    marginRight: theme.spacing.s,
+    marginLeft: theme.spacing.s,
     fontSize: 15,
     color: theme.colors.text,
     backgroundColor: '#FAFAFA',
+    textAlign: 'right',
   },
   addButton: {
     minWidth: 80,
@@ -709,7 +724,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.m,
     borderRadius: theme.borderRadius.m,
     marginBottom: theme.spacing.s,
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
@@ -717,27 +732,29 @@ const styles = StyleSheet.create({
   },
   participantInfo: {
     flex: 1,
-    marginRight: theme.spacing.s,
+    marginLeft: theme.spacing.s,
   },
   participantName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: theme.colors.text,
     marginBottom: 2,
+    textAlign: 'right',
   },
   participantDetail: {
     fontSize: 14,
     color: theme.colors.textSecondary,
     marginBottom: 4,
+    textAlign: 'right',
   },
   participantStatusContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     flexWrap: 'wrap',
     marginTop: 2,
   },
   statusLabel: {
     fontSize: 12,
-    marginRight: theme.spacing.m,
+    marginLeft: theme.spacing.m,
   },
   statusActive: {
     color: '#4CAF50',

@@ -15,12 +15,12 @@ export const StaffLoginScreen = ({ route, navigation }: any) => {
   const [isLoading, setIsLoading] = useState(false);
   const { staffLogin } = useAuth();
 
-  const expectedRoleDisplay = role === 'ADMIN' ? 'Admin' : 'Event Manager';
+  const expectedRoleDisplay = role === 'ADMIN' ? 'מנהל מערכת' : 'מנהל אירוע';
 
   const handleLogin = async () => {
     setErrorMsg('');
     if (!email || !password) {
-      setErrorMsg('Please fill in all fields');
+      setErrorMsg('אנא מלא את כל השדות');
       return;
     }
 
@@ -42,14 +42,14 @@ export const StaffLoginScreen = ({ route, navigation }: any) => {
   return (
     <Screen style={styles.container}>
       <View style={styles.formContainer}>
-        <Text style={styles.title}>{expectedRoleDisplay} Login</Text>
-        <Text style={styles.subtitle}>Enter your staff credentials to continue</Text>
+        <Text style={styles.title}>כניסת {expectedRoleDisplay}</Text>
+        <Text style={styles.subtitle}>הזן את פרטי ההתחברות של הצוות כדי להמשיך</Text>
 
         {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
 
         <AppInput
-          label="Email"
-          placeholder="Enter your staff email"
+          label="אימייל"
+          placeholder="הזן את אימייל הצוות"
           keyboardType="email-address"
           autoCapitalize="none"
           value={email}
@@ -57,15 +57,15 @@ export const StaffLoginScreen = ({ route, navigation }: any) => {
         />
 
         <AppInput
-          label="Password"
-          placeholder="Enter your password"
+          label="סיסמה"
+          placeholder="הזן את הסיסמה"
           secureTextEntry
           value={password}
           onChangeText={setPassword}
         />
 
         <AppButton
-          title={`Log In as ${expectedRoleDisplay}`}
+          title={`התחברות בתור ${expectedRoleDisplay}`}
           onPress={handleLogin}
           loading={isLoading}
           style={styles.button}

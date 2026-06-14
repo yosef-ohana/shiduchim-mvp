@@ -9,6 +9,7 @@ import { getMyPhotos, uploadPhoto, setPrimaryPhoto, deletePhoto } from '../../ap
 import { PhotoResponse } from '../../types/api';
 import { getImageUrl } from '../../utils/imageUrl';
 import { useAuth } from '../../context/AuthContext';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 export const PhotosScreen = () => {
   const { refreshMe } = useAuth();
@@ -24,7 +25,7 @@ export const PhotosScreen = () => {
       const data = await getMyPhotos();
       setPhotos(data);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load photos');
+      setError(getFriendlyErrorMessage(err, 'טעינת התמונות נכשלה.'));
     } finally {
       setLoading(false);
     }
@@ -39,7 +40,7 @@ export const PhotosScreen = () => {
   const handlePickAndUpload = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
+      Alert.alert('הרשאה נדחתה', 'סליחה, אנו זקוקים להרשאת גישה לגלריית התמונות כדי להמשיך!');
       return;
     }
 
@@ -61,9 +62,9 @@ export const PhotosScreen = () => {
         const status = err.response?.status;
         const message = err.response?.data?.message || '';
         if (status === 409 || message.toLowerCase().includes('maximum of') || message.toLowerCase().includes('photos allowed') || message.toLowerCase().includes('limit')) {
-          setError('You can upload up to 2 photos.');
+          setError('באפשרותך להעלות עד 2 תמונות.');
         } else {
-          setError('Failed to upload photo. Please try again.');
+          setError('העלאת התמונה נכשלה. אנא נסה שוב.');
         }
       } finally {
         setActionLoading(false);
@@ -79,7 +80,7 @@ export const PhotosScreen = () => {
       await loadPhotos();
       await refreshMe();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to set primary photo');
+      setError(getFriendlyErrorMessage(err, 'הגדרת התמונה הראשית נכשלה.'));
     } finally {
       setActionLoading(false);
     }
@@ -93,7 +94,7 @@ export const PhotosScreen = () => {
       await loadPhotos();
       await refreshMe();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to delete photo');
+      setError(getFriendlyErrorMessage(err, 'מחיקת התמונה נכשלה.'));
     } finally {
       setActionLoading(false);
     }
@@ -102,7 +103,7 @@ export const PhotosScreen = () => {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>My Photos</Text>
+        <Text style={styles.title}>התמונות שלי</Text>
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -114,20 +115,20 @@ export const PhotosScreen = () => {
               <View key={photo.id} style={styles.photoCard}>
                 <Image source={{ uri: getImageUrl(photo.imageUrl) }} style={styles.image} />
                 <View style={styles.photoInfo}>
-                  <Text style={styles.photoText}>Order: {photo.orderIndex}</Text>
-                  {photo.isPrimary && <Text style={styles.primaryBadge}>Primary</Text>}
+                  <Text style={styles.photoText}>מיקום: {photo.orderIndex}</Text>
+                  {photo.isPrimary && <Text style={styles.primaryBadge}>תמונה ראשית</Text>}
                 </View>
                 <View style={styles.actions}>
                   {!photo.isPrimary && (
                     <AppButton
-                      title="Set Primary"
+                      title="הגדרה כתמונה ראשית"
                       onPress={() => handleSetPrimary(photo.id)}
                       disabled={actionLoading}
                       style={styles.actionButton}
                     />
                   )}
                   <AppButton
-                    title="Delete"
+                    title="מחיקה"
                     onPress={() => handleDelete(photo.id)}
                     disabled={actionLoading}
                     style={[styles.actionButton, styles.deleteButton]}
@@ -136,13 +137,13 @@ export const PhotosScreen = () => {
               </View>
             ))}
             {photos.length === 0 && (
-              <Text style={styles.emptyText}>No photos yet. Upload up to two photos.</Text>
+              <Text style={styles.emptyText}>אין תמונות עדיין. ניתן להעלות עד שתי תמונות.</Text>
             )}
           </View>
         )}
 
         <AppButton
-          title="Pick and Upload Photo"
+          title="בחירת והעלאת תמונה"
           onPress={handlePickAndUpload}
           loading={actionLoading}
           style={styles.uploadButton}
@@ -196,7 +197,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.border,
   },
   photoInfo: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: theme.spacing.m,

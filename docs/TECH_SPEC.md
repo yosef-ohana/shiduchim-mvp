@@ -541,4 +541,24 @@ Phase 17 is officially defined as: **"QA Notes Completion and Missing Feature Co
     * a `PENDING` or `ACCEPTED` invite already exists for the same email and wedding,
     * a user with that email is already an `ACTIVE` participant in the wedding.
 
+---
+
+## 16. Phase 18 Additions: Hebrew UI Localization & RTL Polish
+
+Phase 18 is officially defined as: **"Hebrew UI Localization & RTL Polish"**
+
+* **Mobile-Only UI Scope**:
+  * All user-facing mobile frontend screens, buttons, navigation headers, placeholders, messages, dialogs, loading states, and error alerts are translated to Hebrew.
+  * No backend, API, DTO, entity, or database files were modified or added.
+* **UI Translation Strategy**:
+  * Mappings are encapsulated in display-only helper functions within `mobile/src/utils/displayLabels.ts` (e.g., mapping `WeddingStatus`, `ParticipantStatus`, roles, pool types, gender, yes/no values, and formatting dates to `DD/MM/YYYY`).
+  * Backend and validation error messages are caught locally in the frontend and mapped into friendly Hebrew display prose using `mobile/src/utils/errorMessage.ts` (mapping network timeouts, missing fields, validation failures, and HTTP status codes).
+  * Avoids enum/internal database value translations (e.g., `'ACTIVE'`, `'USER'`, `'MALE'` remain in LTR in code and API payloads).
+* **RTL & Layout Polish**:
+  * Punctuation alignment: Hebrew sentences ending with question marks or exclamation marks are kept in logical syntax order.
+  * Text and Layout Alignment: User-visible labels, headers, and descriptions are aligned right using `textAlign: 'right'` and `flexDirection: 'row-reverse'`.
+  * Technical/System Values: Inputs and fields containing technical, copyable, or non-prose values (e.g. Email addresses, password entries, numeric codes, and wedding access codes) bypass right-alignment and are left-aligned (`textAlign: 'left'`) to preserve copy-paste stability and input usability.
+  * Libraries: No external internationalization (i.e. `i18n`) dependencies or global `I18nManager.forceRTL(true)` overrides were added, ensuring pure vanilla CSS compatibility.
+
+
 

@@ -27,8 +27,8 @@ export const CreateWeddingScreen = ({ navigation }: any) => {
         weddingDate,
         accessCode: accessCode.trim() || undefined,
       });
-      Alert.alert('Success', 'Wedding created successfully', [
-        { text: 'OK', onPress: () => navigation.goBack() }
+      Alert.alert('הצלחה', 'החתונה נוצרה בהצלחה', [
+        { text: 'אישור', onPress: () => navigation.goBack() }
       ]);
     } catch (error) {
       console.error(error);
@@ -41,30 +41,30 @@ export const CreateWeddingScreen = ({ navigation }: any) => {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Create Wedding</Text>
+        <Text style={styles.title}>יצירת חתונה</Text>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Wedding Name *</Text>
+          <Text style={styles.label}>שם החתונה *</Text>
           <TextInput
             style={styles.input}
             value={name}
             onChangeText={setName}
-            placeholder="e.g. Cohen-Levi Wedding"
+            placeholder="למשל חתונת כהן-לוי"
           />
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>City *</Text>
+          <Text style={styles.label}>עיר *</Text>
           <TextInput
             style={styles.input}
             value={city}
             onChangeText={setCity}
-            placeholder="e.g. Jerusalem"
+            placeholder="למשל ירושלים"
           />
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Date (YYYY-MM-DD) *</Text>
+          <Text style={styles.label}>תאריך (YYYY-MM-DD) *</Text>
           <TextInput
             style={styles.input}
             value={weddingDate}
@@ -74,18 +74,18 @@ export const CreateWeddingScreen = ({ navigation }: any) => {
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Access Code (Optional)</Text>
+          <Text style={styles.label}>קוד גישה (אופציונלי)</Text>
           <TextInput
             style={styles.input}
             value={accessCode}
             onChangeText={setAccessCode}
-            placeholder="Leave empty to auto-generate"
+            placeholder="השאר ריק ליצירה אוטומטית"
             autoCapitalize="none"
           />
         </View>
 
         <AppButton 
-          title="Create Wedding" 
+          title="יצירת חתונה" 
           onPress={handleCreate} 
           loading={loading}
           style={styles.button}
@@ -115,6 +115,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginBottom: theme.spacing.s,
     fontWeight: '500',
+    textAlign: 'right',
   },
   input: {
     backgroundColor: theme.colors.surface,
@@ -124,6 +125,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.m,
     fontSize: 16,
     color: theme.colors.text,
+    textAlign: 'right',
   },
   button: {
     marginTop: theme.spacing.l,

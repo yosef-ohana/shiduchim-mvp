@@ -62,15 +62,15 @@ export const AdminEventManagersScreen = () => {
     <View style={styles.card}>
       <Text style={styles.name}>{item.fullName}</Text>
       <Text style={styles.email}>{item.email}</Text>
-      <Text style={styles.status}>Status: {item.adminBlocked ? 'Blocked/Deactivated' : 'Active'}</Text>
+      <Text style={styles.status}>סטטוס: {item.adminBlocked ? 'חסום/מושבת' : 'פעיל'}</Text>
       
       <View style={styles.actions}>
         {item.adminBlocked ? (
-          <AppButton title="Unblock" onPress={() => handleUnblock(item.id)} style={styles.button} />
+          <AppButton title="שחרור חסימה" onPress={() => handleUnblock(item.id)} style={styles.button} />
         ) : (
           <>
-            <AppButton title="Block" onPress={() => handleBlock(item.id)} style={[styles.button, styles.dangerButton]} />
-            <AppButton title="Deactivate" onPress={() => handleDeactivate(item.id)} style={[styles.button, styles.dangerButton]} />
+            <AppButton title="חסימה" onPress={() => handleBlock(item.id)} style={[styles.button, styles.dangerButton]} />
+            <AppButton title="השבתה" onPress={() => handleDeactivate(item.id)} style={[styles.button, styles.dangerButton]} />
           </>
         )}
       </View>
@@ -87,7 +87,7 @@ export const AdminEventManagersScreen = () => {
           refreshing={loading}
           onRefresh={fetchManagers}
           contentContainerStyle={styles.list}
-          ListEmptyComponent={<Text style={styles.empty}>No Event Managers found.</Text>}
+          ListEmptyComponent={<Text style={styles.empty}>לא נמצאו מנהלי אירוע.</Text>}
         />
       </View>
     </Screen>
@@ -117,17 +117,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.text,
     marginBottom: theme.spacing.s,
+    textAlign: 'right',
   },
   email: {
     fontSize: 14,
     color: theme.colors.textSecondary,
     marginBottom: theme.spacing.s,
+    textAlign: 'right',
   },
   status: {
     fontSize: 14,
     fontWeight: '600',
     color: theme.colors.primary,
     marginBottom: theme.spacing.m,
+    textAlign: 'right',
   },
   actions: {
     flexDirection: 'row',

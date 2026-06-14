@@ -7,6 +7,7 @@ import { theme } from '../../theme/theme';
 import { joinWedding } from '../../api/weddingsApi';
 import { JoinWeddingResponse } from '../../types/api';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+import { getParticipantStatusLabel, formatDisplayDate } from '../../utils/displayLabels';
 
 export const JoinWeddingScreen = ({ navigation }: any) => {
   const [accessCode, setAccessCode] = useState('');
@@ -16,7 +17,7 @@ export const JoinWeddingScreen = ({ navigation }: any) => {
 
   const handleJoin = async () => {
     if (!accessCode.trim()) {
-      setError('Access code cannot be empty.');
+      setError('קוד הגישה אינו יכול להיות ריק.');
       return;
     }
 
@@ -36,39 +37,39 @@ export const JoinWeddingScreen = ({ navigation }: any) => {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Join Wedding</Text>
+        <Text style={styles.title}>הצטרפות לחתונה</Text>
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         {successData ? (
           <View style={styles.successCard}>
-            <Text style={styles.successTitle}>Successfully Joined!</Text>
+            <Text style={styles.successTitle}>הצטרפת בהצלחה!</Text>
             <Text style={styles.successMessage}>
               הצטרפת בהצלחה לחתונה של {successData.weddingName}.
             </Text>
             <View style={styles.row}>
-              <Text style={styles.label}>Wedding:</Text>
+              <Text style={styles.label}>חתונה:</Text>
               <Text style={styles.value}>{successData.weddingName}</Text>
             </View>
             <View style={styles.row}>
-              <Text style={styles.label}>ID:</Text>
+              <Text style={styles.label}>מזהה:</Text>
               <Text style={styles.value}>{successData.weddingId}</Text>
             </View>
             <View style={styles.row}>
-              <Text style={styles.label}>Status:</Text>
-              <Text style={styles.value}>{successData.participantStatus}</Text>
+              <Text style={styles.label}>סטטוס:</Text>
+              <Text style={styles.value}>{getParticipantStatusLabel(successData.participantStatus)}</Text>
             </View>
             <View style={styles.row}>
-              <Text style={styles.label}>Joined At:</Text>
-              <Text style={styles.value}>{new Date(successData.joinedAt).toLocaleDateString()}</Text>
+              <Text style={styles.label}>תאריך הצטרפות:</Text>
+              <Text style={styles.value}>{formatDisplayDate(successData.joinedAt)}</Text>
             </View>
             <AppButton
-              title="View My Weddings"
+              title="החתונות שלי"
               onPress={() => navigation.navigate('MyWeddings')}
               style={styles.myWeddingsButton}
             />
             <AppButton
-              title="Back to Home"
+              title="חזרה לבית"
               onPress={() => navigation.navigate('Me')}
               style={styles.backButton}
             />
@@ -76,18 +77,18 @@ export const JoinWeddingScreen = ({ navigation }: any) => {
         ) : (
           <View style={styles.formContainer}>
             <Text style={styles.instruction}>
-              Enter the wedding access code (provided by the organizer) to join. Please note this must be the access code (e.g. letters/numbers), not the numeric wedding ID.
+              הזן/י את קוד הגישה שקיבלת כדי להצטרף לחתונה.
             </Text>
             <AppInput
-              label="Access Code"
+              label="קוד גישה"
               value={accessCode}
               onChangeText={setAccessCode}
-              placeholder="e.g. WEDDING-123"
+              placeholder="קוד גישה"
               autoCapitalize="characters"
               autoCorrect={false}
             />
             <AppButton
-              title="Join Wedding"
+              title="הצטרפות לחתונה"
               onPress={handleJoin}
               loading={loading}
               style={styles.joinButton}
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     fontSize: 16,
     marginBottom: theme.spacing.l,
-    textAlign: 'center',
+    textAlign: 'right',
   },
   formContainer: {
     marginTop: theme.spacing.m,
@@ -147,7 +148,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   row: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     paddingVertical: theme.spacing.s,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -157,6 +158,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: theme.colors.textSecondary,
     fontWeight: '500',
+    textAlign: 'right',
   },
   value: {
     fontSize: 16,

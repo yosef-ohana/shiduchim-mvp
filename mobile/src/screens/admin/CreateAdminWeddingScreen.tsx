@@ -53,7 +53,7 @@ export const CreateAdminWeddingScreen = () => {
         accessCode: accessCode || undefined,
         ownerUserId: isNaN(ownerId as number) ? undefined : ownerId,
       });
-      Alert.alert('Success', 'Wedding created successfully');
+      Alert.alert('הצלחה', 'החתונה נוצרה בהצלחה');
       navigation.goBack();
     } catch (error: any) {
       console.error('Failed to create wedding:', error);
@@ -66,23 +66,23 @@ export const CreateAdminWeddingScreen = () => {
   return (
     <Screen>
       <View style={styles.container}>
-        <Text style={styles.label}>Wedding Name</Text>
+        <Text style={styles.label}>שם החתונה</Text>
         <TextInput
           style={styles.input}
           value={name}
           onChangeText={setName}
-          placeholder="e.g. Cohen-Levi Wedding"
+          placeholder="לדוגמה: חתונת כהן-לוי"
         />
 
-        <Text style={styles.label}>City</Text>
+        <Text style={styles.label}>עיר</Text>
         <TextInput
           style={styles.input}
           value={city}
           onChangeText={setCity}
-          placeholder="e.g. Jerusalem"
+          placeholder="לדוגמה: ירושלים"
         />
 
-        <Text style={styles.label}>Wedding Date (YYYY-MM-DD)</Text>
+        <Text style={styles.label}>תאריך החתונה (YYYY-MM-DD)</Text>
         <TextInput
           style={styles.input}
           value={weddingDate}
@@ -90,22 +90,22 @@ export const CreateAdminWeddingScreen = () => {
           placeholder="YYYY-MM-DD"
         />
 
-        <Text style={styles.label}>Access Code (Optional)</Text>
+        <Text style={styles.label}>קוד גישה (אופציונלי)</Text>
         <TextInput
           style={styles.input}
           value={accessCode}
           onChangeText={setAccessCode}
-          placeholder="Leave blank to auto-generate"
+          placeholder="השאר ריק ליצירה אוטומטית"
           autoCapitalize="characters"
         />
 
-        <Text style={styles.label}>Assign to Event Manager</Text>
+        <Text style={styles.label}>שיוך למנהל אירוע</Text>
         <ScrollView style={styles.managerList} nestedScrollEnabled={true}>
           <TouchableOpacity
             style={[styles.managerCard, ownerUserId === '' && styles.managerCardSelected]}
             onPress={() => setOwnerUserId('')}
           >
-            <Text style={styles.managerName}>None / Admin Temporary Owner</Text>
+            <Text style={styles.managerName}>ללא / מנהל מערכת כבעלים זמני</Text>
           </TouchableOpacity>
           {eventManagers.map(manager => (
             <TouchableOpacity
@@ -127,7 +127,7 @@ export const CreateAdminWeddingScreen = () => {
           onPress={handleCreate}
           disabled={loading}
         >
-          <Text style={styles.buttonText}>{loading ? 'Creating...' : 'Create Wedding'}</Text>
+          <Text style={styles.buttonText}>{loading ? 'יוצר חתונה...' : 'יצירת חתונה'}</Text>
         </TouchableOpacity>
       </View>
     </Screen>
@@ -143,6 +143,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.textSecondary,
     marginBottom: 4,
+    textAlign: 'right',
   },
   input: {
     backgroundColor: theme.colors.surface,
@@ -151,6 +152,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.m,
     borderWidth: 1,
     borderColor: '#e1e1e1',
+    textAlign: 'right',
   },
   button: {
     backgroundColor: theme.colors.primary,
@@ -187,10 +189,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: theme.colors.text,
+    textAlign: 'right',
   },
   managerEmail: {
     fontSize: 14,
     color: theme.colors.textSecondary,
     marginTop: 2,
+    textAlign: 'right',
   },
 });

@@ -7,6 +7,7 @@ import { theme } from '../../theme/theme';
 import { getLikes, getDislikes, getFreezes, getLikedMe } from '../../api/listsApi';
 import { likeUser, dislikeUser, removeAction } from '../../api/actionsApi';
 import { PoolType } from '../../types/api';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 type TabType = 'likes' | 'dislikes' | 'freezes' | 'liked-me';
 
@@ -18,10 +19,10 @@ export const ListsScreen = ({ navigation }: any) => {
   const [processingId, setProcessingId] = useState<number | null>(null);
 
   const tabs: { id: TabType; label: string }[] = [
-    { id: 'likes', label: 'Likes' },
-    { id: 'dislikes', label: 'Dislikes' },
-    { id: 'freezes', label: 'Freezes' },
-    { id: 'liked-me', label: 'Liked Me' },
+    { id: 'likes', label: 'לייקים' },
+    { id: 'dislikes', label: 'לא מתאימים' },
+    { id: 'freezes', label: 'שמורים בצד' },
+    { id: 'liked-me', label: 'עשו לי לייק' },
   ];
 
   const fetchList = async (tab: TabType) => {
@@ -41,9 +42,7 @@ export const ListsScreen = ({ navigation }: any) => {
       setItems(data);
     } catch (err: any) {
       setError(
-        err.response?.data?.message ||
-          err.message ||
-          `Failed to load list. Please try again.`
+        getFriendlyErrorMessage(err, 'טעינת הרשימה נכשלה. אנא נסה שוב.')
       );
     } finally {
       setLoading(false);
@@ -62,10 +61,10 @@ export const ListsScreen = ({ navigation }: any) => {
         const response = await likeUser(targetUserId, { poolType, weddingId });
         await fetchList(activeTab);
         if (response.matchCreated) {
-          Alert.alert('Match created!', 'You can now chat.');
+          Alert.alert('נוצרה התאמה!', 'עכשיו אתם יכולים להתכתב.');
         }
       } catch (err: any) {
-        setError(err.response?.data?.message || err.message || `Failed to like user. Please try again.`);
+        setError(getFriendlyErrorMessage(err, 'סימון הלייק נכשל. אנא נסה שוב.'));
       } finally {
         setProcessingId(null);
       }
@@ -73,20 +72,20 @@ export const ListsScreen = ({ navigation }: any) => {
 
     if (activeTab === 'liked-me') {
       Alert.alert(
-        'Like Candidate',
-        'This may create a Match immediately if the other user already liked you.',
+        'סימון לייק',
+        'פעולה זו עשויה ליצור התאמה מיידית אם המשתמש השני כבר סימן לך לייק.',
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Like', onPress: execute },
+          { text: 'ביטול', style: 'cancel' },
+          { text: 'לייק', onPress: execute },
         ]
       );
     } else {
       Alert.alert(
-        'Like Candidate',
-        'If the other side also likes you, a Match will be created and you will be able to chat.',
+        'סימון לייק',
+        'אם גם הצד השני יסמן לייק, ייווצר שידוך ותוכלו להתכתב.',
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Like', onPress: execute },
+          { text: 'ביטול', style: 'cancel' },
+          { text: 'לייק', onPress: execute },
         ]
       );
     }
@@ -100,18 +99,18 @@ export const ListsScreen = ({ navigation }: any) => {
         await dislikeUser(targetUserId, { poolType, weddingId });
         await fetchList(activeTab);
       } catch (err: any) {
-        setError(err.response?.data?.message || err.message || `Failed to dislike user. Please try again.`);
+        setError(getFriendlyErrorMessage(err, 'הפעולה נכשלה. אנא נסה שוב.'));
       } finally {
         setProcessingId(null);
       }
     };
 
     Alert.alert(
-      'Dislike Candidate',
-      'This user will move to Dislikes and will not be shown again in your feed.',
+      'לא מתאים',
+      'משתמש זה יועבר לרשימת הלא מתאימים ולא יופיע שוב בפיד שלך.',
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Dislike', style: 'destructive', onPress: execute },
+        { text: 'ביטול', style: 'cancel' },
+        { text: 'לא מתאים', style: 'destructive', onPress: execute },
       ]
     );
   };
@@ -124,7 +123,7 @@ export const ListsScreen = ({ navigation }: any) => {
         await removeAction(targetUserId, { poolType, weddingId });
         await fetchList(activeTab);
       } catch (err: any) {
-        setError(err.response?.data?.message || err.message || `Failed to return to feed. Please try again.`);
+        setError(getFriendlyErrorMessage(err, 'ההחזרה לפיד נכשלה. אנא נסה שוב.'));
       } finally {
         setProcessingId(null);
       }
@@ -132,20 +131,20 @@ export const ListsScreen = ({ navigation }: any) => {
 
     if (activeTab === 'freezes') {
       Alert.alert(
-        'Unfreeze Candidate',
-        'This user will be removed from Freeze and may appear again in your feed if they are still eligible.',
+        'החזרה לפיד',
+        'משתמש זה יוסר מהשמורים בצד ועשוי להופיע שוב בפיד שלך אם הוא עדיין מתאים.',
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Unfreeze', onPress: execute },
+          { text: 'ביטול', style: 'cancel' },
+          { text: 'החזרה לפיד', onPress: execute },
         ]
       );
     } else {
       Alert.alert(
-        'Return to Feed',
-        'This action will be removed, and the user may appear again in your feed if they are still eligible.',
+        'החזרה לפיד',
+        'פעולה זו תבוטל, והמשתמש עשוי להופיע שוב בפיד שלך אם הוא עדיין מתאים.',
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Return to Feed', onPress: execute },
+          { text: 'ביטול', style: 'cancel' },
+          { text: 'החזרה לפיד', onPress: execute },
         ]
       );
     }
@@ -176,12 +175,12 @@ export const ListsScreen = ({ navigation }: any) => {
       {loading ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.stateText}>Loading list...</Text>
+          <Text style={styles.stateText}>טוען רשימה...</Text>
         </View>
       ) : error ? (
         <View style={styles.centerContainer}>
           <Text style={styles.errorText}>{error}</Text>
-          <AppButton title="Retry" onPress={() => fetchList(activeTab)} style={styles.retryButton} />
+          <AppButton title="נסה שוב" onPress={() => fetchList(activeTab)} style={styles.retryButton} />
         </View>
       ) : (
         <FlatList
@@ -205,27 +204,27 @@ export const ListsScreen = ({ navigation }: any) => {
                 <View style={styles.actionsContainer}>
                   {activeTab === 'likes' && (
                     <>
-                      <AppButton title="Dislike" onPress={() => handleDislike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
-                      <AppButton title="Return to Feed" onPress={() => handleRemoveAction(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.returnButton} />
+                      <AppButton title="לא מתאים" onPress={() => handleDislike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
+                      <AppButton title="החזרה לפיד" onPress={() => handleRemoveAction(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.returnButton} />
                     </>
                   )}
                   {activeTab === 'dislikes' && (
                     <>
-                      <AppButton title="Like" onPress={() => handleLike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
-                      <AppButton title="Return to Feed" onPress={() => handleRemoveAction(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.returnButton} />
+                      <AppButton title="לייק" onPress={() => handleLike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
+                      <AppButton title="החזרה לפיד" onPress={() => handleRemoveAction(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.returnButton} />
                     </>
                   )}
                   {activeTab === 'freezes' && (
                     <>
-                      <AppButton title="Like" onPress={() => handleLike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
-                      <AppButton title="Dislike" onPress={() => handleDislike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
-                      <AppButton title="Return to Feed" onPress={() => handleRemoveAction(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.returnButton} />
+                      <AppButton title="לייק" onPress={() => handleLike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
+                      <AppButton title="לא מתאים" onPress={() => handleDislike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
+                      <AppButton title="החזרה לפיד" onPress={() => handleRemoveAction(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.returnButton} />
                     </>
                   )}
                   {activeTab === 'liked-me' && (
                     <>
-                      <AppButton title="Like" onPress={() => handleLike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
-                      <AppButton title="Dislike" onPress={() => handleDislike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
+                      <AppButton title="לייק" onPress={() => handleLike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
+                      <AppButton title="לא מתאים" onPress={() => handleDislike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
                     </>
                   )}
                 </View>
@@ -237,9 +236,9 @@ export const ListsScreen = ({ navigation }: any) => {
           refreshing={loading}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyTitle}>No users found</Text>
+              <Text style={styles.emptyTitle}>לא נמצאו משתמשים</Text>
               <Text style={styles.emptySubtitle}>
-                Your "{tabs.find((t) => t.id === activeTab)?.label}" list is currently empty.
+                רשימת ה"{tabs.find((t) => t.id === activeTab)?.label}" שלך ריקה כרגע.
               </Text>
             </View>
           }
@@ -251,7 +250,7 @@ export const ListsScreen = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
   tabsContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
