@@ -43,6 +43,9 @@ export const JoinWeddingScreen = ({ navigation }: any) => {
         {successData ? (
           <View style={styles.successCard}>
             <Text style={styles.successTitle}>Successfully Joined!</Text>
+            <Text style={styles.successMessage}>
+              הצטרפת בהצלחה לחתונה של {successData.weddingName}.
+            </Text>
             <View style={styles.row}>
               <Text style={styles.label}>Wedding:</Text>
               <Text style={styles.value}>{successData.weddingName}</Text>
@@ -59,6 +62,11 @@ export const JoinWeddingScreen = ({ navigation }: any) => {
               <Text style={styles.label}>Joined At:</Text>
               <Text style={styles.value}>{new Date(successData.joinedAt).toLocaleDateString()}</Text>
             </View>
+            <AppButton
+              title="View My Weddings"
+              onPress={() => navigation.navigate('MyWeddings')}
+              style={styles.myWeddingsButton}
+            />
             <AppButton
               title="Back to Home"
               onPress={() => navigation.navigate('Me')}
@@ -155,7 +163,18 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     fontWeight: '600',
   },
-  backButton: {
+  successMessage: {
+    fontSize: 16,
+    color: theme.colors.text,
+    textAlign: 'center',
+    marginBottom: theme.spacing.l,
+    fontWeight: '600',
+  },
+  myWeddingsButton: {
     marginTop: theme.spacing.xl,
+  },
+  backButton: {
+    marginTop: theme.spacing.m,
+    backgroundColor: '#4A4A4A',
   },
 });

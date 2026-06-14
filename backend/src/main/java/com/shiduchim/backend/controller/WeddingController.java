@@ -62,4 +62,9 @@ public class WeddingController {
     public ValidateWeddingCodeResponse validateCode(@RequestBody ValidateWeddingCodeRequest request) {
         return weddingService.validateCode(request);
     }
+
+    @GetMapping("/weddings/my")
+    public List<com.shiduchim.backend.dto.wedding.UserWeddingResponse> getMyWeddings(@AuthenticationPrincipal User currentUser) {
+        return weddingService.getMyWeddings(currentUser);
+    }
 }

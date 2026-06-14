@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import com.shiduchim.backend.dto.chat.ConversationResponse;
+import com.shiduchim.backend.dto.chat.UnreadCountResponse;
 
 @RestController
 public class ChatController {
@@ -34,5 +35,15 @@ public class ChatController {
     @GetMapping("/api/chats/conversations")
     public List<ConversationResponse> getConversations(@AuthenticationPrincipal User currentUser) {
         return chatService.getConversations(currentUser);
+    }
+
+    @GetMapping("/api/chats/unread-count")
+    public UnreadCountResponse getUnreadCount(@AuthenticationPrincipal User currentUser) {
+        return chatService.getTotalUnreadCount(currentUser);
+    }
+
+    @PatchMapping("/api/matches/{matchId}/messages/read")
+    public UnreadCountResponse markMessagesAsRead(@AuthenticationPrincipal User currentUser, @PathVariable Long matchId) {
+        return chatService.markMessagesAsRead(currentUser, matchId);
     }
 }

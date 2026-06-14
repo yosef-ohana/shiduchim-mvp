@@ -1,17 +1,50 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
-import { AppInput } from '../../components/AppInput';
 import { theme } from '../../theme/theme';
-import { DiscoverPool } from '../../types/api';
+import { DiscoverPool, UserWeddingResponse } from '../../types/api';
 import { useAuth } from '../../context/AuthContext';
+import { getMyWeddings } from '../../api/weddingsApi';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 export const PoolSelectionScreen = ({ navigation }: any) => {
   const { user } = useAuth();
   const [selectedPool, setSelectedPool] = useState<DiscoverPool>('GLOBAL');
-  const [weddingIdText, setWeddingIdText] = useState('');
+  const [weddings, setWeddings] = useState<UserWeddingResponse[]>([]);
+  const [loadingWeddings, setLoadingWeddings] = useState(false);
+  const [selectedWeddingId, setSelectedWeddingId] = useState<number | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
+
+  const fetchWeddings = async () => {
+    setLoadingWeddings(true);
+    setErrorText(null);
+    try {
+      const list = await getMyWeddings();
+      setWeddings(list);
+      
+      const eligible = list.filter(
+        (w) => w.isWeddingPoolEligible && w.weddingStatus === 'ACTIVE' && w.participantStatus === 'ACTIVE'
+      );
+      if (eligible.length > 0 && !selectedWeddingId) {
+        setSelectedWeddingId(eligible[0].weddingId);
+      }
+    } catch (err: any) {
+      setErrorText(getFriendlyErrorMessage(err, 'Failed to load joined weddings.'));
+    } finally {
+      setLoadingWeddings(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedPool === 'WEDDING') {
+      fetchWeddings();
+    }
+  }, [selectedPool]);
+
+  const eligibleWeddings = weddings.filter(
+    (w) => w.isWeddingPoolEligible && w.weddingStatus === 'ACTIVE' && w.participantStatus === 'ACTIVE'
+  );
 
   const handleDiscover = () => {
     setErrorText(null);
@@ -40,12 +73,11 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
         return;
       }
       
-      const parsedId = parseInt(weddingIdText.trim(), 10);
-      if (isNaN(parsedId) || parsedId <= 0) {
-        setErrorText('Please enter a valid, positive numeric Wedding ID.');
+      if (!selectedWeddingId) {
+        setErrorText('Please select a wedding from the list.');
         return;
       }
-      navigation.navigate('Discover', { pool: 'WEDDING', weddingId: parsedId });
+      navigation.navigate('Discover', { pool: 'WEDDING', weddingId: selectedWeddingId });
     }
   };
 
@@ -105,20 +137,45 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
 
         {selectedPool === 'WEDDING' && (
           <View style={styles.weddingInputContainer}>
-            <AppInput
-              label="Wedding ID"
-              placeholder="e.g. 101"
-              keyboardType="number-pad"
-              value={weddingIdText}
-              onChangeText={(text) => {
-                setWeddingIdText(text);
-                setErrorText(null);
-              }}
-              error={errorText || undefined}
-            />
-            <Text style={styles.note}>
-              Note: This MVP does not fetch your joined weddings list. Please enter the numeric Wedding ID manually to proceed.
-            </Text>
+            {loadingWeddings ? (
+              <ActivityIndicator size="small" color={theme.colors.primary} style={styles.loader} />
+            ) : eligibleWeddings.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>You haven't joined any eligible weddings yet.</Text>
+                <Text style={styles.emptySubText}>Please join a wedding with an access code first.</Text>
+              </View>
+            ) : (
+              <View style={styles.weddingsListContainer}>
+                <Text style={styles.sectionTitle}>Select a Wedding:</Text>
+                {eligibleWeddings.map((w) => {
+                  const isSelected = selectedWeddingId === w.weddingId;
+                  return (
+                    <TouchableOpacity
+                      key={w.weddingId}
+                      style={[
+                        styles.weddingCard,
+                        isSelected && styles.selectedWeddingCard,
+                      ]}
+                      onPress={() => {
+                        setSelectedWeddingId(w.weddingId);
+                        setErrorText(null);
+                      }}
+                    >
+                      <Text style={[styles.weddingNameText, isSelected && styles.selectedWeddingNameText]}>
+                        {w.weddingName}
+                      </Text>
+                      {w.city || w.weddingDate ? (
+                        <Text style={styles.weddingDetailsText}>
+                          {[w.city, w.weddingDate ? new Date(w.weddingDate).toLocaleDateString() : null]
+                            .filter(Boolean)
+                            .join(' - ')}
+                        </Text>
+                      ) : null}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
           </View>
         )}
 
@@ -189,12 +246,58 @@ const styles = StyleSheet.create({
     padding: theme.spacing.m,
     marginBottom: theme.spacing.xl,
   },
-  note: {
+  loader: {
+    marginVertical: theme.spacing.m,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.m,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  emptySubText: {
     fontSize: 12,
     color: theme.colors.textSecondary,
-    fontStyle: 'italic',
-    lineHeight: 16,
-    marginTop: theme.spacing.s,
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  weddingsListContainer: {
+    width: '100%',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: theme.colors.text,
+    marginBottom: theme.spacing.m,
+  },
+  weddingCard: {
+    backgroundColor: theme.colors.background,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.m,
+    padding: theme.spacing.m,
+    marginBottom: theme.spacing.s,
+  },
+  selectedWeddingCard: {
+    borderColor: theme.colors.primary,
+    backgroundColor: '#FAF7F0',
+  },
+  weddingNameText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  selectedWeddingNameText: {
+    color: theme.colors.primary,
+  },
+  weddingDetailsText: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginTop: 4,
   },
   actionButton: {
     marginTop: 'auto',

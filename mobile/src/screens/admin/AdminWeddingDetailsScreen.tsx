@@ -99,6 +99,32 @@ export const AdminWeddingDetailsScreen = () => {
     }
   };
 
+  const handleRestoreInvite = async (inviteId: number) => {
+    Alert.alert(
+      'Restore Invitation',
+      'Are you sure you want to restore this invitation?',
+      [
+        { text: 'No', style: 'cancel' },
+        { 
+          text: 'Yes, Restore', 
+          onPress: async () => {
+            setLoading(true);
+            try {
+              await adminApi.restoreInvite(weddingId, inviteId);
+              Alert.alert('Success', 'Invitation restored.');
+              await fetchData();
+            } catch (error: any) {
+              console.error(error);
+              Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'החזרת ההזמנה נכשלה.'));
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+
   if (loading) {
     return (
       <Screen>
@@ -173,9 +199,19 @@ export const AdminWeddingDetailsScreen = () => {
               <Text style={styles.sectionTitle}>Invitations ({invites.length})</Text>
               {invites.map((invite) => (
                 <View key={`invite-${invite.id}`} style={styles.inviteCard}>
-                  <Text style={styles.inviteName}>{invite.fullName}</Text>
-                  <Text style={styles.inviteEmail}>{invite.email}</Text>
-                  <Text style={styles.inviteStatus}>Status: {invite.status}</Text>
+                  <View style={{ flex: 1, marginRight: theme.spacing.s }}>
+                    <Text style={styles.inviteName}>{invite.fullName}</Text>
+                    <Text style={styles.inviteEmail}>{invite.email}</Text>
+                    <Text style={styles.inviteStatus}>Status: {invite.status}</Text>
+                  </View>
+                  {invite.status === 'CANCELLED' && wedding.status === 'ACTIVE' && (
+                    <TouchableOpacity
+                      style={styles.restoreBtn}
+                      onPress={() => handleRestoreInvite(invite.id)}
+                    >
+                      <Text style={styles.restoreBtnText}>Restore</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               ))}
             </View>
@@ -259,6 +295,20 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.s,
     borderWidth: 1,
     borderColor: '#E0E0E0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  restoreBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#E8F5E9',
+    borderRadius: theme.borderRadius.s,
+  },
+  restoreBtnText: {
+    color: '#2E7D32',
+    fontWeight: '600',
+    fontSize: 13,
   },
   inviteName: {
     fontSize: 16,

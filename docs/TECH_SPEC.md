@@ -270,12 +270,14 @@ Fields:
 - `senderId: Long`
 - `content: Text`
 - `sentAt: LocalDateTime`
+- `readByRecipient: Boolean`
 
 Constraints:
 - `content` not blank.
 - sender must be one side of the Match.
 - Match must be ACTIVE.
-- No readAt, read receipts, unread count, attachments, editing or deletion.
+- `readByRecipient` default false; tracks if the message has been read by the recipient.
+- No read receipts or per-message read timestamps exposed to the other user, no WebSocket, no Push.
 
 ---
 
@@ -420,8 +422,9 @@ No global approval. FULL profile opens global automatically.
 - Text messages only.
 - No WebSocket.
 - No realtime.
-- No unread count.
-- No readAt or read receipts.
+- Unread counts are allowed as internal badges only (conversation unreadCount & total unreadCount).
+- Resetting unread count when recipient opens chat is allowed.
+- No read receipts or read timestamps are exposed to the peer (no blue checks, no "seen" label, no per-message readAt).
 - No attachments.
 - No edit/delete in MVP.
 - BLOCKED Match blocks sending and active chat display.
@@ -506,5 +509,36 @@ No global approval. FULL profile opens global automatically.
 * **Lightweight Invitations (`WeddingInvite`)**: Administrative-only entity tracking invites via email. No real email or SMS transmissions, no magic links, and no QR codes. Any user can join by `accessCode` without a pre-existing invite.
 * **Deactivation / Block Rule**: Do not add `isActive` or new deactivate fields. Default MVP behavior relies on setting `adminBlocked = true` on the `User` entity to block/deactivate both regular users and Event Managers.
 * **Administrative Operations Safety**: Deactivation, cancellation, blocking, and participant removal must be safe and soft operations. No hard deletes of transactional data (users, weddings, matches, chats, actions, participants, or invites) are permitted.
+
+---
+
+## 15. Phase 17 Additions
+
+Phase 17 is officially defined as: **"QA Notes Completion and Missing Feature Completion"**
+
+* **Chat Unread Counts**:
+  * Add a `readByRecipient: Boolean` flag (default false) to `ChatMessage`.
+  * Conversation unread count calculation rules: count messages in a match context where `senderId != currentUserId` and `readByRecipient = false`.
+  * Total unread count behavior: sum of unread counts across all active conversations. Expose via `GET /api/chats/unread-count`.
+  * Reset unread counts: opening a conversation triggers `PATCH /api/matches/{matchId}/messages/read`, which sets `readByRecipient = true` for all messages in that match where `senderId != currentUserId`.
+  * No read receipts, "seen" label, blue checks, per-message read timestamps, WebSockets, or Push notifications.
+* **Regular User “My Weddings” Screen**:
+  * Exposes simple user-safe data via `GET /api/weddings/my` using `UserWeddingResponse`.
+  * Contains fields: `weddingId`, `weddingName`, `city`, `weddingDate`, `weddingStatus`, `participantStatus`, `joinedAt` (if available), and `isWeddingPoolEligible` (indicates whether this wedding can currently be used as a wedding pool, which requires both ACTIVE wedding status and ACTIVE participant status).
+  * Does not expose other participants, invite lists, management/admin data, private emails, or other sensitive admin-only data.
+* **Clear Join Indication**:
+  * After joining a wedding via accessCode, display a clear success indication (e.g., “You successfully joined [Wedding Name].”).
+  * Joining a wedding only links the user to the wedding. It does not bypass basic profile and primary photo eligibility requirements for the Wedding Pool.
+* **Wedding Pool Selection from Joined Weddings**:
+  * User selects from list of joined weddings instead of typing access codes manually.
+  * Rules: show only weddings the current user has joined, allow only ACTIVE participation status, and allow only ACTIVE weddings. Does not bypass onboarding eligibility requirements.
+* **Restore Cancelled Invite**:
+  * Admin and Event Managers can restore a cancelled invite from `CANCELLED` status back to `PENDING` only.
+  * Endpoint: `PATCH /api/event-manager/weddings/{id}/invites/{inviteId}/restore`.
+  * Rules: Do not create a new invite instead of restoring, do not hard delete, do not send real email, do not add QR, magic links, or invite tokens.
+  * Do not allow restore if:
+    * the wedding is `CLOSED` or `CANCELLED`,
+    * a `PENDING` or `ACCEPTED` invite already exists for the same email and wedding,
+    * a user with that email is already an `ACTIVE` participant in the wedding.
 
 

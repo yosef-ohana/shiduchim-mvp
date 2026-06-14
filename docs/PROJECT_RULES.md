@@ -46,8 +46,7 @@ Do not add:
 - WebSocket
 - realtime chat
 - notifications
-- unread count
-- readAt / read receipts
+- read receipts / seen / blue checks / readAt per message (Note: internal unread count per conversation & total unread count are allowed in Phase 17 as internal badges only, no read receipts exposed to the other user)
 - attachments
 - heavy reports
 - heavy logs

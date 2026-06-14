@@ -96,8 +96,14 @@ export const adminApi = {
     return response.data;
   },
 
+  restoreInvite: async (weddingId: number, inviteId: number): Promise<WeddingInviteResponse> => {
+    const response = await apiClient.patch<WeddingInviteResponse>(`/event-manager/weddings/${weddingId}/invites/${inviteId}/restore`);
+    return response.data;
+  },
+
   getDashboard: async (): Promise<AdminDashboardResponse> => {
     const response = await apiClient.get<AdminDashboardResponse>('/admin/dashboard');
     return response.data;
   },
 };
+

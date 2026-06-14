@@ -24,6 +24,9 @@ public class ChatMessage {
     @Column(nullable = false)
     private LocalDateTime sentAt;
 
+    @Column(nullable = false)
+    private boolean readByRecipient = false;
+
     @PrePersist
     protected void onCreate() {
         if (this.sentAt == null) {
@@ -47,4 +50,7 @@ public class ChatMessage {
 
     public LocalDateTime getSentAt() { return sentAt; }
     public void setSentAt(LocalDateTime sentAt) { this.sentAt = sentAt; }
+
+    public boolean isReadByRecipient() { return readByRecipient; }
+    public void setReadByRecipient(boolean readByRecipient) { this.readByRecipient = readByRecipient; }
 }

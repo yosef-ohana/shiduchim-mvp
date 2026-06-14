@@ -6,6 +6,7 @@ import { AppButton } from '../../components/AppButton';
 import { useAuth } from '../../context/AuthContext';
 import { theme } from '../../theme/theme';
 import { adminApi } from '../../api/adminApi';
+import { getUnreadCount } from '../../api/chatsApi';
 import { AdminDashboardResponse } from '../../types/api';
 
 export const MeScreen = ({ navigation }: any) => {
@@ -13,6 +14,7 @@ export const MeScreen = ({ navigation }: any) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [dashboardData, setDashboardData] = useState<AdminDashboardResponse | null>(null);
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
+  const [totalUnreadCount, setTotalUnreadCount] = useState<number>(0);
 
   const fetchDashboard = async () => {
     setIsLoadingDashboard(true);
@@ -26,10 +28,22 @@ export const MeScreen = ({ navigation }: any) => {
     }
   };
 
+  const fetchTotalUnreadCount = async () => {
+    try {
+      const data = await getUnreadCount();
+      setTotalUnreadCount(data.unreadCount);
+    } catch (error) {
+      console.error('Error fetching total unread count:', error);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
       if (user && user.role === 'ADMIN') {
         fetchDashboard();
+      }
+      if (user && user.role === 'USER') {
+        fetchTotalUnreadCount();
       }
     }, [user])
   );
@@ -41,6 +55,9 @@ export const MeScreen = ({ navigation }: any) => {
       if (user && user.role === 'ADMIN') {
         const data = await adminApi.getDashboard();
         setDashboardData(data);
+      }
+      if (user && user.role === 'USER') {
+        await fetchTotalUnreadCount();
       }
     } catch (error) {
       console.error('Error refreshing data:', error);
@@ -114,7 +131,7 @@ export const MeScreen = ({ navigation }: any) => {
             />
 
             <AppButton 
-              title="Chats" 
+              title={totalUnreadCount > 0 ? `Chats (${totalUnreadCount})` : 'Chats'} 
               onPress={() => navigation.navigate('Chats')}
               style={styles.button}
             />
@@ -134,6 +151,12 @@ export const MeScreen = ({ navigation }: any) => {
             <AppButton 
               title="My Photos" 
               onPress={() => navigation.navigate('Photos')}
+              style={styles.button}
+            />
+
+            <AppButton 
+              title="My Weddings" 
+              onPress={() => navigation.navigate('MyWeddings')}
               style={styles.button}
             />
 

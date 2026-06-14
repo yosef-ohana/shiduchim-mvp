@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,12 @@ import {
   Platform,
   TouchableOpacity,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
 import { AppInput } from '../../components/AppInput';
 import { theme } from '../../theme/theme';
-import { getChatMessages, sendChatMessage } from '../../api/chatApi';
+import { getChatMessages, sendChatMessage, markMessagesAsRead } from '../../api/chatApi';
 import { ChatMessageResponse } from '../../types/api';
 import { ChatMessageBubble } from '../../components/ChatMessageBubble';
 
@@ -26,6 +27,20 @@ export const ChatScreen = ({ route, navigation }: any) => {
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+
+  const handleMarkAsRead = async () => {
+    try {
+      await markMessagesAsRead(matchId);
+    } catch (err) {
+      console.warn('Failed to mark messages as read:', err);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      handleMarkAsRead();
+    }, [matchId])
+  );
 
   const fetchMessages = async (showLoadingIndicator = true) => {
     if (showLoadingIndicator) {

@@ -6,6 +6,7 @@ import { BasicProfileScreen } from '../screens/profile/BasicProfileScreen';
 import { FullProfileScreen } from '../screens/profile/FullProfileScreen';
 import { PhotosScreen } from '../screens/photos/PhotosScreen';
 import { JoinWeddingScreen } from '../screens/weddings/JoinWeddingScreen';
+import { MyWeddingsScreen } from '../screens/weddings/MyWeddingsScreen';
 import { PoolSelectionScreen } from '../screens/discover/PoolSelectionScreen';
 import { DiscoverScreen } from '../screens/discover/DiscoverScreen';
 import { CandidateProfileScreen } from '../screens/discover/CandidateProfileScreen';
@@ -32,6 +33,7 @@ export type MainStackParamList = {
   FullProfile: undefined;
   Photos: undefined;
   JoinWedding: undefined;
+  MyWeddings: undefined;
   PoolSelection: undefined;
   Discover: { pool: DiscoverPool; weddingId?: number };
   CandidateProfile: { userId: number };
@@ -62,6 +64,7 @@ export const MainStack = () => {
       <Stack.Screen name="FullProfile" component={FullProfileScreen} options={{ title: 'Full Profile' }} />
       <Stack.Screen name="Photos" component={PhotosScreen} options={{ title: 'My Photos' }} />
       <Stack.Screen name="JoinWedding" component={JoinWeddingScreen} options={{ title: 'Join Wedding' }} />
+      <Stack.Screen name="MyWeddings" component={MyWeddingsScreen} options={{ title: 'My Weddings' }} />
       <Stack.Screen name="PoolSelection" component={PoolSelectionScreen} options={{ title: 'Select Pool' }} />
       <Stack.Screen name="Discover" component={DiscoverScreen} options={{ title: 'Candidates' }} />
       <Stack.Screen name="CandidateProfile" component={CandidateProfileScreen} options={{ title: 'Candidate Profile' }} />

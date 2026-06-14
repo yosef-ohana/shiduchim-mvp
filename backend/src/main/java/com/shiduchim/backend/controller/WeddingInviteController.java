@@ -38,4 +38,11 @@ public class WeddingInviteController {
                                               @AuthenticationPrincipal User currentUser) {
         return weddingInviteService.cancelInvite(id, inviteId, currentUser);
     }
+
+    @PatchMapping("/event-manager/weddings/{id}/invites/{inviteId}/restore")
+    public WeddingInviteResponse restoreInvite(@PathVariable Long id,
+                                               @PathVariable Long inviteId,
+                                               @AuthenticationPrincipal User currentUser) {
+        return weddingInviteService.restoreInvite(id, inviteId, currentUser);
+    }
 }

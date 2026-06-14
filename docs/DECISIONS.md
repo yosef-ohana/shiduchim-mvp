@@ -98,8 +98,7 @@ No new stack proposals.
 - device tokens
 - WebSocket
 - realtime
-- unread count
-- readAt / read receipts
+- read receipts / seen / blue checks / readAt per message (Note: internal unread count per conversation & total unread count are allowed in Phase 17 as internal badges only, no read receipts exposed to the other user)
 - heavy dashboards
 - heavy reports
 - heavy logs
@@ -311,8 +310,9 @@ Chat:
 - HTTP GET/POST only
 - no WebSocket
 - no realtime
-- no unread
-- no readAt/read receipts
+- unread counts are allowed only as internal badges (conversation unreadCount & total unreadCount)
+- resetting unread count when recipient opens chat is allowed
+- no read receipts or read timestamps are exposed to the peer (no blue checks, no "seen" label, no per-message readAt)
 - no attachments
 - no edit/delete
 
@@ -342,3 +342,36 @@ Official order:
 Do not start with UI before API/backend foundations.
 Do not build all backend at once.
 Do not build all mobile at once.
+
+---
+
+## 17. Phase 17 Decisions
+
+Phase 17 is officially defined as: **"QA Notes Completion and Missing Feature Completion"**
+
+### 17.1 Unread Message Counts
+- Allowed: Internal unread count per conversation (`unreadCount` on `ConversationResponse`) and total unread count across all conversations (`GET /api/chats/unread-count`).
+- Reset behavior: Resetting conversation's unread count when the recipient opens the chat/messages (`PATCH /api/matches/{matchId}/messages/read`).
+- Backend flag: A backend/internal flag such as `readByRecipient` on `ChatMessage`.
+- Forbidden: No blue checks, no "seen" label, no read receipts exposed to the other user, no per-message `readAt` timestamp, no WebSockets, no Push notifications, no heavy realtime or frequent heavy polling.
+- Scope: The unread mechanism is internal and exists only to show the current user how many received messages they have not opened yet.
+
+### 17.2 My Weddings for Regular Users
+- Regular USER accounts are approved to see weddings they have joined via a dedicated screen.
+- Endpoint: `GET /api/weddings/my` (returns user-safe `UserWeddingResponse` objects).
+- Exposed fields: `weddingId`, `weddingName`, `city`, `weddingDate`, `weddingStatus`, `participantStatus`, `joinedAt` (if available), and whether this wedding can currently be used as a wedding pool (`isWeddingPoolEligible`).
+- Forbidden: Do not expose other participants, invite lists, management/admin data, private emails, or other sensitive admin-only data.
+
+### 17.3 Clear Join Indication
+- After a user successfully joins a wedding, a clear success indication is shown (e.g., "You successfully joined [Wedding Name].").
+- Onboarding rules: Joining via code does not bypass basic profile and primary photo eligibility requirements for the Wedding Pool.
+
+### 17.4 Wedding Pool Selection
+- Regular users should select from weddings they have already joined. Typing wedding IDs manually is no longer needed.
+- Filtering rules: Show only weddings the user has joined, allow only ACTIVE participation status, and allow only ACTIVE weddings.
+
+### 17.5 Restore Cancelled Invite
+- Admin and Event Managers can restore a cancelled invite from `CANCELLED` status back to `PENDING`.
+- Endpoint: `PATCH /api/event-manager/weddings/{id}/invites/{inviteId}/restore`.
+- Restrictions: Restore only to `PENDING` (do not create a new invite, do not hard delete, do not send real emails, do not add QR/magic links/invite tokens).
+- Prevention rules: Do not allow restore if the wedding is `CLOSED` or `CANCELLED`, if a `PENDING` or `ACCEPTED` invite already exists for the same email/wedding, or if the email owner is already an `ACTIVE` participant.

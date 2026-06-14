@@ -219,6 +219,16 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 - `createdAt`
 - `acceptedAt`
 
+`UserWeddingResponse`
+- `weddingId`
+- `weddingName`
+- `city`
+- `weddingDate`
+- `weddingStatus`
+- `participantStatus`
+- `joinedAt` (optional)
+- `isWeddingPoolEligible`
+
 ---
 
 ### Discover / Actions
@@ -319,6 +329,7 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 - `poolType`
 - `weddingId`
 - `matchStatus`
+- `unreadCount`
 
 ---
 
@@ -409,6 +420,7 @@ No Cloudinary. No soft delete. No `deleted` flag.
 | PATCH | `/api/event-manager/weddings/{id}/cancel` | EVENT_MANAGER / ADMIN | — | `WeddingResponse` | Owner/Admin; status CANCELLED | 401, 403, 404 |
 | POST | `/api/weddings/join` | USER | `JoinWeddingRequest` | `JoinWeddingResponse` | Join ACTIVE wedding by accessCode; no QR | 400, 401, 403, 404, 409 |
 | POST | `/api/weddings/validate-code` | Public | `ValidateWeddingCodeRequest` | `ValidateWeddingCodeResponse` | Validate wedding access code before auth | 400, 404 |
+| GET | `/api/weddings/my` | USER | — | `List<UserWeddingResponse>` | Returns list of weddings joined by the current user with simple user-safe data | 401, 403 |
 
 ---
 
@@ -429,6 +441,7 @@ No Cloudinary. No soft delete. No `deleted` flag.
 | POST | `/api/event-manager/weddings/{id}/invites` | EVENT_MANAGER / ADMIN | `CreateWeddingInviteRequest` | `WeddingInviteResponse` | Creates a lightweight invitation; owner or ADMIN only | 400, 401, 403, 404, 409 |
 | GET | `/api/event-manager/weddings/{id}/invites` | EVENT_MANAGER / ADMIN | — | `List<WeddingInviteResponse>` | Lists invitations; owner or ADMIN only | 401, 403, 404 |
 | PATCH | `/api/event-manager/weddings/{id}/invites/{inviteId}/cancel` | EVENT_MANAGER / ADMIN | — | `WeddingInviteResponse` | Cancels the invitation; owner or ADMIN only | 401, 403, 404 |
+| PATCH | `/api/event-manager/weddings/{id}/invites/{inviteId}/restore` | EVENT_MANAGER / ADMIN | — | `WeddingInviteResponse` | Restores a cancelled invitation back to PENDING; owner or ADMIN only | 400, 401, 403, 404, 409 |
 
 ---
 
@@ -491,11 +504,13 @@ Never expose who Disliked/Froze current user.
 
 | Method | Path | Role | Request | Response | Rules | Errors |
 |---|---|---|---|---|---|---|
-| GET | `/api/chats/conversations` | USER | — | `List<ConversationResponse>` | Returns current user's active conversations sorted newest-first | 401, 403 |
+| GET | `/api/chats/conversations` | USER | — | `List<ConversationResponse>` | Returns current user's active conversations sorted newest-first (includes unread counts) | 401, 403 |
 | GET | `/api/matches/{matchId}/messages` | USER | — | `ChatMessagesResponse` | Match must be ACTIVE; user must be side | 401, 403, 404 |
 | POST | `/api/matches/{matchId}/messages` | USER | `ChatMessageRequest` | `ChatMessageResponse` | Text only; content not blank; ACTIVE Match only | 400, 401, 403, 404 |
+| GET | `/api/chats/unread-count` | USER | — | `{ "totalUnreadCount": Integer }` | Returns total number of unread messages across all active conversations | 401, 403 |
+| PATCH | `/api/matches/{matchId}/messages/read` | USER | — | `{ "success": Boolean }` | Marks all messages sent by peer in this match as read | 401, 403, 404 |
 
-No WebSocket. No realtime. No unread. No readAt. No attachments.
+No WebSocket. No realtime. No attachments. (Note: internal unread count per conversation & total unread count are allowed in Phase 17 as internal badges only, no read receipts exposed to the other user)
 
 ---
 

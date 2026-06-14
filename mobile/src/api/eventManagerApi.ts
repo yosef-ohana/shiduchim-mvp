@@ -63,3 +63,8 @@ export const cancelInvite = async (weddingId: number, inviteId: number): Promise
   return response.data;
 };
 
+export const restoreInvite = async (weddingId: number, inviteId: number): Promise<WeddingInviteResponse> => {
+  const response = await apiClient.patch<WeddingInviteResponse>(`/event-manager/weddings/${weddingId}/invites/${inviteId}/restore`);
+  return response.data;
+};
+

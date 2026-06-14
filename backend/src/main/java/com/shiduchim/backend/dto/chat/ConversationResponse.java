@@ -16,6 +16,7 @@ public class ConversationResponse {
     private PoolType poolType;
     private Long weddingId;
     private MatchStatus matchStatus;
+    private int unreadCount;
 
     public ConversationResponse() {
     }
@@ -23,7 +24,7 @@ public class ConversationResponse {
     public ConversationResponse(Long matchId, Long otherUserId, String otherUserFullName,
                                 String otherUserPrimaryPhotoUrl, String lastMessagePreview,
                                 LocalDateTime lastMessageAt, PoolType poolType, Long weddingId,
-                                MatchStatus matchStatus) {
+                                MatchStatus matchStatus, int unreadCount) {
         this.matchId = matchId;
         this.otherUserId = otherUserId;
         this.otherUserFullName = otherUserFullName;
@@ -33,6 +34,7 @@ public class ConversationResponse {
         this.poolType = poolType;
         this.weddingId = weddingId;
         this.matchStatus = matchStatus;
+        this.unreadCount = unreadCount;
     }
 
     public Long getMatchId() {
@@ -105,5 +107,13 @@ public class ConversationResponse {
 
     public void setMatchStatus(MatchStatus matchStatus) {
         this.matchStatus = matchStatus;
+    }
+
+    public int getUnreadCount() {
+        return unreadCount;
+    }
+
+    public void setUnreadCount(int unreadCount) {
+        this.unreadCount = unreadCount;
     }
 }

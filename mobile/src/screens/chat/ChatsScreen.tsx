@@ -114,6 +114,11 @@ export const ChatsScreen = ({ navigation }: any) => {
 
             <View style={styles.badgeContainer}>
               <Text style={styles.contextLabel}>{contextText}</Text>
+              {item.unreadCount !== undefined && item.unreadCount > 0 && (
+                <View style={styles.unreadBadge}>
+                  <Text style={styles.unreadBadgeText}>{item.unreadCount}</Text>
+                </View>
+              )}
             </View>
           </View>
         </View>
@@ -296,6 +301,7 @@ const styles = StyleSheet.create({
   badgeContainer: {
     flexDirection: 'row',
     marginTop: 4,
+    alignItems: 'center',
   },
   contextLabel: {
     fontSize: 11,
@@ -307,6 +313,21 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     borderWidth: 1,
     borderColor: 'rgba(212, 175, 55, 0.3)',
+  },
+  unreadBadge: {
+    backgroundColor: theme.colors.error,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: theme.spacing.s,
+    paddingHorizontal: 6,
+  },
+  unreadBadgeText: {
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: 'bold',
   },
   actionsContainer: {
     flexDirection: 'row',

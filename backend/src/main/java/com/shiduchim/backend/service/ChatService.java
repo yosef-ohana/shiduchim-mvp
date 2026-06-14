@@ -9,6 +9,7 @@ import com.shiduchim.backend.entity.User;
 import com.shiduchim.backend.enums.MatchStatus;
 import com.shiduchim.backend.enums.UserRole;
 import com.shiduchim.backend.dto.chat.ConversationResponse;
+import com.shiduchim.backend.dto.chat.UnreadCountResponse;
 import com.shiduchim.backend.repository.ChatMessageRepository;
 import com.shiduchim.backend.repository.MatchRepository;
 import com.shiduchim.backend.repository.UserPhotoRepository;
@@ -82,6 +83,8 @@ public class ChatService {
                 lastMessageAt = latestMessage.getSentAt();
             }
 
+            int unreadCount = chatMessageRepository.countByMatchIdAndSenderIdNotAndReadByRecipientFalse(match.getId(), currentUser.getId());
+
             ConversationResponse response = new ConversationResponse(
                     match.getId(),
                     otherUserId,
@@ -91,7 +94,8 @@ public class ChatService {
                     lastMessageAt,
                     match.getPoolType(),
                     match.getWeddingId(),
-                    match.getStatus()
+                    match.getStatus(),
+                    unreadCount
             );
             
             return new java.util.AbstractMap.SimpleEntry<>(response, match.getCreatedAt());
@@ -127,6 +131,37 @@ public class ChatService {
                 savedMessage.getContent(),
                 savedMessage.getSentAt()
         );
+    }
+
+    public UnreadCountResponse getTotalUnreadCount(User currentUser) {
+        if (currentUser == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User must be authenticated");
+        }
+        if (currentUser.getRole() != UserRole.USER) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User must have USER role");
+        }
+        if (Boolean.TRUE.equals(currentUser.getAdminBlocked())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is blocked");
+        }
+
+        List<Match> activeMatches = matchRepository.findByUserIdAndStatus(currentUser.getId(), MatchStatus.ACTIVE);
+        int totalUnread = 0;
+        for (Match match : activeMatches) {
+            totalUnread += chatMessageRepository.countByMatchIdAndSenderIdNotAndReadByRecipientFalse(match.getId(), currentUser.getId());
+        }
+        return new UnreadCountResponse(totalUnread);
+    }
+
+    public UnreadCountResponse markMessagesAsRead(User currentUser, Long matchId) {
+        validateChatAccess(currentUser, matchId);
+
+        List<ChatMessage> unreadMessages = chatMessageRepository.findByMatchIdAndSenderIdNotAndReadByRecipientFalse(matchId, currentUser.getId());
+        for (ChatMessage msg : unreadMessages) {
+            msg.setReadByRecipient(true);
+        }
+        chatMessageRepository.saveAll(unreadMessages);
+
+        return new UnreadCountResponse(0);
     }
 
     private void validateChatAccess(User currentUser, Long matchId) {

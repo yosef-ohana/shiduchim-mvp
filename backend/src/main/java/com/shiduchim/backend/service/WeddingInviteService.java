@@ -8,6 +8,11 @@ import com.shiduchim.backend.entity.WeddingInvite;
 import com.shiduchim.backend.enums.UserRole;
 import com.shiduchim.backend.enums.WeddingInviteStatus;
 import com.shiduchim.backend.repository.WeddingInviteRepository;
+import com.shiduchim.backend.repository.UserRepository;
+import com.shiduchim.backend.repository.WeddingParticipantRepository;
+import com.shiduchim.backend.enums.WeddingStatus;
+import com.shiduchim.backend.enums.ParticipantStatus;
+import com.shiduchim.backend.entity.WeddingParticipant;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,11 +27,17 @@ public class WeddingInviteService {
 
     private final WeddingInviteRepository weddingInviteRepository;
     private final WeddingService weddingService;
+    private final UserRepository userRepository;
+    private final WeddingParticipantRepository weddingParticipantRepository;
 
     public WeddingInviteService(WeddingInviteRepository weddingInviteRepository,
-                                WeddingService weddingService) {
+                                WeddingService weddingService,
+                                UserRepository userRepository,
+                                WeddingParticipantRepository weddingParticipantRepository) {
         this.weddingInviteRepository = weddingInviteRepository;
         this.weddingService = weddingService;
+        this.userRepository = userRepository;
+        this.weddingParticipantRepository = weddingParticipantRepository;
     }
 
     @Transactional
@@ -79,6 +90,50 @@ public class WeddingInviteService {
         }
         
         invite.setStatus(WeddingInviteStatus.CANCELLED);
+        invite = weddingInviteRepository.save(invite);
+        return toResponse(invite);
+    }
+
+    @Transactional
+    public WeddingInviteResponse restoreInvite(Long weddingId, Long inviteId, User currentUser) {
+        Wedding wedding = weddingService.getWeddingEntityAndCheckOwner(weddingId, currentUser);
+        
+        if (wedding.getStatus() != WeddingStatus.ACTIVE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot restore invite for closed or cancelled wedding");
+        }
+
+        WeddingInvite invite = weddingInviteRepository.findById(inviteId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invite not found"));
+                
+        if (!invite.getWeddingId().equals(weddingId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invite does not belong to this wedding");
+        }
+        
+        if (invite.getStatus() != WeddingInviteStatus.CANCELLED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only cancelled invites can be restored");
+        }
+
+        String email = invite.getEmail();
+
+        Optional<WeddingInvite> existingPending = weddingInviteRepository.findByWeddingIdAndEmailAndStatus(weddingId, email, WeddingInviteStatus.PENDING);
+        if (existingPending.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "A pending invite already exists for this email");
+        }
+
+        Optional<WeddingInvite> existingAccepted = weddingInviteRepository.findByWeddingIdAndEmailAndStatus(weddingId, email, WeddingInviteStatus.ACCEPTED);
+        if (existingAccepted.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "An accepted invite already exists for this email");
+        }
+
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        if (existingUser.isPresent()) {
+            Optional<WeddingParticipant> participant = weddingParticipantRepository.findByWeddingIdAndUserId(weddingId, existingUser.get().getId());
+            if (participant.isPresent() && participant.get().getStatus() == ParticipantStatus.ACTIVE) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "User is already an active participant in this wedding");
+            }
+        }
+
+        invite.setStatus(WeddingInviteStatus.PENDING);
         invite = weddingInviteRepository.save(invite);
         return toResponse(invite);
     }

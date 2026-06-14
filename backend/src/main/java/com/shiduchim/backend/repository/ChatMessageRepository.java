@@ -15,4 +15,8 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     List<ChatMessage> findByMatchIdOrderBySentAtAsc(Long matchId);
 
     Optional<ChatMessage> findTopByMatchIdOrderBySentAtDesc(Long matchId);
+
+    List<ChatMessage> findByMatchIdAndSenderIdNotAndReadByRecipientFalse(Long matchId, Long senderId);
+
+    int countByMatchIdAndSenderIdNotAndReadByRecipientFalse(Long matchId, Long senderId);
 }

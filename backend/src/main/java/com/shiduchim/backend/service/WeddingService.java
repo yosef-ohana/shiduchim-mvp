@@ -90,6 +90,46 @@ public class WeddingService {
         return weddings.stream().map(this::toResponse).collect(Collectors.toList());
     }
 
+    public List<UserWeddingResponse> getMyWeddings(User currentUser) {
+        requireUserRole(currentUser);
+
+        List<WeddingParticipant> participations = participantRepository.findByUserId(currentUser.getId());
+        if (participations.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+
+        List<Long> weddingIds = participations.stream()
+                .map(WeddingParticipant::getWeddingId)
+                .collect(Collectors.toList());
+
+        List<Wedding> weddings = weddingRepository.findAllById(weddingIds);
+        java.util.Map<Long, Wedding> weddingMap = weddings.stream()
+                .collect(Collectors.toMap(Wedding::getId, w -> w));
+
+        return participations.stream()
+                .map(participant -> {
+                    Wedding wedding = weddingMap.get(participant.getWeddingId());
+                    if (wedding == null) return null;
+
+                    UserWeddingResponse response = new UserWeddingResponse();
+                    response.setWeddingId(wedding.getId());
+                    response.setWeddingName(wedding.getName());
+                    response.setCity(wedding.getCity());
+                    response.setWeddingDate(wedding.getWeddingDate());
+                    response.setWeddingStatus(wedding.getStatus());
+                    response.setParticipantStatus(participant.getStatus());
+                    response.setJoinedAt(participant.getJoinedAt());
+
+                    boolean isEligible = wedding.getStatus() == WeddingStatus.ACTIVE
+                            && participant.getStatus() == ParticipantStatus.ACTIVE;
+                    response.setWeddingPoolEligible(isEligible);
+
+                    return response;
+                })
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
     public WeddingResponse getWedding(Long id, User currentUser) {
         requireEventManagerOrAdmin(currentUser);
         Wedding wedding = weddingRepository.findById(id)

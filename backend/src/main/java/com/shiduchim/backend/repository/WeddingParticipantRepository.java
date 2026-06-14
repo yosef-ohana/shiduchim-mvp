@@ -12,6 +12,8 @@ public interface WeddingParticipantRepository extends JpaRepository<WeddingParti
 
     List<WeddingParticipant> findByWeddingId(Long weddingId);
 
+    List<WeddingParticipant> findByUserId(Long userId);
+
     Optional<WeddingParticipant> findByWeddingIdAndUserId(Long weddingId, Long userId);
 
     long countByWeddingIdAndStatus(Long weddingId, com.shiduchim.backend.enums.ParticipantStatus status);

@@ -674,3 +674,220 @@ Tests:
 - Freeze after Match
 - admin block
 - end-to-end demo
+
+---
+
+## Batch 17.0 — Phase 17 Docs + API Contract Lock
+
+Goal: Update core documentation files to define Phase 17 features, limits, and API endpoints.
+
+Scope:
+- Update TECH_SPEC.md, API_CONTRACT.md, PROJECT_RULES.md, BATCH_PLAN.md, and DECISIONS.md.
+
+Do not:
+- Write or modify backend/mobile source code.
+
+Expected areas:
+- `docs/`
+
+DoD:
+- All 5 doc files updated and consistent.
+- Forbidden boundaries for Phase 17 clearly defined.
+
+Required checks:
+- `git status --short` and `git diff` check.
+
+---
+
+## Batch 17.1 — Backend: Unread Messages Foundation
+
+Goal: Add DB field/migrations, entity support, and APIs to track and fetch unread message counts.
+
+Scope:
+- Add `readByRecipient` boolean (default false) to ChatMessage entity/DB.
+- Add `unreadCount` field to ConversationResponse DTO.
+- Implement `GET /api/chats/unread-count` (total unread count).
+- Implement `PATCH /api/matches/{matchId}/messages/read` (mark all incoming messages in a match as read).
+
+Do not:
+- Add WebSockets, Push notifications, read receipts exposed to the other user, or per-message `readAt` timestamps.
+
+Expected areas:
+- `backend/.../entity/ChatMessage.java`
+- `backend/.../dto/ConversationResponse.java`
+- `backend/.../controller/ChatController.java`
+- `backend/.../service/ChatService.java`
+
+DoD:
+- Unread counts correctly calculated per conversation and returned in lists.
+- Total unread count returns correctly.
+- Marking read resets the counts.
+
+Required checks:
+- Backend build and unit tests.
+
+---
+
+## Batch 17.2 — Mobile: Unread Messages Badges + Total Count + Reset
+
+Goal: Implement frontend integration to fetch and display unread counts and trigger mark-as-read updates.
+
+Scope:
+- Display unread message count badges in conversation list.
+- Display total unread count badge on navigation/home screen.
+- Call read endpoint (`PATCH /api/matches/{matchId}/messages/read`) when chat screen is opened or focused, resetting counts locally.
+
+Do not:
+- Add realtime message notifications or polling faster than current standards.
+
+Expected areas:
+- `mobile/src/screens/` (Chat/Matches screens)
+- `mobile/src/api/`
+
+DoD:
+- Unread counts are visible on chat screen lists and the main navigation badges.
+- Badges reset automatically when active chat is opened.
+
+Required checks:
+- Mobile compilation / TypeScript lint check.
+
+---
+
+## Batch 17.3 — Backend: User “My Weddings” API
+
+Goal: Implement endpoint to list all weddings joined by the current user.
+
+Scope:
+- Implement `GET /api/weddings/my` returning a list of `UserWeddingResponse`.
+- DTO fields: `weddingId`, `weddingName`, `city`, `weddingDate`, `weddingStatus`, `participantStatus`, `joinedAt`, `isWeddingPoolEligible`.
+
+Do not:
+- Expose other participants, invitations, or management data.
+
+Expected areas:
+- `backend/.../controller/WeddingController.java`
+- `backend/.../service/WeddingService.java`
+
+DoD:
+- Endpoint returns only weddings the authenticated user joined.
+- Returns safe data only.
+
+Required checks:
+- Backend build and unit tests.
+
+---
+
+## Batch 17.4 — Mobile: “My Weddings” Screen + Clear Join Indication
+
+Goal: Build a screen to view joined weddings and show clear success feedback after joining.
+
+Scope:
+- Create "My Weddings" screen listing all joined weddings.
+- Show clear confirmation feedback post-join (e.g. "You successfully joined [Wedding Name]").
+
+Do not:
+- Bypass basic profile or primary photo requirements for pool eligibility.
+
+Expected areas:
+- `mobile/src/screens/` (My Weddings, Join Wedding)
+- `mobile/src/navigation/`
+
+DoD:
+- "My Weddings" lists joined weddings correctly.
+- Post-join message shows wedding name clearly.
+
+Required checks:
+- Mobile TypeScript check.
+
+---
+
+## Batch 17.5 — Mobile: Wedding Pool Selection from Joined Weddings
+
+Goal: Replace manual wedding ID typing with selection from joined weddings list.
+
+Scope:
+- Pool selection screen retrieves joined weddings and displays them in a picker/dropdown.
+- Show only active participation / active weddings.
+
+Do not:
+- Bypass onboarding profile requirements.
+
+Expected areas:
+- `mobile/src/screens/` (Pool Selection/Discover entry)
+
+DoD:
+- User selects from list instead of typing ID.
+- Active wedding verification enforced.
+
+Required checks:
+- Mobile TypeScript check.
+
+---
+
+## Batch 17.6 — Backend: Restore Cancelled Invite
+
+Goal: Implement endpoint to restore cancelled invite to PENDING.
+
+Scope:
+- Implement `PATCH /api/event-manager/weddings/{id}/invites/{inviteId}/restore`.
+- Enforce validation rules: only from CANCELLED to PENDING, check if wedding is active, check no duplicate invite, check no active participant.
+
+Do not:
+- Send emails, generate QR/tokens, or create a new row.
+
+Expected areas:
+- `backend/.../controller/ParticipantController.java` (or invite controllers)
+- `backend/.../service/ParticipantService.java`
+
+DoD:
+- Cancelled invite status changes back to PENDING.
+- All validation checks block restore when rules are violated.
+
+Required checks:
+- Backend build and unit tests.
+
+---
+
+## Batch 17.7 — Mobile: Restore Cancelled Invite UI
+
+Goal: Add restore button in the invitation list for Event Managers.
+
+Scope:
+- Display restore button next to cancelled invites in the Event Manager's Invite list.
+- Hook button to the restore API and refresh list on success.
+
+Do not:
+- Add complex UI/dashboard animations.
+
+Expected areas:
+- `mobile/src/screens/` (Event Manager Invite list)
+
+DoD:
+- Event Manager can restore cancelled invites directly from UI.
+
+Required checks:
+- Mobile TypeScript check.
+
+---
+
+## Batch 17.8 — Focused Phase 17 QA + Cleanup + GitHub Push
+
+Goal: End-to-end verification, cleanup, and repository sync.
+
+Scope:
+- Test all Phase 17 features.
+- Clean up any unused files or debugging lines.
+- Git commit and push to main.
+
+Do not:
+- Implement any features outside approved scope.
+
+Expected areas:
+- Entire repository.
+
+DoD:
+- End-to-end flow verified.
+- Repo is clean and pushed.
+
+Required checks:
+- Backend build + Mobile TypeScript check + Git status check.

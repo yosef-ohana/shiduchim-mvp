@@ -11,7 +11,8 @@ import {
   cancelWedding,
   getInvites,
   createInvite,
-  cancelInvite
+  cancelInvite,
+  restoreInvite
 } from '../../api/eventManagerApi';
 import { WeddingResponse, ParticipantResponse, WeddingInviteResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
@@ -116,6 +117,33 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
       ]
     );
   };
+
+  const handleRestoreInvite = async (inviteId: number) => {
+    Alert.alert(
+      'Restore Invitation',
+      'Are you sure you want to restore this invitation?',
+      [
+        { text: 'No', style: 'cancel' },
+        { 
+          text: 'Yes, Restore', 
+          onPress: async () => {
+            setActionLoading(true);
+            try {
+              await restoreInvite(weddingId, inviteId);
+              Alert.alert('Success', 'Invitation restored.');
+              await loadData();
+            } catch (error: any) {
+              console.error(error);
+              Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'החזרת ההזמנה נכשלה.'));
+            } finally {
+              setActionLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
 
   const handleRemoveParticipant = async (userId: number, email: string) => {
     Alert.alert(
@@ -393,6 +421,14 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
                         onPress={() => handleCancelInvite(invite.id)}
                       >
                         <Text style={styles.removeButtonText}>Cancel</Text>
+                      </TouchableOpacity>
+                    )}
+                    {invite.status === 'CANCELLED' && wedding?.status === 'ACTIVE' && (
+                      <TouchableOpacity 
+                        style={styles.restoreButton}
+                        onPress={() => handleRestoreInvite(invite.id)}
+                      >
+                        <Text style={styles.restoreButtonText}>Restore</Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -723,6 +759,17 @@ const styles = StyleSheet.create({
   },
   removeButtonText: {
     color: '#C62828',
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  restoreButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#E8F5E9',
+    borderRadius: theme.borderRadius.s,
+  },
+  restoreButtonText: {
+    color: '#2E7D32',
     fontWeight: '600',
     fontSize: 13,
   },

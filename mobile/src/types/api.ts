@@ -121,6 +121,17 @@ export interface JoinWeddingResponse {
   joinedAt: string;
 }
 
+export interface UserWeddingResponse {
+  weddingId: number;
+  weddingName: string;
+  city: string | null;
+  weddingDate: string | null;
+  weddingStatus: WeddingStatus;
+  participantStatus: ParticipantStatus;
+  joinedAt: string;
+  isWeddingPoolEligible: boolean;
+}
+
 export type DiscoverPool = 'WEDDING' | 'GLOBAL';
 
 export interface PublicUserCardResponse {
@@ -254,6 +265,11 @@ export interface ConversationResponse {
   poolType: PoolType;
   weddingId: number | null;
   matchStatus: MatchStatus;
+  unreadCount?: number;
+}
+
+export interface UnreadCountResponse {
+  unreadCount: number;
 }
 
 export interface MatchDetailsResponse {
