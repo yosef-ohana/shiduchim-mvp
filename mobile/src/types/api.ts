@@ -130,6 +130,7 @@ export interface UserWeddingResponse {
   participantStatus: ParticipantStatus;
   joinedAt: string;
   isWeddingPoolEligible: boolean;
+  weddingPoolEligible?: boolean;
 }
 
 export type DiscoverPool = 'WEDDING' | 'GLOBAL';

@@ -136,7 +136,7 @@ export const MeScreen = ({ navigation }: any) => {
             />
 
             <AppButton 
-              title="השידוכים שלי" 
+              title="ההתאמות שלי" 
               onPress={() => navigation.navigate('Matches')}
               style={styles.button}
             />

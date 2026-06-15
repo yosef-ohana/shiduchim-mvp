@@ -69,7 +69,7 @@ export const MainStack = () => {
       <Stack.Screen name="Discover" component={DiscoverScreen} options={{ title: 'מועמדים' }} />
       <Stack.Screen name="CandidateProfile" component={CandidateProfileScreen} options={{ title: 'פרופיל מועמד' }} />
       <Stack.Screen name="Lists" component={ListsScreen} options={{ title: 'הרשימות שלי' }} />
-      <Stack.Screen name="Matches" component={MatchesScreen} options={{ title: 'השידוכים שלי' }} />
+      <Stack.Screen name="Matches" component={MatchesScreen} options={{ title: 'ההתאמות שלי' }} />
       <Stack.Screen name="MatchDetails" component={MatchDetailsScreen} options={{ title: 'פרטי השידוך' }} />
       <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'צ׳אט' }} />
       <Stack.Screen name="Chats" component={ChatsScreen} options={{ title: 'צ׳אטים' }} />

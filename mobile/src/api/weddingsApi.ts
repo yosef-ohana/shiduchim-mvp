@@ -13,5 +13,8 @@ export const validateCode = async (request: ValidateWeddingCodeRequest): Promise
 
 export const getMyWeddings = async (): Promise<UserWeddingResponse[]> => {
   const response = await apiClient.get<UserWeddingResponse[]>('/weddings/my');
-  return response.data;
+  return response.data.map(w => ({
+    ...w,
+    isWeddingPoolEligible: w.isWeddingPoolEligible ?? w.weddingPoolEligible ?? false
+  }));
 };
