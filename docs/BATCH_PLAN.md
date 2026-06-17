@@ -922,3 +922,37 @@ Goal: Localize administrative views (users, event managers, weddings).
 ### Batch 18.7 — Localization QA & Wrap-up
 Goal: Run mobile TypeScript checks, perform English user-visible text scans, check RTL/punctuation, clean up, and push verified changes.
 
+---
+
+## Cycle 1 — Session Hardening, Join Flow & Deep Linking
+
+### Batch 1 — Session Persistence Audit & Minimal Fix
+- **Goal**: Audit and harden session persistence flow on mobile app bootstrap.
+- **Scope**:
+  - Ensure user credentials and authentication tokens reload smoothly on application start.
+  - Expired or invalid tokens trigger clean client logout redirects without hanging or stalling screens.
+- **DoD**: Stable auth bootstrap verified under positive and negative test cases.
+
+### Batch 2 — Wedding Join Landing Flow + Hebrew Guidance
+- **Goal**: Design and implement a unified landing flow for joining weddings.
+- **Scope**:
+  - Unify validation and joining flow under `WeddingJoinLandingScreen.tsx`.
+  - Check and display Hebrew guidelines regarding user eligibility (missing profile or primary photo) when successfully joining.
+  - Prevent guest/regular user join actions and display warning alerts if a wedding is closed or cancelled.
+- **DoD**: Comprehensive entry and join flow validated with clear Hebrew feedback.
+
+### Batch 3 — QR Card + Join Link + Deep Link Wiring
+- **Goal**: Enable custom scheme deep linking and QR code share cards.
+- **Scope**:
+  - Wire custom app deep linking scheme: `shiduchim://join-wedding/:accessCode`.
+  - Add client-side QR generation via `react-native-qrcode-svg`.
+  - Render active wedding share cards for Admins and Event Managers, and display warning flags for inactive weddings.
+- **DoD**: Deep link scheme and QR components verified and functional.
+
+### Batch 4 — Final QA, Documentation, Cleanup
+- **Goal**: End-to-end QA validation, document cycle decisions, package consistency checks, and repository verification.
+- **Scope**:
+  - Review all modified and added files for compliance with project constraints.
+  - Compile backend services and check mobile TypeScript compliance.
+  - Update decision, tech spec, and batch plans.
+- **DoD**: Cycle 1 fully verified, clean, and prepared for commit/push.

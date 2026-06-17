@@ -17,8 +17,17 @@ export const AppNavigator = () => {
     );
   }
 
+  const linking = React.useMemo(() => ({
+    prefixes: ['shiduchim://'],
+    config: {
+      screens: user
+        ? { JoinWedding: 'join-wedding/:accessCode' }
+        : { WeddingCodeEntry: 'join-wedding/:accessCode' },
+    },
+  }), [user]);
+
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       {user ? <MainStack /> : <AuthStack />}
     </NavigationContainer>
   );

@@ -560,5 +560,21 @@ Phase 18 is officially defined as: **"Hebrew UI Localization & RTL Polish"**
   * Technical/System Values: Inputs and fields containing technical, copyable, or non-prose values (e.g. Email addresses, password entries, numeric codes, and wedding access codes) bypass right-alignment and are left-aligned (`textAlign: 'left'`) to preserve copy-paste stability and input usability.
   * Libraries: No external internationalization (i.e. `i18n`) dependencies or global `I18nManager.forceRTL(true)` overrides were added, ensuring pure vanilla CSS compatibility.
 
+---
 
+## 17. Cycle 1 Additions: Session Hardening, Join Flow & Deep Linking
 
+### 17.1 Session Persistence Hardening
+- **Authentication Resilience**: Strengthened frontend credentials restore on app startup. Invalidated tokens or unauthorized API states safely clear authentication states and redirect users back to the entry credentials screen without stalling the client.
+
+### 17.2 Wedding Join Flow
+- **Unified Landing Flow**: Combined access-code validation, login redirection for guest users, registration support for new users, and automatic/manual join execution into a single screen (`WeddingJoinLandingScreen.tsx`).
+- **Readiness Guidance**: Upon successfully joining a wedding, regular users are evaluated for profile readiness. If the basic profile or primary photo are missing, appropriate Hebrew warning guidelines are shown advising them on missing steps to qualify for the wedding pool.
+
+### 17.3 QR & Deep Linking Wiring
+- **Mobile QR Cards**: Added client-side rendering of QR codes representing join links for ACTIVE weddings using `react-native-qrcode-svg`.
+- **Custom App Scheme**: Configured React Navigation and Expo configuration to handle incoming custom URI scheme URLs:
+  `shiduchim://join-wedding/:accessCode`
+- **Dynamic Access Checks**:
+  - Displays QR card and selectable link on Admin and Event Manager wedding details screens only if status is `ACTIVE` and access code exists.
+  - Displays a Hebrew warning banner and prevents QR card generation if wedding status is `CLOSED` or `CANCELLED`.

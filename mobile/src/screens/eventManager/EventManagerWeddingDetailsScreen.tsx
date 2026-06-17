@@ -23,6 +23,7 @@ import {
   getInviteStatusLabel, 
   formatDisplayDate 
 } from '../../utils/displayLabels';
+import { WeddingJoinQrCard } from '../../components/WeddingJoinQrCard';
 
 export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
   const { weddingId } = route.params;
@@ -351,6 +352,14 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
                   </View>
                 )}
               </View>
+            )}
+
+            {wedding && (
+              <WeddingJoinQrCard
+                accessCode={wedding.accessCode}
+                status={wedding.status}
+                weddingName={wedding.name}
+              />
             )}
 
             {wedding && wedding.status === 'ACTIVE' && (

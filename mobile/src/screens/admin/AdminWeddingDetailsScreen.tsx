@@ -9,6 +9,7 @@ import { AdminWeddingResponse, WeddingInviteResponse, AdminUserResponse } from '
 import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 import { getWeddingStatusLabel, getInviteStatusLabel, formatDisplayDate } from '../../utils/displayLabels';
+import { WeddingJoinQrCard } from '../../components/WeddingJoinQrCard';
 
 type DetailsRouteProp = RouteProp<MainStackParamList, 'AdminWeddingDetails'>;
 type NavigationProp = NativeStackNavigationProp<MainStackParamList, 'AdminWeddingDetails'>;
@@ -152,6 +153,14 @@ export const AdminWeddingDetailsScreen = () => {
           <Text style={styles.info}>משתתפים: {wedding.participantsCount}</Text>
           <Text style={styles.info}>שידוכים: {wedding.matchesCount}</Text>
         </View>
+
+        {wedding && (
+          <WeddingJoinQrCard
+            accessCode={wedding.accessCode}
+            status={wedding.status}
+            weddingName={wedding.name}
+          />
+        )}
 
         <View style={styles.actionsContainer}>
           <Text style={styles.sectionTitle}>שיוך מנהל אירוע</Text>

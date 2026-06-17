@@ -398,3 +398,23 @@ Phase 18 is officially defined as: **"Hebrew UI Localization & RTL Polish"**
 ### 18.4 No External Internationalization Libraries
 - No heavy internationalization packages (e.g., `i18n`, `react-i18next`) or global `I18nManager.forceRTL(true)` logic were introduced, keeping mobile styling lean and using vanilla CSS attributes.
 
+---
+
+## 19. Cycle 1 Decisions: Session Audit, Join Flow, QR Card & Deep Linking
+
+### 19.1 QR Card & Join Link
+- **QR/Link as accessCode Wrapper**: The QR code and join link function strictly as wrappers around the existing wedding `accessCode`.
+- **No Backend QR Endpoint**: No backend QR code generation endpoints were introduced; QR code rendering is handled entirely on the mobile client.
+- **No DB Changes**: No new tables, columns, or schema migrations were added to the database.
+- **No Magic Links/Invite Tokens**: We do not use magic links or backend-generated invite tokens for joining.
+- **No Camera/Scanner Features**: No internal QR scanner, camera views, or camera permissions were added. Joining via QR code relies on the operating system's native QR scanner triggering the deep link.
+- **No Clipboard Dependency**: No Clipboard dependencies or integrations were added to copy the link.
+
+### 19.2 Onboarding and Eligibility
+- **No Eligibility Bypass**: Joining via a QR code or deep link does NOT bypass the regular onboarding checks (Basic Profile, Primary Photo, and Eligibility status) required to enter the Discover matching pool.
+
+### 19.3 Deep Linking Scheme & Display Rules
+- **Custom Scheme**: The wedding join link uses the custom application scheme: `shiduchim://join-wedding/:accessCode`.
+- **Access Control & Warning Labels**:
+  - The QR card and shareable join link are shown *only* for weddings in `ACTIVE` status with a valid `accessCode`.
+  - Weddings in `CLOSED` or `CANCELLED` status must not encourage sharing and instead show a clear Hebrew warning label indicating that the wedding is not open for joining.
