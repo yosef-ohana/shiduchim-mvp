@@ -61,9 +61,17 @@ export const getFriendlyErrorMessage = (error: unknown, fallback?: string): stri
 
   // 2. Map based on backend/internal message content
   if (backendMessage && typeof backendMessage === 'string') {
-    // Blocked Account
-    if (containsAny(backendMessage, ['blocked', 'deactivated', 'adminblocked', 'account is blocked', 'user is blocked'])) {
-      return 'המשתמש חסום. פנה להנהלת המערכת.';
+    // Blocked Account / Blocked by Admin
+    if (containsAny(backendMessage, [
+      'user is blocked by admin',
+      'user is blocked',
+      'account is blocked',
+      'actor is blocked',
+      'blocked',
+      'deactivated',
+      'adminblocked'
+    ])) {
+      return 'המשתמש חסום על ידי מנהל המערכת. פנה להנהלת המערכת.';
     }
 
     // Role / Staff Portal mismatch
@@ -74,6 +82,15 @@ export const getFriendlyErrorMessage = (error: unknown, fallback?: string): stri
       'role permissions'
     ])) {
       return 'החשבון הזה אינו מורשה להיכנס לפורטל הניהול.';
+    }
+
+    // Only USERS can access discover
+    if (containsAny(backendMessage, [
+      'only users can access discover',
+      'actor must have user role',
+      'only user allowed'
+    ])) {
+      return 'רק משתמשים רגילים יכולים לגשת למאגר המועמדים.';
     }
 
     // Access denied / forbidden
@@ -121,43 +138,110 @@ export const getFriendlyErrorMessage = (error: unknown, fallback?: string): stri
     if (containsAny(backendMessage, [
       'already a participant',
       'already an active participant',
-      'participant already exists'
+      'participant already exists',
+      'user is already an active participant'
     ])) {
       return 'המשתמש כבר משתתף בחתונה זו.';
     }
 
     // Already joined wedding (User flow)
     if (containsAny(backendMessage, [
-      'already joined',
       'already joined this wedding',
+      'already joined',
       'already registered'
     ])) {
       return 'כבר הצטרפת לחתונה זו.';
     }
 
-    // Closed or cancelled wedding
+    // Incomplete profile status
     if (containsAny(backendMessage, [
+      'incomplete profile status',
+      'actor profile status must be basic or full',
+      'actor has invalid profile status',
+      'profile status must be basic or full'
+    ])) {
+      return 'פרופיל המשתמש אינו מלא. אנא השלם את הפרופיל הבסיסי.';
+    }
+
+    // Primary photo is required
+    if (containsAny(backendMessage, [
+      'primary photo is required',
+      'actor must have a primary photo',
+      'target user must have a primary photo'
+    ])) {
+      return 'נדרשת תמונת פרופיל ראשית כדי להמשיך.';
+    }
+
+    // Gender is not set
+    if (containsAny(backendMessage, [
+      'gender is not set',
+      'actor must have a gender',
+      'target user must have a gender'
+    ])) {
+      return 'לא הוגדר מגדר לפרופיל. אנא הגדר מגדר בהגדרות החשבון.';
+    }
+
+    // User is not an active participant in this wedding / not a participant
+    if (containsAny(backendMessage, [
+      'actor is not an active participant in this wedding',
+      'user is not an active participant in this wedding',
+      'target is not an active participant in this wedding'
+    ])) {
+      return 'אינך משתתף פעיל בחתונה זו.';
+    }
+
+    if (containsAny(backendMessage, [
+      'actor is not a participant',
+      'user is not a participant'
+    ])) {
+      return 'אינך רשום כמשתתף בחתונה זו.';
+    }
+
+    // Closed or cancelled wedding / not open for joining
+    if (containsAny(backendMessage, [
+      'wedding is closed or cancelled',
       'wedding is closed',
       'wedding is cancelled',
       'closed or cancelled',
       'closed',
       'cancelled',
       'canceled',
-      'inactive wedding'
+      'not open for joining'
     ])) {
-      return 'החתונה אינה פתוחה להצטרפות כרגע.';
+      return 'החתונה סגורה או מבוטלת ולא ניתן להצטרף אליה.';
     }
 
-    // Invalid wedding code
+    // Wedding is not active
+    if (containsAny(backendMessage, [
+      'wedding is not active',
+      'inactive wedding'
+    ])) {
+      return 'החתונה אינה פעילה ואינה פתוחה להצטרפות כרגע.';
+    }
+
+    // Wedding code not found / invalid QR / invalid wedding link
     if (containsAny(backendMessage, [
       'wedding not found',
       'wedding code not found',
       'invalid wedding code',
       'invalid code',
       'code not found',
-      'access code not found'
+      'access code not found',
+      'invalid qr',
+      'invalid link',
+      'invalid wedding link'
     ])) {
-      return 'קוד החתונה שהזנת אינו תקין. אנא בדוק שנית ונסה שוב.';
+      return 'קוד או קישור החתונה שהזנת אינו תקין. אנא בדוק שנית ונסה שוב.';
+    }
+
+    // Wedding code not provided
+    if (containsAny(backendMessage, [
+      'weddingid is required for wedding pool',
+      'wedding code not provided',
+      'access code is required',
+      'code is required'
+    ])) {
+      return 'לא צוין קוד חתונה או מזהה חתונה.';
     }
 
     // Duplicate wedding access code

@@ -159,6 +159,8 @@ export const AdminWeddingDetailsScreen = () => {
             accessCode={wedding.accessCode}
             status={wedding.status}
             weddingName={wedding.name}
+            city={wedding.city}
+            weddingDate={wedding.weddingDate}
           />
         )}
 

@@ -30,8 +30,11 @@ const translateFieldName = (field: string) => {
   }
 };
 
-export const BasicProfileScreen = ({ navigation }: any) => {
+export const BasicProfileScreen = ({ navigation, route }: any) => {
   const { refreshMe } = useAuth();
+  const returnToWedding = route.params?.returnToWedding;
+  const returnWeddingId = route.params?.returnWeddingId;
+  const returnWeddingSnapshot = route.params?.returnWeddingSnapshot;
   const [fullName, setFullName] = useState('');
   const [age, setAge] = useState('');
   const [heightCm, setHeightCm] = useState('');
@@ -150,6 +153,17 @@ export const BasicProfileScreen = ({ navigation }: any) => {
             ) : (
               <Text style={styles.successDetails}>אין שדות חסרים לקבלת סטטוס פרופיל מלא!</Text>
             )}
+            {returnToWedding && returnWeddingId ? (
+              <AppButton
+                title="חזרה לפרטי החתונה"
+                onPress={() => navigation.navigate('JoinWedding', {
+                  weddingId: returnWeddingId,
+                  weddingSnapshot: returnWeddingSnapshot,
+                  source: 'returnFlow'
+                })}
+                style={styles.successButton}
+              />
+            ) : null}
             <AppButton
               title="מעבר לפרופיל שלי"
               onPress={() => navigation.navigate('Profile')}

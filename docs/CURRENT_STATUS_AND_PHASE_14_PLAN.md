@@ -189,3 +189,9 @@ During Phase 14.14 (Final Regression QA), developers must manually verify all co
   - Automated backend API runtime QA is COMPLETE and passed.
   - Mobile visual runtime and final manual verification remain pending.
 
+## 10. Wedding UX Upgrades (Features 4-9) Status
+* **Status after Batches 1-5 and final QA**: All code changes implemented and compiled successfully.
+* **Changes Made**: Implemented wedding readiness utility, Universal Wedding Hub with direct Discover navigation, Return flow from Profile/Photos to Hub, detailed My Weddings status tracking, and Staff manual invitation text.
+* **Backend Status**: Explicitly NO backend, API, DB, Entity, or DTO changes were made during this cycle.
+* **QA Status**: Code inspection and static checks pass (TypeScript, Git diff). Manual Expo QA deferred as runtime was not performed in this session.
+

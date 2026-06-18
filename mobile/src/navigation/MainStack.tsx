@@ -24,15 +24,30 @@ import { CreateWeddingScreen } from '../screens/eventManager/CreateWeddingScreen
 import { EventManagerWeddingDetailsScreen } from '../screens/eventManager/EventManagerWeddingDetailsScreen';
 import { CreateAdminWeddingScreen } from '../screens/admin/CreateAdminWeddingScreen';
 import { AdminWeddingDetailsScreen } from '../screens/admin/AdminWeddingDetailsScreen';
-import { DiscoverPool } from '../types/api';
+import { DiscoverPool, UserWeddingResponse } from '../types/api';
 
 export type MainStackParamList = {
   Me: undefined;
   Profile: undefined;
-  BasicProfile: undefined;
+  BasicProfile: {
+    returnToWedding?: boolean;
+    returnWeddingId?: number;
+    returnWeddingSnapshot?: UserWeddingResponse;
+    source?: 'weddingHub' | 'returnFlow';
+  } | undefined;
   FullProfile: undefined;
-  Photos: undefined;
-  JoinWedding: undefined;
+  Photos: {
+    returnToWedding?: boolean;
+    returnWeddingId?: number;
+    returnWeddingSnapshot?: UserWeddingResponse;
+    source?: 'weddingHub' | 'returnFlow';
+  } | undefined;
+  JoinWedding: {
+    accessCode?: string;
+    weddingId?: number;
+    weddingSnapshot?: UserWeddingResponse;
+    source?: 'code' | 'deepLink' | 'myWeddings' | 'returnFlow';
+  } | undefined;
   MyWeddings: undefined;
   PoolSelection: undefined;
   Discover: { pool: DiscoverPool; weddingId?: number };

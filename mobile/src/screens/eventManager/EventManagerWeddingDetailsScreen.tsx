@@ -284,9 +284,7 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
     );
   }
 
-  const invitationText = wedding 
-    ? `שלום, הוזמנת להצטרף לחתונה במערכת Shiduchim.\nשם החתונה: ${wedding.name}\nקוד החתונה שלך: ${wedding.accessCode}\nפתח/י את האפליקציה, לחצ/י על "יש לי קוד חתונה", והזן/י את הקוד.`
-    : '';
+
 
   return (
     <Screen>
@@ -359,22 +357,9 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
                 accessCode={wedding.accessCode}
                 status={wedding.status}
                 weddingName={wedding.name}
+                city={wedding.city}
+                weddingDate={wedding.weddingDate}
               />
-            )}
-
-            {wedding && wedding.status === 'ACTIVE' && (
-              <View style={styles.inviteCard}>
-                <Text style={styles.inviteTitle}>טקסט הזמנה ידנית</Text>
-                <Text style={styles.inviteDescription}>
-                  באפשרותך להעתיק את תבנית ההודעה להלן ולשתף אותה עם משתתפים פוטנציאליים:
-                </Text>
-                <View style={styles.inviteTextBox}>
-                  <Text style={styles.inviteText} selectable={true}>
-                    {invitationText}
-                  </Text>
-                </View>
-                <Text style={styles.copyHint}>הערה: לחץ לחיצה כפולה או לחיצה ארוכה על הטקסט לעיל כדי להעתיק אותו.</Text>
-              </View>
             )}
 
             {wedding && wedding.status === 'ACTIVE' && (
@@ -628,49 +613,6 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.error,
     marginRight: theme.spacing.s,
     paddingVertical: 12,
-  },
-  inviteCard: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.m,
-    borderRadius: theme.borderRadius.m,
-    marginBottom: theme.spacing.m,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  inviteTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 4,
-    textAlign: 'right',
-  },
-  inviteDescription: {
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.m,
-    lineHeight: 18,
-    textAlign: 'right',
-  },
-  inviteTextBox: {
-    backgroundColor: '#F5F5F5',
-    padding: theme.spacing.m,
-    borderRadius: theme.borderRadius.s,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  inviteText: {
-    fontSize: 14,
-    color: '#333333',
-    lineHeight: 20,
-    fontFamily: 'System',
-    textAlign: 'right',
-  },
-  copyHint: {
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-    marginTop: theme.spacing.s,
-    fontStyle: 'italic',
-    textAlign: 'right',
   },
   addParticipantContainer: {
     backgroundColor: theme.colors.surface,

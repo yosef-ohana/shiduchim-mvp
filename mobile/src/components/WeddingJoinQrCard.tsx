@@ -3,17 +3,22 @@ import { View, Text, StyleSheet } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { theme } from '../theme/theme';
 import { buildWeddingJoinLink } from '../utils/weddingJoinLink';
+import { generateWeddingInvitationText } from '../utils/weddingInvitationText';
 
 interface WeddingJoinQrCardProps {
   accessCode: string;
   status: 'ACTIVE' | 'CLOSED' | 'CANCELLED';
   weddingName?: string;
+  city?: string;
+  weddingDate?: string;
 }
 
 export const WeddingJoinQrCard: React.FC<WeddingJoinQrCardProps> = ({
   accessCode,
   status,
   weddingName,
+  city,
+  weddingDate,
 }) => {
   if (status === 'CLOSED' || status === 'CANCELLED') {
     return (
@@ -30,6 +35,12 @@ export const WeddingJoinQrCard: React.FC<WeddingJoinQrCardProps> = ({
   }
 
   const joinUrl = buildWeddingJoinLink(accessCode);
+  const invitationText = generateWeddingInvitationText({
+    name: weddingName || '',
+    city,
+    weddingDate,
+    accessCode,
+  });
 
   return (
     <View style={styles.card}>
@@ -51,6 +62,25 @@ export const WeddingJoinQrCard: React.FC<WeddingJoinQrCardProps> = ({
       <Text style={styles.linkText} selectable>
         {joinUrl}
       </Text>
+
+      {/* Divider */}
+      <View style={styles.divider} />
+
+      {/* Manual Invitation Text Section */}
+      <View style={styles.inviteSection}>
+        <Text style={styles.inviteTitle}>טקסט הזמנה ידנית</Text>
+        <Text style={styles.inviteDescription}>
+          באפשרותך להעתיק את תבנית ההודעה להלן ולשתף אותה עם משתתפים פוטנציאליים:
+        </Text>
+        <View style={styles.inviteTextBox}>
+          <Text style={styles.inviteText} selectable={true}>
+            {invitationText}
+          </Text>
+        </View>
+        <Text style={styles.copyHint}>
+          הערה: לחץ לחיצה כפולה או לחיצה ארוכה על הטקסט לעיל כדי להעתיק אותו.
+        </Text>
+      </View>
     </View>
   );
 };
@@ -58,11 +88,11 @@ export const WeddingJoinQrCard: React.FC<WeddingJoinQrCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: theme.colors.surface,
-    padding: theme.spacing.l,
+    padding: theme.spacing.m,
     borderRadius: theme.borderRadius.m,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    alignItems: 'center',
+    alignItems: 'stretch',
     marginVertical: theme.spacing.m,
   },
   title: {
@@ -86,6 +116,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   qrContainer: {
+    alignSelf: 'center',
     padding: theme.spacing.m,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.s,
@@ -97,6 +128,51 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.primary,
     textAlign: 'center',
+    marginBottom: theme.spacing.m,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: theme.colors.border,
+    marginVertical: theme.spacing.l,
+    width: '100%',
+  },
+  inviteSection: {
+    alignItems: 'stretch',
+  },
+  inviteTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: theme.colors.text,
+    marginBottom: 4,
+    textAlign: 'right',
+  },
+  inviteDescription: {
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.m,
+    lineHeight: 18,
+    textAlign: 'right',
+  },
+  inviteTextBox: {
+    backgroundColor: '#F5F5F5',
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.s,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  inviteText: {
+    fontSize: 14,
+    color: '#333333',
+    lineHeight: 20,
+    fontFamily: 'System',
+    textAlign: 'right',
+  },
+  copyHint: {
+    fontSize: 11,
+    color: theme.colors.textSecondary,
+    marginTop: theme.spacing.s,
+    fontStyle: 'italic',
+    textAlign: 'right',
   },
   warningText: {
     fontSize: 14,

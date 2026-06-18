@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { getMyWeddings } from '../../api/weddingsApi';
 import { UserWeddingResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 import { getWeddingStatusLabel, getParticipantStatusLabel, formatDisplayDate } from '../../utils/displayLabels';
+import { useAuth } from '../../context/AuthContext';
+import { useNavigation } from '@react-navigation/native';
+import { getWeddingReadiness } from '../../utils/weddingReadiness';
 
 export const MyWeddingsScreen = () => {
+  const navigation = useNavigation<any>();
+  const { user } = useAuth();
   const [weddings, setWeddings] = useState<UserWeddingResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
@@ -35,10 +40,73 @@ export const MyWeddingsScreen = () => {
   const renderItem = ({ item }: { item: UserWeddingResponse }) => {
     const formattedDate = formatDisplayDate(item.weddingDate);
     const formattedJoinedDate = formatDisplayDate(item.joinedAt);
+    const isActive = item.weddingStatus === 'ACTIVE' && item.participantStatus === 'ACTIVE';
+
+    const readiness = getWeddingReadiness({
+      user,
+      weddingStatus: item.weddingStatus,
+      participantStatus: item.participantStatus,
+      isJoined: true,
+    });
+
+    const getReadinessText = (state: string) => {
+      switch (state) {
+        case 'READY':
+          return 'זמין למאגר החתונה';
+        case 'JOINED_MISSING_BASIC_PROFILE':
+          return 'חסר פרופיל בסיסי';
+        case 'JOINED_MISSING_PRIMARY_PHOTO':
+          return 'חסרה תמונה ראשית';
+        case 'JOINED_MISSING_BOTH':
+          return 'חסרים פרופיל ותמונה';
+        case 'INACTIVE_WEDDING':
+          return 'החתונה אינה פעילה';
+        case 'INACTIVE_PARTICIPANT':
+          return 'המשתתף אינו פעיל';
+        case 'BLOCKED_USER':
+          return 'המשתמש חסום';
+        default:
+          return 'סטטוס לא ידוע';
+      }
+    };
+
+    const getReadinessColor = (state: string) => {
+      switch (state) {
+        case 'READY':
+          return theme.colors.primary;
+        case 'JOINED_MISSING_BASIC_PROFILE':
+        case 'JOINED_MISSING_PRIMARY_PHOTO':
+        case 'JOINED_MISSING_BOTH':
+          return '#E65100'; // Amber/Orange
+        case 'INACTIVE_WEDDING':
+        case 'INACTIVE_PARTICIPANT':
+          return '#757575'; // Gray
+        case 'BLOCKED_USER':
+          return theme.colors.error;
+        default:
+          return theme.colors.textSecondary;
+      }
+    };
+
+    const readinessLabel = getReadinessText(readiness.state);
+    const readinessColor = getReadinessColor(readiness.state);
+
+    const handlePress = () => {
+      navigation.navigate('JoinWedding', {
+        weddingId: item.weddingId,
+        weddingSnapshot: item,
+        source: 'myWeddings',
+      });
+    };
 
     return (
-      <View style={styles.card}>
-        <Text style={styles.name}>{item.weddingName}</Text>
+      <TouchableOpacity
+        style={[styles.card, !isActive && styles.disabledCard]}
+        onPress={handlePress}
+        disabled={!isActive}
+        activeOpacity={0.7}
+      >
+        <Text style={[styles.name, !isActive && styles.disabledName]}>{item.weddingName}</Text>
         
         {item.city ? (
           <View style={styles.row}>
@@ -70,21 +138,36 @@ export const MyWeddingsScreen = () => {
         </View>
 
         <View style={styles.eligibilityContainer}>
-          {item.isWeddingPoolEligible ? (
-            <Text style={styles.eligibleText}>זמין למאגר החתונה</Text>
-          ) : (
-            <Text style={styles.ineligibleText}>לא זמין כרגע למאגר החתונה</Text>
+          <Text style={[styles.readinessText, { color: readinessColor }]}>
+            {readinessLabel}
+          </Text>
+          {isActive && (
+            <Text style={styles.clickHint}>
+              לחץ למעבר לאזור החתונה
+            </Text>
           )}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
+
+  const hasAnyWeddings = weddings.length > 0;
+  const hasActiveWeddings = weddings.some(w => w.weddingStatus === 'ACTIVE' && w.participantStatus === 'ACTIVE');
+  const showInactiveExplanation = hasAnyWeddings && !hasActiveWeddings;
 
   return (
     <Screen>
       <View style={styles.container}>
         <Text style={styles.title}>החתונות שלי</Text>
         
+        {showInactiveExplanation && (
+          <View style={styles.inactiveBanner}>
+            <Text style={styles.inactiveBannerText}>
+              שים לב: אין לך חתונות פעילות כרגע. חתונות סגורות, מבוטלות או חתונות שהוסרת מהן אינן מהוות מאגר שידוכים פעיל.
+            </Text>
+          </View>
+        )}
+
         {loading ? (
           <View style={styles.center}>
             <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -147,6 +230,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
+  disabledCard: {
+    opacity: 0.65,
+    backgroundColor: '#F5F5F5',
+    borderColor: '#E0E0E0',
+  },
   name: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -156,6 +244,10 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.colors.border,
     paddingBottom: 4,
     textAlign: 'right',
+  },
+  disabledName: {
+    color: '#888888',
+    borderBottomColor: '#E0E0E0',
   },
   row: {
     flexDirection: 'row-reverse',
@@ -179,15 +271,32 @@ const styles = StyleSheet.create({
     borderTopColor: theme.colors.border,
     alignItems: 'center',
   },
-  eligibleText: {
+  readinessText: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: theme.colors.primary,
+    textAlign: 'center',
   },
-  ineligibleText: {
+  clickHint: {
+    fontSize: 12,
+    color: theme.colors.primary,
+    marginTop: 4,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  inactiveBanner: {
+    backgroundColor: '#F9F6F0',
+    borderColor: '#E0D0B0',
+    borderWidth: 1,
+    borderRadius: theme.borderRadius.m,
+    padding: theme.spacing.m,
+    marginBottom: theme.spacing.m,
+  },
+  inactiveBannerText: {
+    color: '#7C6E52',
     fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
     fontWeight: '500',
-    color: theme.colors.textSecondary,
   },
   errorText: {
     color: theme.colors.error,

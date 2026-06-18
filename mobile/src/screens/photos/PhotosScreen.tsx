@@ -11,8 +11,11 @@ import { getImageUrl } from '../../utils/imageUrl';
 import { useAuth } from '../../context/AuthContext';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
-export const PhotosScreen = () => {
+export const PhotosScreen = ({ navigation, route }: any) => {
   const { refreshMe } = useAuth();
+  const returnToWedding = route.params?.returnToWedding;
+  const returnWeddingId = route.params?.returnWeddingId;
+  const returnWeddingSnapshot = route.params?.returnWeddingSnapshot;
   const [photos, setPhotos] = useState<PhotoResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -148,6 +151,18 @@ export const PhotosScreen = () => {
           loading={actionLoading}
           style={styles.uploadButton}
         />
+
+        {returnToWedding && returnWeddingId ? (
+          <AppButton
+            title="חזרה לפרטי החתונה"
+            onPress={() => navigation.navigate('JoinWedding', {
+              weddingId: returnWeddingId,
+              weddingSnapshot: returnWeddingSnapshot,
+              source: 'returnFlow'
+            })}
+            style={styles.returnButton}
+          />
+        ) : null}
       </ScrollView>
     </Screen>
   );
@@ -228,5 +243,8 @@ const styles = StyleSheet.create({
   },
   uploadButton: {
     marginTop: 'auto',
+  },
+  returnButton: {
+    marginTop: theme.spacing.m,
   },
 });
