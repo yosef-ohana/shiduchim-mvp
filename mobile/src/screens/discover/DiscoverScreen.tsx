@@ -7,6 +7,8 @@ import { theme } from '../../theme/theme';
 import { getDiscoverCandidates } from '../../api/discoverApi';
 import { PublicUserCardResponse } from '../../types/api';
 import { ActionButtons } from '../../components/ActionButtons';
+import { OpeningMessageComposer } from '../../components/OpeningMessageComposer';
+import { sendOpeningMessage } from '../../api/openingMessagesApi';
 
 export const DiscoverScreen = ({ route, navigation }: any) => {
   const { pool, weddingId } = route.params || {};
@@ -15,6 +17,7 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [matchMessage, setMatchMessage] = useState<string | null>(null);
+  const [composerTargetId, setComposerTargetId] = useState<number | null>(null);
 
   const fetchCandidates = async (showRefreshIndicator = false) => {
     if (showRefreshIndicator) {
@@ -99,6 +102,7 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
                   }
                   setCandidates((prev) => prev.filter((c) => c.userId !== item.userId));
                 }}
+                onOpeningMessagePress={() => setComposerTargetId(item.userId)}
               />
             }
           />
@@ -115,6 +119,21 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
             <AppButton title="רענן" onPress={handleRefresh} style={styles.refreshButton} />
           </View>
         }
+      />
+      <OpeningMessageComposer
+        visible={composerTargetId !== null}
+        onClose={() => setComposerTargetId(null)}
+        onSend={async (content) => {
+          if (composerTargetId !== null) {
+            await sendOpeningMessage(composerTargetId, {
+              content,
+              poolType: pool,
+              weddingId: weddingId,
+            });
+            setMatchMessage('ההודעה נשלחה בהצלחה');
+            setCandidates((prev) => prev.filter((c) => c.userId !== composerTargetId));
+          }
+        }}
       />
     </Screen>
   );

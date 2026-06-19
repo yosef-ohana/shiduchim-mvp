@@ -11,6 +11,7 @@ interface ActionButtonsProps {
   poolType: PoolType;
   weddingId?: number;
   onActionCompleted: (matchCreated: boolean) => void;
+  onOpeningMessagePress?: () => void;
 }
 
 export const ActionButtons: React.FC<ActionButtonsProps> = ({
@@ -18,6 +19,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   poolType,
   weddingId,
   onActionCompleted,
+  onOpeningMessagePress,
 }) => {
   const [loadingAction, setLoadingAction] = useState<'LIKE' | 'DISLIKE' | 'FREEZE' | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -104,6 +106,15 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
           style={[styles.button, styles.likeButton]}
         />
       </View>
+      {onOpeningMessagePress && (
+        <AppButton
+          title="הודעת פתיחה"
+          onPress={onOpeningMessagePress}
+          disabled={isAnyLoading}
+          style={styles.openingMessageButton}
+          variant="secondary"
+        />
+      )}
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
@@ -142,4 +153,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '500',
   },
+  openingMessageButton: {
+    marginTop: theme.spacing.m,
+  },
+
 });

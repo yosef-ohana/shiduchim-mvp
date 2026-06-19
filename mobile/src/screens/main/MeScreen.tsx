@@ -142,6 +142,12 @@ export const MeScreen = ({ navigation }: any) => {
             />
 
             <AppButton
+              title="הודעות פתיחה"
+              onPress={() => navigation.navigate('OpeningMessages')}
+              style={styles.button}
+            />
+
+            <AppButton
               title="משתמשים חסומים"
               onPress={() => navigation.navigate('BlockedUsers')}
               style={styles.button}

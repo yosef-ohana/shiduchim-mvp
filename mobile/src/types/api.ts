@@ -459,3 +459,56 @@ export interface BlockedUserResponse {
   primaryPhotoUrl?: string | null;
   blockedAt: string;
 }
+
+export type OpeningConversationStatus = 'OPEN' | 'CONVERTED' | 'EXPIRED' | 'REJECTED';
+
+export interface OpeningMessageResponse {
+  id: number;
+  senderUserId: number;
+  content: string;
+  createdAt: string;
+}
+
+export interface OpeningConversationSummaryResponse {
+  conversationId: number;
+  otherUserId: number;
+  otherUserName: string;
+  poolType: PoolType;
+  weddingId: number | null;
+  status: OpeningConversationStatus;
+  lastMessagePreview: string;
+  lastMessageAt: string;
+  createdAt: string;
+}
+
+export interface OpeningConversationDetailsResponse {
+  conversationId: number;
+  openerUserId: number;
+  recipientUserId: number;
+  otherUserId: number;
+  poolType: PoolType;
+  weddingId: number | null;
+  status: OpeningConversationStatus;
+  messages: OpeningMessageResponse[];
+  matchCreated: boolean;
+  matchId?: number;
+  requiresMatchConfirmation: boolean;
+}
+
+export interface SendOpeningMessageRequest {
+  content: string;
+  poolType: PoolType;
+  weddingId?: number;
+}
+
+export interface ReplyOpeningMessageRequest {
+  content: string;
+  confirmCreateMatch?: boolean;
+}
+
+export interface OpeningReplyResponse {
+  matchCreated: boolean;
+  matchId?: number;
+  requiresMatchConfirmation: boolean;
+  message: string;
+}
