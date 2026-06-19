@@ -418,3 +418,27 @@ Phase 18 is officially defined as: **"Hebrew UI Localization & RTL Polish"**
 - **Access Control & Warning Labels**:
   - The QR card and shareable join link are shown *only* for weddings in `ACTIVE` status with a valid `accessCode`.
   - Weddings in `CLOSED` or `CANCELLED` status must not encourage sharing and instead show a clear Hebrew warning label indicating that the wedding is not open for joining.
+
+---
+
+## 20. Cycle 3 Decisions: Safety, Reporting, Blocking & Initial Messages
+
+### 20.1 User Reports MVP
+- **Backend and Admin only**: Added `UserReport` entity with statuses (`PENDING`, `RESOLVED`) and reasons (`INAPPROPRIATE_PROFILE`, `HARASSMENT`, `SPAM`, `OTHER`). Created admin endpoints to list, detail, and resolve reports.
+- **Mobile UI**: Added `ReportUserScreen.tsx` to allow reporting users from candidate profiles or match details with clear Hebrew reasons.
+- **Minimal MVP**: Only records reports. Reports do not automatically block/suspend users; decisions are handled manually by admins.
+
+### 20.2 User-to-User Blocking
+- **Backend & Enforcement**: Added `UserBlock` entity with statuses (`ACTIVE`, `UNBLOCKED`). Enforced blocks dynamically across all critical queries: candidates do not appear in Discover feed, Likes/Dislikes lists, or Liked-Me.
+- **No Data Deletion**: Blocking does NOT delete or alter matches, chats, or historical user actions. The match status does not change to blocked/removed, but the UI filters out conversations and profiles dynamically.
+- **Mobile UI**: Users can block/unblock other users from candidate profile, match details, or settings. Added a `BlockedUsersScreen.tsx` accessed from `MeScreen.tsx` to view and manage blocked users.
+
+### 20.3 OpeningMessages before Match
+- **Isolated Sandbox**: Added `OpeningConversation` and `OpeningMessage` entities to allow sending a single initial message before a match is established.
+- **No Pre-Match Likes**: Sending an opening message does NOT create a `UserAction` (Like/Dislike) or establish a match immediately.
+- **Conversion Flow**: When the recipient replies, they can choose to reply normally (retaining the opening message flow) or accept/reply with a match confirmation, converting the opening conversation into a standard `Match` and `ChatMessage` history.
+- **Strict Separation**: Kept entirely separate from existing Match/Chat lifecycle until explicit conversion occurs.
+- **No Realtime/WebSocket/Read Receipts**: No WebSockets, push notifications, or read receipts were added; chat/messages rely on the standard HTTP request-response flow.
+
+### 20.4 Testing & QA Policy
+- **Deferred Manual QA**: In line with project policy, manual regression QA of broader flows is deferred to a later user-run session. Automated compilation and TypeScript checks are used for current verification.

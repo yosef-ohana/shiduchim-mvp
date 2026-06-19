@@ -526,3 +526,36 @@ No WebSocket. No realtime. No attachments. (Note: internal unread count per conv
 | PATCH | `/api/admin/weddings/{weddingId}/assign-self` | ADMIN | — | `WeddingResponse` | Admin assigns self to manage wedding | 401, 403, 404 |
 | PUT | `/api/admin/weddings/{weddingId}/owner` | ADMIN | `{ "ownerUserId": Long }` | `WeddingResponse` | [Phase 15 Planned] Admin assigns Event Manager to wedding | 400, 401, 403, 404 |
 | GET | `/api/admin/dashboard` | ADMIN | — | `AdminDashboardResponse` | [Phase 15 Planned] Returns basic admin dashboard counters | 401, 403 |
+| GET | `/api/admin/reports` | ADMIN | — | `List<UserReportSummaryResponse>` | List all user reports | 401, 403 |
+| GET | `/api/admin/reports/{reportId}` | ADMIN | — | `UserReportDetailsResponse` | Get details of a specific report | 401, 403, 404 |
+| PATCH | `/api/admin/reports/{reportId}/resolve` | ADMIN | — | Void | Resolve a report | 401, 403, 404 |
+
+---
+
+### User Blocks
+
+| Method | Path | Role | Request | Response | Rules | Errors |
+|---|---|---|---|---|---|---|
+| POST | `/api/blocks/{targetUserId}` | USER | — | `BlockUserResponse` | Block target user (non-destructive block) | 401, 403, 404 |
+| PATCH | `/api/blocks/{targetUserId}/unblock` | USER | — | `BlockUserResponse` | Unblock target user | 401, 403, 404 |
+| GET | `/api/blocks` | USER | — | `List<BlockedUserResponse>` | Get list of blocked users | 401, 403 |
+
+---
+
+### User Reports
+
+| Method | Path | Role | Request | Response | Rules | Errors |
+|---|---|---|---|---|---|---|
+| POST | `/api/reports/users/{reportedUserId}` | USER | `CreateUserReportRequest` | Void | Report a user with reason and explanation | 400, 401, 403, 404 |
+
+---
+
+### Opening Messages
+
+| Method | Path | Role | Request | Response | Rules | Errors |
+|---|---|---|---|---|---|---|
+| POST | `/api/opening-messages/{targetUserId}` | USER | `CreateOpeningMessageRequest` | Void | Send initial opening message to a user before matching | 400, 401, 403, 404 |
+| POST | `/api/opening-messages/{conversationId}/messages` | USER | `CreateOpeningReplyRequest` | `OpeningReplyResponse` | Reply to opening message or accept to convert to a Match | 400, 401, 403, 404 |
+| GET | `/api/opening-messages/inbox` | USER | — | `List<OpeningConversationSummaryResponse>` | View received opening conversations | 401, 403 |
+| GET | `/api/opening-messages/sent` | USER | — | `List<OpeningConversationSummaryResponse>` | View sent opening conversations | 401, 403 |
+| GET | `/api/opening-messages/{conversationId}` | USER | — | `OpeningConversationDetailsResponse` | View details and message history | 401, 403, 404 |

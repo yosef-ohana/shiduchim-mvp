@@ -578,3 +578,46 @@ Phase 18 is officially defined as: **"Hebrew UI Localization & RTL Polish"**
 - **Dynamic Access Checks**:
   - Displays QR card and selectable link on Admin and Event Manager wedding details screens only if status is `ACTIVE` and access code exists.
   - Displays a Hebrew warning banner and prevents QR card generation if wedding status is `CLOSED` or `CANCELLED`.
+
+---
+
+## 18. Cycle 3 Additions: Safety, Reporting, Blocking & Initial Messages
+
+### 18.1 User Reports MVP
+- **Backend Schema**: Added `UserReport` entity with columns: `id` (Long, PK), `reporter_id` (FK to `User`), `reported_id` (FK to `User`), `reason` (Enum: `ReportReasonType`), `explanation` (Text), `status` (Enum: `ReportStatus`), `created_at` (Timestamp), `resolved_at` (Timestamp).
+- **Enforcement & Admin Flow**:
+  - Regular users can submit a report via `POST /api/reports/users/{reportedUserId}`.
+  - Admins can retrieve reports using `GET /api/admin/reports` and `GET /api/admin/reports/{reportId}`.
+  - Admins can mark a report as resolved using `PATCH /api/admin/reports/{reportId}/resolve`.
+- **Mobile UI Integration**: Added `ReportUserScreen.tsx` where users can select a pre-defined reason and submit their complaint.
+
+### 18.2 User-to-User Blocking
+- **Backend Schema**: Added `UserBlock` entity with columns: `id` (Long, PK), `blocker_id` (FK to `User`), `blocked_id` (FK to `User`), `status` (Enum: `UserBlockStatus` - `ACTIVE`/`UNBLOCKED`), `created_at` (Timestamp), `updated_at` (Timestamp).
+- **Dynamic Queries Integration**:
+  - Modified query helpers in `UserRepository`, `MatchRepository`, `ListsService`, and `ActionService` to exclude blocked/blocker relations.
+  - Blocked users are dynamically filtered out of Discover feed, Liked-Me list, Likes/Dislikes lists, and Chats/Conversations list view.
+  - Blocking is non-destructive: it does not hard delete matches, messages, or actions, and does not alter `Match.status`.
+- **Endpoints**:
+  - `POST /api/blocks/{targetUserId}`: Creates or activates a block.
+  - `PATCH /api/blocks/{targetUserId}/unblock`: Deactivates a block (changes status to `UNBLOCKED`).
+  - `GET /api/blocks`: Retrieves list of blocked users for the current user.
+- **Mobile Screens**: Added `BlockedUsersScreen.tsx` for listing and unblocking users. Integrated blocking actions on `CandidateProfileScreen.tsx` and `MatchDetailsScreen.tsx`.
+
+### 18.3 OpeningMessages before Match
+- **Backend Schema**:
+  - Added `OpeningConversation` entity with columns: `id` (PK), `opener_id` (FK to `User`), `recipient_id` (FK to `User`), `status` (Enum: `OpeningConversationStatus` - `PENDING`, `REPLIED`, `CONVERTED`), `created_at` (Timestamp), `updated_at` (Timestamp).
+  - Added `OpeningMessage` entity with columns: `id` (PK), `conversation_id` (FK to `OpeningConversation`), `sender_id` (FK to `User`), `content` (Text), `created_at` (Timestamp).
+- **Core Rules**:
+  - Allows sending a single initial message to a candidate before a match is made.
+  - Does not create `UserAction` (Like/Dislike).
+- **Conversion Flow**:
+  - `POST /api/opening-messages/{conversationId}/messages`: Allows recipient to reply.
+  - If request body specifies `confirmCreateMatch=true`, the conversation converts to a standard mutual `Match`.
+  - Upon conversion, a `Match` record is created, and the opening message history is copied over as standard `ChatMessage` records in order. The `OpeningConversation` status changes to `CONVERTED`.
+- **Endpoints**:
+  - `POST /api/opening-messages/{targetUserId}`: Send initial message.
+  - `POST /api/opening-messages/{conversationId}/messages`: Send reply or convert to match.
+  - `GET /api/opening-messages/inbox`: Get received conversations.
+  - `GET /api/opening-messages/sent`: Get sent conversations.
+  - `GET /api/opening-messages/{conversationId}`: Get detailed message history.
+- **Mobile Screens**: Added `OpeningMessagesScreen.tsx` (inbox/sent tabs) and `OpeningConversationDetailsScreen.tsx` with composer. Integrated "Send Message" action on `CandidateProfileScreen.tsx`.

@@ -956,3 +956,47 @@ Goal: Run mobile TypeScript checks, perform English user-visible text scans, che
   - Compile backend services and check mobile TypeScript compliance.
   - Update decision, tech spec, and batch plans.
 - **DoD**: Cycle 1 fully verified, clean, and prepared for commit/push.
+
+---
+
+## Cycle 3 — Safety, Reporting, Blocking & Initial Messages
+
+### Batch 1 — User Reports MVP Backend & Admin Integration
+- **Goal**: Implement database entities, repositories, services, controllers, and admin endpoints for recording and managing user reports.
+- **Scope**: Create `UserReport` entity and mapping enums. Build `POST /api/reports/users/{reportedUserId}` endpoint for users, and `GET /api/admin/reports`, `GET /api/admin/reports/{reportId}`, `PATCH /api/admin/reports/{reportId}/resolve` for admin.
+- **DoD**: Compilation successful, database schema created, report management API operational.
+
+### Batch 2 — UserBlock Backend Core
+- **Goal**: Add database entity and endpoints for blocking and unblocking users.
+- **Scope**: Create `UserBlock` entity with status enum. Build `POST /api/blocks/{targetUserId}` to block, `PATCH /api/blocks/{targetUserId}/unblock` to unblock, and `GET /api/blocks` to retrieve blocked list.
+- **DoD**: UserBlock CRUD operations compile and run successfully.
+
+### Batch 3 — UserBlock Enforcement
+- **Goal**: Enforce blocking restrictions across all query, discover, matching, and messaging services.
+- **Scope**: Update service query methods and helper functions to dynamically filter out blocked/blocker candidates from feed, liked-me, list views, and chats. Ensure blocking is non-destructive (matches and chats are not deleted, `Match.status` remains unchanged).
+- **DoD**: Blocked relationships successfully hidden from all candidate-facing endpoints.
+
+### Batch 4 — UserBlock Mobile UI
+- **Goal**: Build mobile screens and interface entry points for blocking and unblocking users.
+- **Scope**: Create `blocksApi.ts` client. Add blocking options to `CandidateProfileScreen.tsx` and `MatchDetailsScreen.tsx`. Add `BlockedUsersScreen.tsx` (accessed from `MeScreen.tsx`) to display and manage blocked users in Hebrew.
+- **DoD**: TypeScript checks pass; block/unblock actions fully integrated into mobile UI.
+
+### Batch 5 — OpeningMessages Backend Sandbox
+- **Goal**: Create entities, repositories, and initial sandbox endpoints for sending single pre-match opening messages.
+- **Scope**: Add `OpeningConversation` and `OpeningMessage` entities. Implement `POST /api/opening-messages/{targetUserId}` to send initial message. Enforce eligibility validations.
+- **DoD**: Opening messages sent successfully without creating `UserAction` (likes/dislikes) or mutual matches.
+
+### Batch 6 — OpeningMessages Conversion + Discover Filter
+- **Goal**: Implement opening message inbox/details endpoints and reply/conversion flows.
+- **Scope**: Build `GET /api/opening-messages/inbox`, `/sent`, and `/{conversationId}`. Implement reply flow `POST /api/opening-messages/{conversationId}/messages` supporting `confirmCreateMatch=true`. On conversion, copy messages to standard chat and create an ACTIVE `Match`.
+- **DoD**: Replied opening conversations successfully convert to active matches and chats.
+
+### Batch 7 — OpeningMessages Mobile UI
+- **Goal**: Add mobile interface for sending and managing opening messages.
+- **Scope**: Build `openingMessagesApi.ts` client. Create `OpeningMessagesScreen.tsx` (inbox/sent tabs) and `OpeningConversationDetailsScreen.tsx` with composer. Add "Send message" option to `CandidateProfileScreen.tsx`.
+- **DoD**: Opening messages fully interactable on mobile UI; TypeScript compilable.
+
+### Batch 8A — Cycle 3 Hardening, Cleanup, and Docs Review
+- **Goal**: Clean up repository junk, run backend compile, run mobile TypeScript compiler check, and update project documentation.
+- **Scope**: Run static checks, ensure zero whitespace errors or leftover junk files, and review/update `BATCH_PLAN.md`, `DECISIONS.md`, `TECH_SPEC.md`, and `API_CONTRACT.md`.
+- **DoD**: Verified repository build and type sanity; updated 4 doc files.
