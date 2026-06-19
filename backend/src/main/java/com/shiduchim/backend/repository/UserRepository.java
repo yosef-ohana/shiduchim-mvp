@@ -26,6 +26,19 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     long countByRoleAndAdminBlockedFalse(com.shiduchim.backend.enums.UserRole role);
 
+    /**
+     * Discover: Wedding pool candidates.
+     * Excludes users who:
+     * - are not opposite gender
+     * - have no primary photo
+     * - are not active participants in the wedding
+     * - the current user has already acted on (UserAction)
+     * - have an ACTIVE UserBlock in either direction
+     * - already have an OPEN OpeningConversation with the current user in the same wedding context
+     *   (checked bidirectionally: current user as opener OR as recipient)
+     * - already have an ACTIVE Match with the current user in the same wedding context
+     *   (bidirectional; covers Matches created via OpeningMessages conversion with no UserAction)
+     */
     @Query("SELECT u, up.imageUrl FROM User u " +
            "JOIN UserPhoto up ON up.userId = u.id AND up.isPrimary = true " +
            "WHERE u.role = com.shiduchim.backend.enums.UserRole.USER " +
@@ -46,7 +59,19 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "  AND NOT EXISTS (SELECT 1 FROM UserBlock ub " +
            "                  WHERE ub.status = com.shiduchim.backend.enums.UserBlockStatus.ACTIVE " +
            "                    AND ((ub.blockerUserId = :currentUserId AND ub.blockedUserId = u.id) " +
-           "                      OR (ub.blockerUserId = u.id AND ub.blockedUserId = :currentUserId)))")
+           "                      OR (ub.blockerUserId = u.id AND ub.blockedUserId = :currentUserId))) " +
+           "  AND NOT EXISTS (SELECT 1 FROM OpeningConversation oc " +
+           "                  WHERE oc.status = com.shiduchim.backend.enums.OpeningConversationStatus.OPEN " +
+           "                    AND oc.poolType = com.shiduchim.backend.enums.PoolType.WEDDING " +
+           "                    AND oc.weddingId = :weddingId " +
+           "                    AND ((oc.openerUserId = :currentUserId AND oc.recipientUserId = u.id) " +
+           "                      OR (oc.openerUserId = u.id AND oc.recipientUserId = :currentUserId))) " +
+           "  AND NOT EXISTS (SELECT 1 FROM Match m " +
+           "                  WHERE m.status = com.shiduchim.backend.enums.MatchStatus.ACTIVE " +
+           "                    AND m.poolType = com.shiduchim.backend.enums.PoolType.WEDDING " +
+           "                    AND m.weddingId = :weddingId " +
+           "                    AND ((m.user1Id = :currentUserId AND m.user2Id = u.id) " +
+           "                      OR (m.user1Id = u.id AND m.user2Id = :currentUserId)))")
     List<Object[]> findWeddingCandidatesWithPhoto(
         @Param("currentUserId") Long currentUserId,
         @Param("oppositeGender") Gender oppositeGender,
@@ -54,6 +79,19 @@ public interface UserRepository extends JpaRepository<User, Long> {
         Pageable pageable
     );
 
+    /**
+     * Discover: Global pool candidates.
+     * Excludes users who:
+     * - are not opposite gender
+     * - do not have a FULL profile
+     * - have no primary photo
+     * - the current user has already acted on (UserAction)
+     * - have an ACTIVE UserBlock in either direction
+     * - already have an OPEN OpeningConversation with the current user in the global context
+     *   (checked bidirectionally: current user as opener OR as recipient; weddingId IS NULL)
+     * - already have an ACTIVE Match with the current user in the global context
+     *   (bidirectional; covers Matches created via OpeningMessages conversion with no UserAction)
+     */
     @Query("SELECT u, up.imageUrl FROM User u " +
            "JOIN UserPhoto up ON up.userId = u.id AND up.isPrimary = true " +
            "WHERE u.role = com.shiduchim.backend.enums.UserRole.USER " +
@@ -69,7 +107,19 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "  AND NOT EXISTS (SELECT 1 FROM UserBlock ub " +
            "                  WHERE ub.status = com.shiduchim.backend.enums.UserBlockStatus.ACTIVE " +
            "                    AND ((ub.blockerUserId = :currentUserId AND ub.blockedUserId = u.id) " +
-           "                      OR (ub.blockerUserId = u.id AND ub.blockedUserId = :currentUserId)))")
+           "                      OR (ub.blockerUserId = u.id AND ub.blockedUserId = :currentUserId))) " +
+           "  AND NOT EXISTS (SELECT 1 FROM OpeningConversation oc " +
+           "                  WHERE oc.status = com.shiduchim.backend.enums.OpeningConversationStatus.OPEN " +
+           "                    AND oc.poolType = com.shiduchim.backend.enums.PoolType.GLOBAL " +
+           "                    AND oc.weddingId IS NULL " +
+           "                    AND ((oc.openerUserId = :currentUserId AND oc.recipientUserId = u.id) " +
+           "                      OR (oc.openerUserId = u.id AND oc.recipientUserId = :currentUserId))) " +
+           "  AND NOT EXISTS (SELECT 1 FROM Match m " +
+           "                  WHERE m.status = com.shiduchim.backend.enums.MatchStatus.ACTIVE " +
+           "                    AND m.poolType = com.shiduchim.backend.enums.PoolType.GLOBAL " +
+           "                    AND m.weddingId IS NULL " +
+           "                    AND ((m.user1Id = :currentUserId AND m.user2Id = u.id) " +
+           "                      OR (m.user1Id = u.id AND m.user2Id = :currentUserId)))")
     List<Object[]> findGlobalCandidatesWithPhoto(
         @Param("currentUserId") Long currentUserId,
         @Param("oppositeGender") Gender oppositeGender,

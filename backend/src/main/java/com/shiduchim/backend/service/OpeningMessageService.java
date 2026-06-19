@@ -1,9 +1,11 @@
 package com.shiduchim.backend.service;
 
 import com.shiduchim.backend.dto.opening.CreateOpeningMessageRequest;
+import com.shiduchim.backend.dto.opening.CreateOpeningReplyRequest;
 import com.shiduchim.backend.dto.opening.OpeningConversationDetailsResponse;
 import com.shiduchim.backend.dto.opening.OpeningConversationSummaryResponse;
 import com.shiduchim.backend.dto.opening.OpeningMessageResponse;
+import com.shiduchim.backend.dto.opening.OpeningReplyResponse;
 import com.shiduchim.backend.entity.*;
 import com.shiduchim.backend.enums.*;
 import com.shiduchim.backend.repository.*;
@@ -25,6 +27,7 @@ public class OpeningMessageService {
     private final UserPhotoRepository userPhotoRepository;
     private final UserBlockService userBlockService;
     private final MatchRepository matchRepository;
+    private final ChatMessageRepository chatMessageRepository;
     private final WeddingRepository weddingRepository;
     private final WeddingParticipantRepository weddingParticipantRepository;
 
@@ -35,6 +38,7 @@ public class OpeningMessageService {
             UserPhotoRepository userPhotoRepository,
             UserBlockService userBlockService,
             MatchRepository matchRepository,
+            ChatMessageRepository chatMessageRepository,
             WeddingRepository weddingRepository,
             WeddingParticipantRepository weddingParticipantRepository) {
         this.openingConversationRepository = openingConversationRepository;
@@ -43,9 +47,14 @@ public class OpeningMessageService {
         this.userPhotoRepository = userPhotoRepository;
         this.userBlockService = userBlockService;
         this.matchRepository = matchRepository;
+        this.chatMessageRepository = chatMessageRepository;
         this.weddingRepository = weddingRepository;
         this.weddingParticipantRepository = weddingParticipantRepository;
     }
+
+    // -------------------------------------------------------------------------
+    // Batch 5: Send the first (opener) message
+    // -------------------------------------------------------------------------
 
     @Transactional
     public void sendFirstMessage(User currentUser, Long targetUserId, CreateOpeningMessageRequest request) {
@@ -174,6 +183,189 @@ public class OpeningMessageService {
         openingMessageRepository.save(message);
     }
 
+    // -------------------------------------------------------------------------
+    // Batch 6: Reply to an existing conversation (recipient) / convert to Match
+    // -------------------------------------------------------------------------
+
+    /**
+     * Handles the recipient replying to an OPEN opening conversation.
+     *
+     * <p>First reply: creates one OpeningMessage. No Match, no ChatMessage, no UserAction.
+     * <p>Second reply without confirmCreateMatch=true: rejected with a clear validation error.
+     * <p>Second reply with confirmCreateMatch=true: atomically creates a Match, copies all
+     * OpeningMessages into ChatMessages, adds the confirmed reply as a ChatMessage, and
+     * sets OpeningConversation.status = MATCH_CREATED with the new matchId.
+     */
+    @Transactional
+    public OpeningReplyResponse replyToConversation(User currentUser, Long conversationId, CreateOpeningReplyRequest request) {
+
+        // --- Basic caller validation ---
+        if (currentUser.getRole() != UserRole.USER) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only users can reply to opening conversations");
+        }
+        if (Boolean.TRUE.equals(currentUser.getAdminBlocked())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is blocked by admin");
+        }
+
+        // --- Content validation ---
+        String content = request.getContent() != null ? request.getContent().trim() : "";
+        if (content.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Content cannot be empty");
+        }
+        if (content.length() > 1000) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Content cannot exceed 1000 characters");
+        }
+
+        // --- Load conversation ---
+        OpeningConversation conversation = openingConversationRepository.findById(conversationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation not found"));
+
+        // --- Access check: caller must be opener or recipient ---
+        Long openerId    = conversation.getOpenerUserId();
+        Long recipientId = conversation.getRecipientUserId();
+        boolean isOpener    = currentUser.getId().equals(openerId);
+        boolean isRecipient = currentUser.getId().equals(recipientId);
+
+        if (!isOpener && !isRecipient) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this conversation");
+        }
+
+        // --- Opener cannot send another pre-match message ---
+        if (isOpener) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Opener cannot send another message before a match is created. Wait for the recipient to reply.");
+        }
+
+        // --- Conversation must be OPEN ---
+        if (conversation.getStatus() != OpeningConversationStatus.OPEN) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "This conversation is no longer accepting pre-match replies. Use normal chat instead.");
+        }
+
+        // --- Reload other user with fresh state ---
+        Long otherUserId = openerId;
+        User otherUser = userRepository.findById(otherUserId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Other user not found"));
+
+        if (Boolean.TRUE.equals(otherUser.getAdminBlocked())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "The other user is unavailable");
+        }
+
+        // --- UserBlock check ---
+        if (userBlockService.existsActiveBlockBetween(currentUser.getId(), otherUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot reply due to an active block between you and the other user");
+        }
+
+        // --- Determine how many messages the recipient has already sent ---
+        List<OpeningMessage> existingMessages = openingMessageRepository
+                .findByConversationIdOrderByCreatedAtAsc(conversationId);
+
+        long recipientMessageCount = existingMessages.stream()
+                .filter(m -> m.getSenderUserId().equals(recipientId))
+                .count();
+
+        boolean isFirstReply = (recipientMessageCount == 0);
+
+        if (isFirstReply) {
+            // ----------------------------------------------------------------
+            // FIRST REPLY: create one OpeningMessage only.
+            // No Match, no ChatMessage, no UserAction.
+            // ----------------------------------------------------------------
+            OpeningMessage reply = new OpeningMessage();
+            reply.setConversationId(conversationId);
+            reply.setSenderUserId(currentUser.getId());
+            reply.setContent(content);
+            openingMessageRepository.save(reply);
+
+            OpeningReplyResponse response = new OpeningReplyResponse();
+            response.setMatchCreated(false);
+            response.setMatchId(null);
+            // Signal that the next reply will require explicit confirmation.
+            response.setRequiresMatchConfirmation(true);
+            response.setMessage("Reply sent. To continue this conversation, you will need to confirm match creation on your next reply.");
+            return response;
+
+        } else {
+            // ----------------------------------------------------------------
+            // SECOND (OR LATER) REPLY:
+            // Without confirmCreateMatch=true → reject.
+            // With confirmCreateMatch=true → convert to Match.
+            // ----------------------------------------------------------------
+            if (!Boolean.TRUE.equals(request.getConfirmCreateMatch())) {
+                throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                        "Explicit confirmation is required to continue. Set confirmCreateMatch=true to create a match and continue the conversation.");
+            }
+
+            // --- Revalidate: no existing ACTIVE or BLOCKED Match in same context ---
+            PoolType poolType = conversation.getPoolType();
+            Long weddingId   = conversation.getWeddingId();
+
+            Long canonicalUser1 = Math.min(currentUser.getId(), otherUserId);
+            Long canonicalUser2 = Math.max(currentUser.getId(), otherUserId);
+
+            Optional<Match> existingActive = matchRepository.findByCanonicalUsersAndContextAndStatus(
+                    canonicalUser1, canonicalUser2, poolType, weddingId, MatchStatus.ACTIVE);
+            if (existingActive.isPresent()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "A match already exists between you and this user in this context");
+            }
+
+            Optional<Match> existingBlocked = matchRepository.findByCanonicalUsersAndContextAndStatus(
+                    canonicalUser1, canonicalUser2, poolType, weddingId, MatchStatus.BLOCKED);
+            if (existingBlocked.isPresent()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "A blocked match already exists between you and this user in this context");
+            }
+
+            // --- Create the Match ---
+            Match match = new Match();
+            match.setUser1Id(canonicalUser1);
+            match.setUser2Id(canonicalUser2);
+            match.setPoolType(poolType);
+            match.setWeddingId(weddingId);
+            match.setStatus(MatchStatus.ACTIVE);
+            match = matchRepository.save(match);
+            final Long newMatchId = match.getId();
+
+            // --- Copy all existing OpeningMessages → ChatMessage (chronological) ---
+            for (OpeningMessage om : existingMessages) {
+                ChatMessage cm = new ChatMessage();
+                cm.setMatchId(newMatchId);
+                cm.setSenderId(om.getSenderUserId());
+                cm.setContent(om.getContent());
+                // Preserve original timestamps; ChatMessage.onCreate() only sets sentAt if null.
+                cm.setSentAt(om.getCreatedAt());
+                cm.setReadByRecipient(false);
+                chatMessageRepository.save(cm);
+            }
+
+            // --- Add the confirmed reply as a ChatMessage ---
+            ChatMessage confirmedReply = new ChatMessage();
+            confirmedReply.setMatchId(newMatchId);
+            confirmedReply.setSenderId(currentUser.getId());
+            confirmedReply.setContent(content);
+            // sentAt left null so @PrePersist will set it to now.
+            confirmedReply.setReadByRecipient(false);
+            chatMessageRepository.save(confirmedReply);
+
+            // --- Update conversation ---
+            conversation.setStatus(OpeningConversationStatus.MATCH_CREATED);
+            conversation.setMatchId(newMatchId);
+            openingConversationRepository.save(conversation);
+
+            OpeningReplyResponse response = new OpeningReplyResponse();
+            response.setMatchCreated(true);
+            response.setMatchId(newMatchId);
+            response.setRequiresMatchConfirmation(false);
+            response.setMessage("Match created. You can now continue the conversation in normal chat.");
+            return response;
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Batch 5: Read endpoints
+    // -------------------------------------------------------------------------
+
     @Transactional(readOnly = true)
     public List<OpeningConversationSummaryResponse> getInbox(User currentUser) {
         if (currentUser.getRole() != UserRole.USER || Boolean.TRUE.equals(currentUser.getAdminBlocked())) {
@@ -218,16 +410,18 @@ public class OpeningMessageService {
         Long otherUserId = conversation.getOpenerUserId().equals(currentUser.getId()) 
                 ? conversation.getRecipientUserId() : conversation.getOpenerUserId();
 
-        OpeningConversationDetailsResponse response = new OpeningConversationDetailsResponse();
-        response.setConversationId(conversation.getId());
-        response.setOpenerUserId(conversation.getOpenerUserId());
-        response.setRecipientUserId(conversation.getRecipientUserId());
-        response.setOtherUserId(otherUserId);
-        response.setPoolType(conversation.getPoolType());
-        response.setWeddingId(conversation.getWeddingId());
-        response.setStatus(conversation.getStatus());
-
         List<OpeningMessage> messages = openingMessageRepository.findByConversationIdOrderByCreatedAtAsc(conversation.getId());
+
+        // Determine requiresMatchConfirmation:
+        // OPEN conversation where recipient has already replied once means next reply needs confirmCreateMatch.
+        boolean requiresMatchConfirmation = false;
+        if (conversation.getStatus() == OpeningConversationStatus.OPEN) {
+            long recipientReplies = messages.stream()
+                    .filter(m -> m.getSenderUserId().equals(conversation.getRecipientUserId()))
+                    .count();
+            requiresMatchConfirmation = (recipientReplies >= 1);
+        }
+
         List<OpeningMessageResponse> messageResponses = messages.stream().map(msg -> {
             OpeningMessageResponse mr = new OpeningMessageResponse();
             mr.setId(msg.getId());
@@ -236,10 +430,25 @@ public class OpeningMessageService {
             mr.setCreatedAt(msg.getCreatedAt());
             return mr;
         }).collect(Collectors.toList());
-        
+
+        OpeningConversationDetailsResponse response = new OpeningConversationDetailsResponse();
+        response.setConversationId(conversation.getId());
+        response.setOpenerUserId(conversation.getOpenerUserId());
+        response.setRecipientUserId(conversation.getRecipientUserId());
+        response.setOtherUserId(otherUserId);
+        response.setPoolType(conversation.getPoolType());
+        response.setWeddingId(conversation.getWeddingId());
+        response.setStatus(conversation.getStatus());
         response.setMessages(messageResponses);
+        response.setMatchCreated(conversation.getStatus() == OpeningConversationStatus.MATCH_CREATED);
+        response.setMatchId(conversation.getMatchId());
+        response.setRequiresMatchConfirmation(requiresMatchConfirmation);
         return response;
     }
+
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
 
     private OpeningConversationSummaryResponse mapToSummary(OpeningConversation conversation, Long otherUserId) {
         OpeningConversationSummaryResponse response = new OpeningConversationSummaryResponse();

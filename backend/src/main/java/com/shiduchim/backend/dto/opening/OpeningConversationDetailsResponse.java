@@ -15,6 +15,18 @@ public class OpeningConversationDetailsResponse {
     private OpeningConversationStatus status;
     private List<OpeningMessageResponse> messages;
 
+    /** True when status == MATCH_CREATED */
+    private boolean matchCreated;
+
+    /** Set when matchCreated is true */
+    private Long matchId;
+
+    /**
+     * True when the conversation is OPEN and the recipient has already replied once,
+     * meaning their next reply will require confirmCreateMatch=true.
+     */
+    private boolean requiresMatchConfirmation;
+
     // Getters and Setters
     public Long getConversationId() { return conversationId; }
     public void setConversationId(Long conversationId) { this.conversationId = conversationId; }
@@ -39,4 +51,15 @@ public class OpeningConversationDetailsResponse {
 
     public List<OpeningMessageResponse> getMessages() { return messages; }
     public void setMessages(List<OpeningMessageResponse> messages) { this.messages = messages; }
+
+    public boolean isMatchCreated() { return matchCreated; }
+    public void setMatchCreated(boolean matchCreated) { this.matchCreated = matchCreated; }
+
+    public Long getMatchId() { return matchId; }
+    public void setMatchId(Long matchId) { this.matchId = matchId; }
+
+    public boolean isRequiresMatchConfirmation() { return requiresMatchConfirmation; }
+    public void setRequiresMatchConfirmation(boolean requiresMatchConfirmation) {
+        this.requiresMatchConfirmation = requiresMatchConfirmation;
+    }
 }

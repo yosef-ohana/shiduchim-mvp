@@ -1,8 +1,11 @@
 package com.shiduchim.backend.repository;
 
 import com.shiduchim.backend.entity.Match;
+import com.shiduchim.backend.enums.MatchStatus;
 import com.shiduchim.backend.enums.PoolType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -28,4 +31,20 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
 
     @org.springframework.data.jpa.repository.Query("SELECT m FROM Match m WHERE (m.user1Id = :userId OR m.user2Id = :userId) AND m.status = :status")
     List<Match> findByUserIdAndStatus(@org.springframework.data.repository.query.Param("userId") Long userId, @org.springframework.data.repository.query.Param("status") com.shiduchim.backend.enums.MatchStatus status);
+
+    /**
+     * Find a match between two users (in canonical user1/user2 order) in a given pool/wedding context,
+     * filtered by status. Used by OpeningMessageService during conversion to detect duplicate/blocked matches.
+     */
+    @Query("SELECT m FROM Match m WHERE m.user1Id = :user1Id AND m.user2Id = :user2Id " +
+           "AND m.poolType = :poolType " +
+           "AND ((m.weddingId IS NULL AND :weddingId IS NULL) OR m.weddingId = :weddingId) " +
+           "AND m.status = :status")
+    Optional<Match> findByCanonicalUsersAndContextAndStatus(
+            @Param("user1Id") Long user1Id,
+            @Param("user2Id") Long user2Id,
+            @Param("poolType") PoolType poolType,
+            @Param("weddingId") Long weddingId,
+            @Param("status") MatchStatus status
+    );
 }

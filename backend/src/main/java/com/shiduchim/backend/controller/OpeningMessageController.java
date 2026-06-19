@@ -1,8 +1,10 @@
 package com.shiduchim.backend.controller;
 
 import com.shiduchim.backend.dto.opening.CreateOpeningMessageRequest;
+import com.shiduchim.backend.dto.opening.CreateOpeningReplyRequest;
 import com.shiduchim.backend.dto.opening.OpeningConversationDetailsResponse;
 import com.shiduchim.backend.dto.opening.OpeningConversationSummaryResponse;
+import com.shiduchim.backend.dto.opening.OpeningReplyResponse;
 import com.shiduchim.backend.entity.User;
 import com.shiduchim.backend.service.OpeningMessageService;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,10 @@ public class OpeningMessageController {
         this.openingMessageService = openingMessageService;
     }
 
+    /**
+     * Batch 5: Opener sends the initial opening message to a target user.
+     * POST /api/opening-messages/{targetUserId}
+     */
     @PostMapping("/{targetUserId}")
     public ResponseEntity<Void> sendFirstMessage(
             @AuthenticationPrincipal User currentUser,
@@ -28,6 +34,21 @@ public class OpeningMessageController {
             @RequestBody CreateOpeningMessageRequest request) {
         openingMessageService.sendFirstMessage(currentUser, targetUserId, request);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Batch 6: Recipient replies to an open conversation.
+     * First reply: creates an OpeningMessage only (no Match).
+     * Second reply with confirmCreateMatch=true: converts to a normal Match.
+     * POST /api/opening-messages/{conversationId}/messages
+     */
+    @PostMapping("/{conversationId}/messages")
+    public ResponseEntity<OpeningReplyResponse> replyToConversation(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Long conversationId,
+            @RequestBody CreateOpeningReplyRequest request) {
+        OpeningReplyResponse response = openingMessageService.replyToConversation(currentUser, conversationId, request);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/inbox")
