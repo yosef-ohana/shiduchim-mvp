@@ -452,3 +452,10 @@ export interface UserReportDetailsResponse {
   createdAt: string;
   resolvedAt: string | null;
 }
+
+export interface BlockedUserResponse {
+  userId: number;
+  fullName: string;
+  primaryPhotoUrl?: string | null;
+  blockedAt: string;
+}

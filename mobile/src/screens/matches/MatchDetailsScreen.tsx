@@ -9,6 +9,7 @@ import { MatchDetailsResponse } from '../../types/api';
 import { getImageUrl } from '../../utils/imageUrl';
 import { getYesNoLabel, getEmptyLabel } from '../../utils/displayLabels';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+import { blockUser } from '../../api/blocksApi';
 
 export const MatchDetailsScreen = ({ route, navigation }: any) => {
   const { matchId } = route.params || {};
@@ -75,6 +76,32 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
       [
         { text: 'ביטול', style: 'cancel' },
         { text: 'כן, ביטול התאמה', style: 'destructive', onPress: handleCancelMatch },
+      ]
+    );
+  };
+
+  const handleBlockUser = () => {
+    if (!details || !details.otherUserProfile?.userId) return;
+
+    Alert.alert(
+      'חסום משתמש',
+      'המשתמש לא יופיע לך, ואת/ה לא תופיע/י לו, כל עוד החסימה פעילה.',
+      [
+        { text: 'ביטול', style: 'cancel' },
+        {
+          text: 'חסום',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await blockUser(details.otherUserProfile.userId);
+              Alert.alert('חסימה בוצעה', 'המשתמש נחסם בהצלחה.', [
+                { text: 'אישור', onPress: () => navigation.goBack() }
+              ]);
+            } catch (err: any) {
+              Alert.alert('שגיאה', err.response?.data?.message || 'חסימת המשתמש נכשלה.');
+            }
+          }
+        },
       ]
     );
   };
@@ -166,11 +193,18 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
             disabled={dislikeLoading}
           />
           {profile.userId ? (
-            <AppButton
-              title="דווח על משתמש"
-              onPress={() => navigation.navigate('ReportUser', { userId: profile.userId })}
-              style={styles.reportButton}
-            />
+            <>
+              <AppButton
+                title="דווח על משתמש"
+                onPress={() => navigation.navigate('ReportUser', { userId: profile.userId })}
+                style={styles.reportButton}
+              />
+              <AppButton
+                title="חסום משתמש"
+                onPress={handleBlockUser}
+                style={styles.blockButton}
+              />
+            </>
           ) : null}
         </View>
 
@@ -351,5 +385,9 @@ const styles = StyleSheet.create({
   reportButton: {
     marginTop: theme.spacing.s,
     borderColor: theme.colors.error,
+  },
+  blockButton: {
+    marginTop: theme.spacing.s,
+    backgroundColor: '#8B0000',
   },
 });

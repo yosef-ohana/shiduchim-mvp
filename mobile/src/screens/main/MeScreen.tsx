@@ -135,20 +135,26 @@ export const MeScreen = ({ navigation }: any) => {
               style={styles.button}
             />
 
-            <AppButton 
-              title="ההתאמות שלי" 
+            <AppButton
+              title="ההתאמות שלי"
               onPress={() => navigation.navigate('Matches')}
               style={styles.button}
             />
 
-            <AppButton 
-              title={totalUnreadCount > 0 ? `צ׳אטים (${totalUnreadCount})` : 'צ׳אטים'} 
+            <AppButton
+              title="משתמשים חסומים"
+              onPress={() => navigation.navigate('BlockedUsers')}
+              style={styles.button}
+            />
+
+            <AppButton
+              title={totalUnreadCount > 0 ? `צ׳אטים (${totalUnreadCount})` : 'צ׳אטים'}
               onPress={() => navigation.navigate('Chats')}
               style={styles.button}
             />
 
-            <AppButton 
-              title="השלמת פרופיל בסיסי" 
+            <AppButton
+              title="השלמת פרופיל בסיסי"
               onPress={() => navigation.navigate('BasicProfile')}
               style={styles.button}
             />

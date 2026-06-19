@@ -27,6 +27,7 @@ import { AdminWeddingDetailsScreen } from '../screens/admin/AdminWeddingDetailsS
 import { AdminReportsScreen } from '../screens/admin/AdminReportsScreen';
 import { AdminReportDetailsScreen } from '../screens/admin/AdminReportDetailsScreen';
 import { ReportUserScreen } from '../screens/reports/ReportUserScreen';
+import { BlockedUsersScreen } from '../screens/blocks/BlockedUsersScreen';
 import { DiscoverPool, UserWeddingResponse } from '../types/api';
 
 export type MainStackParamList = {
@@ -72,6 +73,7 @@ export type MainStackParamList = {
   ReportUser: { userId: number };
   AdminReports: undefined;
   AdminReportDetails: { reportId: number };
+  BlockedUsers: undefined;
 };
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
@@ -106,6 +108,7 @@ export const MainStack = () => {
       <Stack.Screen name="ReportUser" component={ReportUserScreen} options={{ title: 'דיווח על משתמש' }} />
       <Stack.Screen name="AdminReports" component={AdminReportsScreen} options={{ title: 'ניהול דיווחים' }} />
       <Stack.Screen name="AdminReportDetails" component={AdminReportDetailsScreen} options={{ title: 'פרטי דיווח' }} />
+      <Stack.Screen name="BlockedUsers" component={BlockedUsersScreen} options={{ title: 'משתמשים חסומים' }} />
     </Stack.Navigator>
   );
 };

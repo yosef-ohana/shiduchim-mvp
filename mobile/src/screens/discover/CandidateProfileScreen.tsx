@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, Alert } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
 import { theme } from '../../theme/theme';
-import { getPublicProfile } from '../../api/profileApi';
 import { PublicProfileResponse } from '../../types/api';
 import { getImageUrl } from '../../utils/imageUrl';
 import { getYesNoLabel, getEmptyLabel } from '../../utils/displayLabels';
-
+import { blockUser } from '../../api/blocksApi';
+import { getPublicProfile } from '../../api/profileApi';
 
 export const CandidateProfileScreen = ({ route, navigation }: any) => {
   const { userId } = route.params || {};
@@ -35,6 +35,30 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
   useEffect(() => {
     fetchProfile();
   }, [userId]);
+
+  const handleBlockUser = () => {
+    Alert.alert(
+      'חסום משתמש',
+      'המשתמש לא יופיע לך, ואת/ה לא תופיע/י לו, כל עוד החסימה פעילה.',
+      [
+        { text: 'ביטול', style: 'cancel' },
+        {
+          text: 'חסום',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await blockUser(userId);
+              Alert.alert('חסימה בוצעה', 'המשתמש נחסם בהצלחה.', [
+                { text: 'אישור', onPress: () => navigation.goBack() }
+              ]);
+            } catch (err: any) {
+              Alert.alert('שגיאה', err.response?.data?.message || 'חסימת המשתמש נכשלה.');
+            }
+          }
+        },
+      ]
+    );
+  };
 
   if (loading) {
     return (
@@ -137,6 +161,11 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
             title="דווח על משתמש"
             onPress={() => navigation.navigate('ReportUser', { userId })}
             style={styles.reportButton}
+          />
+          <AppButton
+            title="חסום משתמש"
+            onPress={handleBlockUser}
+            style={styles.blockButton}
           />
         </View>
 
@@ -279,5 +308,9 @@ const styles = StyleSheet.create({
   reportButton: {
     marginTop: theme.spacing.m,
     borderColor: theme.colors.error,
+  },
+  blockButton: {
+    marginTop: theme.spacing.s,
+    backgroundColor: '#8B0000',
   },
 });
