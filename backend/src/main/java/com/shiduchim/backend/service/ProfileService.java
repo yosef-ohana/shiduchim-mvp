@@ -19,12 +19,15 @@ public class ProfileService {
     private final UserRepository userRepository;
     private final UserPhotoRepository userPhotoRepository;
     private final com.shiduchim.backend.repository.WeddingParticipantRepository weddingParticipantRepository;
+    private final UserBlockService userBlockService;
 
     public ProfileService(UserRepository userRepository, UserPhotoRepository userPhotoRepository,
-                          com.shiduchim.backend.repository.WeddingParticipantRepository weddingParticipantRepository) {
+                          com.shiduchim.backend.repository.WeddingParticipantRepository weddingParticipantRepository,
+                          UserBlockService userBlockService) {
         this.userRepository = userRepository;
         this.userPhotoRepository = userPhotoRepository;
         this.weddingParticipantRepository = weddingParticipantRepository;
+        this.userBlockService = userBlockService;
     }
 
     // ─── GET /api/profile/me ──────────────────────────────────────────────────
@@ -150,6 +153,11 @@ public class ProfileService {
         }
         if (currentUser.getGender() != null && currentUser.getGender() == targetUser.getGender()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Same-gender viewing is not allowed");
+        }
+
+        // UserBlock enforcement: block profile access between blocked pairs in either direction
+        if (userBlockService.existsActiveBlockBetween(currentUser.getId(), targetUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Profile not accessible");
         }
 
         List<com.shiduchim.backend.entity.UserPhoto> targetPhotos = userPhotoRepository.findByUserIdOrderByOrderIndexAscCreatedAtAsc(targetUserId);

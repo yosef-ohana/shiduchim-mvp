@@ -30,16 +30,19 @@ public class ListsService {
     private final UserRepository userRepository;
     private final UserPhotoRepository userPhotoRepository;
     private final MatchRepository matchRepository;
+    private final UserBlockService userBlockService;
 
     public ListsService(
             UserActionRepository userActionRepository,
             UserRepository userRepository,
             UserPhotoRepository userPhotoRepository,
-            MatchRepository matchRepository) {
+            MatchRepository matchRepository,
+            UserBlockService userBlockService) {
         this.userActionRepository = userActionRepository;
         this.userRepository = userRepository;
         this.userPhotoRepository = userPhotoRepository;
         this.matchRepository = matchRepository;
+        this.userBlockService = userBlockService;
     }
 
     public List<ActionListItemResponse> getOutgoingActionsList(User currentUser, ActionType actionType, PoolType poolType, Long weddingId) {
@@ -75,6 +78,11 @@ public class ListsService {
         for (UserAction action : actions) {
             User targetUser = userRepository.findById(action.getTargetUserId()).orElse(null);
             if (targetUser == null || Boolean.TRUE.equals(targetUser.getAdminBlocked())) {
+                continue;
+            }
+
+            // UserBlock enforcement: filter out blocked pairs in either direction
+            if (userBlockService.existsActiveBlockBetween(currentUser.getId(), targetUser.getId())) {
                 continue;
             }
 
@@ -138,6 +146,11 @@ public class ListsService {
         for (UserAction action : actions) {
             User liker = userRepository.findById(action.getActorUserId()).orElse(null);
             if (liker == null || Boolean.TRUE.equals(liker.getAdminBlocked())) {
+                continue;
+            }
+
+            // UserBlock enforcement: filter out blocked pairs in either direction
+            if (userBlockService.existsActiveBlockBetween(currentUser.getId(), liker.getId())) {
                 continue;
             }
 

@@ -29,12 +29,14 @@ public class ChatService {
     private final MatchRepository matchRepository;
     private final UserRepository userRepository;
     private final UserPhotoRepository userPhotoRepository;
+    private final UserBlockService userBlockService;
 
-    public ChatService(ChatMessageRepository chatMessageRepository, MatchRepository matchRepository, UserRepository userRepository, UserPhotoRepository userPhotoRepository) {
+    public ChatService(ChatMessageRepository chatMessageRepository, MatchRepository matchRepository, UserRepository userRepository, UserPhotoRepository userPhotoRepository, UserBlockService userBlockService) {
         this.chatMessageRepository = chatMessageRepository;
         this.matchRepository = matchRepository;
         this.userRepository = userRepository;
         this.userPhotoRepository = userPhotoRepository;
+        this.userBlockService = userBlockService;
     }
 
     public ChatMessagesResponse getMessages(User currentUser, Long matchId) {
@@ -66,6 +68,11 @@ public class ChatService {
             User otherUser = userRepository.findById(otherUserId).orElse(null);
             
             if (otherUser == null || Boolean.TRUE.equals(otherUser.getAdminBlocked())) {
+                return null;
+            }
+
+            // UserBlock enforcement: hide conversation if an ACTIVE block exists in either direction
+            if (userBlockService.existsActiveBlockBetween(currentUser.getId(), otherUserId)) {
                 return null;
             }
 
@@ -147,6 +154,11 @@ public class ChatService {
         List<Match> activeMatches = matchRepository.findByUserIdAndStatus(currentUser.getId(), MatchStatus.ACTIVE);
         int totalUnread = 0;
         for (Match match : activeMatches) {
+            Long otherUserId = match.getUser1Id().equals(currentUser.getId()) ? match.getUser2Id() : match.getUser1Id();
+            // UserBlock enforcement: skip blocked conversations from unread count
+            if (userBlockService.existsActiveBlockBetween(currentUser.getId(), otherUserId)) {
+                continue;
+            }
             totalUnread += chatMessageRepository.countByMatchIdAndSenderIdNotAndReadByRecipientFalse(match.getId(), currentUser.getId());
         }
         return new UnreadCountResponse(totalUnread);
@@ -192,6 +204,11 @@ public class ChatService {
 
         if (Boolean.TRUE.equals(otherUser.getAdminBlocked())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Other user not found");
+        }
+
+        // UserBlock enforcement: block chat access if an ACTIVE block exists in either direction
+        if (userBlockService.existsActiveBlockBetween(currentUser.getId(), otherUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chat not accessible");
         }
     }
 }

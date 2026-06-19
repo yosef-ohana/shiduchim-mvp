@@ -42,7 +42,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "                  WHERE ua.actorUserId = :currentUserId " +
            "                    AND ua.targetUserId = u.id " +
            "                    AND ua.poolType = com.shiduchim.backend.enums.PoolType.WEDDING " +
-           "                    AND ua.weddingId = :weddingId)")
+           "                    AND ua.weddingId = :weddingId) " +
+           "  AND NOT EXISTS (SELECT 1 FROM UserBlock ub " +
+           "                  WHERE ub.status = com.shiduchim.backend.enums.UserBlockStatus.ACTIVE " +
+           "                    AND ((ub.blockerUserId = :currentUserId AND ub.blockedUserId = u.id) " +
+           "                      OR (ub.blockerUserId = u.id AND ub.blockedUserId = :currentUserId)))")
     List<Object[]> findWeddingCandidatesWithPhoto(
         @Param("currentUserId") Long currentUserId,
         @Param("oppositeGender") Gender oppositeGender,
@@ -61,7 +65,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "                  WHERE ua.actorUserId = :currentUserId " +
            "                    AND ua.targetUserId = u.id " +
            "                    AND ua.poolType = com.shiduchim.backend.enums.PoolType.GLOBAL " +
-           "                    AND ua.weddingId IS NULL)")
+           "                    AND ua.weddingId IS NULL) " +
+           "  AND NOT EXISTS (SELECT 1 FROM UserBlock ub " +
+           "                  WHERE ub.status = com.shiduchim.backend.enums.UserBlockStatus.ACTIVE " +
+           "                    AND ((ub.blockerUserId = :currentUserId AND ub.blockedUserId = u.id) " +
+           "                      OR (ub.blockerUserId = u.id AND ub.blockedUserId = :currentUserId)))")
     List<Object[]> findGlobalCandidatesWithPhoto(
         @Param("currentUserId") Long currentUserId,
         @Param("oppositeGender") Gender oppositeGender,

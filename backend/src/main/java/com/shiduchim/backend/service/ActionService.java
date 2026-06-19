@@ -38,6 +38,7 @@ public class ActionService {
     private final WeddingParticipantRepository weddingParticipantRepository;
     private final UserActionRepository userActionRepository;
     private final MatchRepository matchRepository;
+    private final UserBlockService userBlockService;
 
     public ActionService(
             UserRepository userRepository,
@@ -45,13 +46,15 @@ public class ActionService {
             WeddingRepository weddingRepository,
             WeddingParticipantRepository weddingParticipantRepository,
             UserActionRepository userActionRepository,
-            MatchRepository matchRepository) {
+            MatchRepository matchRepository,
+            UserBlockService userBlockService) {
         this.userRepository = userRepository;
         this.userPhotoRepository = userPhotoRepository;
         this.weddingRepository = weddingRepository;
         this.weddingParticipantRepository = weddingParticipantRepository;
         this.userActionRepository = userActionRepository;
         this.matchRepository = matchRepository;
+        this.userBlockService = userBlockService;
     }
 
     @Transactional
@@ -213,6 +216,11 @@ public class ActionService {
         // Target user must exist
         User target = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Target user not found"));
+
+        // UserBlock enforcement: block actions between blocked pairs in either direction
+        if (userBlockService.existsActiveBlockBetween(actor.getId(), targetUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Action not allowed between blocked users");
+        }
 
         // Context validations
         if (poolType == PoolType.WEDDING) {

@@ -113,4 +113,12 @@ public class UserBlockService {
         response.setUnblockedAt(userBlock.getUnblockedAt());
         return response;
     }
+
+    /**
+     * Returns true if an ACTIVE block exists in either direction between userA and userB.
+     * Used by other services to enforce UserBlock visibility/access filtering.
+     */
+    public boolean existsActiveBlockBetween(Long userAId, Long userBId) {
+        return userBlockRepository.existsActiveBlockBetween(userAId, userBId);
+    }
 }

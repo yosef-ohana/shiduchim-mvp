@@ -25,11 +25,13 @@ public class MatchService {
     private final MatchRepository matchRepository;
     private final UserRepository userRepository;
     private final UserPhotoRepository userPhotoRepository;
+    private final UserBlockService userBlockService;
 
-    public MatchService(MatchRepository matchRepository, UserRepository userRepository, UserPhotoRepository userPhotoRepository) {
+    public MatchService(MatchRepository matchRepository, UserRepository userRepository, UserPhotoRepository userPhotoRepository, UserBlockService userBlockService) {
         this.matchRepository = matchRepository;
         this.userRepository = userRepository;
         this.userPhotoRepository = userPhotoRepository;
+        this.userBlockService = userBlockService;
     }
 
     public List<MatchResponse> getActiveMatches(User currentUser) {
@@ -56,6 +58,11 @@ public class MatchService {
         User otherUser = userRepository.findById(otherUserId).orElse(null);
 
         if (otherUser == null || Boolean.TRUE.equals(otherUser.getAdminBlocked())) {
+            return null;
+        }
+
+        // UserBlock enforcement: hide match from list if an ACTIVE block exists in either direction
+        if (userBlockService.existsActiveBlockBetween(currentUser.getId(), otherUserId)) {
             return null;
         }
 
@@ -102,6 +109,11 @@ public class MatchService {
 
         if (Boolean.TRUE.equals(otherUser.getAdminBlocked())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Other user not found");
+        }
+
+        // UserBlock enforcement: block match details access if an ACTIVE block exists in either direction
+        if (userBlockService.existsActiveBlockBetween(currentUser.getId(), otherUserId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Match not found or is not accessible");
         }
 
         String primaryPhotoUrl = userPhotoRepository.findByUserIdAndIsPrimaryTrue(otherUserId)
