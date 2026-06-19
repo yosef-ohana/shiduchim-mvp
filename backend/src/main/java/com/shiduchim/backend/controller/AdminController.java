@@ -6,8 +6,11 @@ import com.shiduchim.backend.dto.admin.AdminCreateWeddingRequest;
 import com.shiduchim.backend.dto.admin.AssignManagerRequest;
 import com.shiduchim.backend.dto.admin.CreateEventManagerRequest;
 import com.shiduchim.backend.dto.admin.AdminDashboardResponse;
+import com.shiduchim.backend.dto.report.UserReportSummaryResponse;
+import com.shiduchim.backend.dto.report.UserReportDetailsResponse;
 import com.shiduchim.backend.entity.User;
 import com.shiduchim.backend.service.AdminService;
+import com.shiduchim.backend.service.UserReportService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -19,9 +22,11 @@ import java.util.List;
 public class AdminController {
 
     private final AdminService adminService;
+    private final UserReportService userReportService;
 
-    public AdminController(AdminService adminService) {
+    public AdminController(AdminService adminService, UserReportService userReportService) {
         this.adminService = adminService;
+        this.userReportService = userReportService;
     }
 
     @PostMapping("/event-managers")
@@ -106,5 +111,20 @@ public class AdminController {
     @GetMapping("/dashboard")
     public AdminDashboardResponse getDashboard(@AuthenticationPrincipal User currentUser) {
         return adminService.getDashboard(currentUser);
+    }
+
+    @GetMapping("/reports")
+    public List<UserReportSummaryResponse> getReports(@AuthenticationPrincipal User currentUser) {
+        return userReportService.getAllReports(currentUser);
+    }
+
+    @GetMapping("/reports/{reportId}")
+    public UserReportDetailsResponse getReportDetails(@PathVariable Long reportId, @AuthenticationPrincipal User currentUser) {
+        return userReportService.getReportDetails(reportId, currentUser);
+    }
+
+    @PatchMapping("/reports/{reportId}/resolve")
+    public void resolveReport(@PathVariable Long reportId, @AuthenticationPrincipal User currentUser) {
+        userReportService.resolveReport(reportId, currentUser);
     }
 }

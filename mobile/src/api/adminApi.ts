@@ -7,7 +7,9 @@ import {
   CreateEventManagerRequest,
   WeddingInviteResponse,
   CreateWeddingInviteRequest,
-  AdminDashboardResponse
+  AdminDashboardResponse,
+  UserReportSummaryResponse,
+  UserReportDetailsResponse
 } from '../types/api';
 
 export const adminApi = {
@@ -105,5 +107,18 @@ export const adminApi = {
     const response = await apiClient.get<AdminDashboardResponse>('/admin/dashboard');
     return response.data;
   },
-};
 
+  getReports: async (): Promise<UserReportSummaryResponse[]> => {
+    const response = await apiClient.get<UserReportSummaryResponse[]>('/admin/reports');
+    return response.data;
+  },
+
+  getReportDetails: async (reportId: number): Promise<UserReportDetailsResponse> => {
+    const response = await apiClient.get<UserReportDetailsResponse>(`/admin/reports/${reportId}`);
+    return response.data;
+  },
+
+  resolveReport: async (reportId: number): Promise<void> => {
+    await apiClient.patch(`/admin/reports/${reportId}/resolve`);
+  },
+};

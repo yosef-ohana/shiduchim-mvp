@@ -424,3 +424,31 @@ export interface AdminDashboardResponse {
   activeWeddingsCount: number;
 }
 
+export type ReportStatus = 'NEW' | 'RESOLVED';
+export type ReportReasonType = 'PROFILE' | 'BEHAVIOR' | 'OTHER';
+
+export interface CreateUserReportRequest {
+  reasonType: ReportReasonType;
+  text?: string;
+}
+
+export interface UserReportSummaryResponse {
+  id: number;
+  reporterUserId: number;
+  reportedUserId: number;
+  status: ReportStatus;
+  reasonType: ReportReasonType;
+  hasText: boolean;
+  createdAt: string;
+}
+
+export interface UserReportDetailsResponse {
+  id: number;
+  reporterUserId: number;
+  reportedUserId: number;
+  status: ReportStatus;
+  reasonType: ReportReasonType;
+  text: string | null;
+  createdAt: string;
+  resolvedAt: string | null;
+}

@@ -24,6 +24,9 @@ import { CreateWeddingScreen } from '../screens/eventManager/CreateWeddingScreen
 import { EventManagerWeddingDetailsScreen } from '../screens/eventManager/EventManagerWeddingDetailsScreen';
 import { CreateAdminWeddingScreen } from '../screens/admin/CreateAdminWeddingScreen';
 import { AdminWeddingDetailsScreen } from '../screens/admin/AdminWeddingDetailsScreen';
+import { AdminReportsScreen } from '../screens/admin/AdminReportsScreen';
+import { AdminReportDetailsScreen } from '../screens/admin/AdminReportDetailsScreen';
+import { ReportUserScreen } from '../screens/reports/ReportUserScreen';
 import { DiscoverPool, UserWeddingResponse } from '../types/api';
 
 export type MainStackParamList = {
@@ -66,6 +69,9 @@ export type MainStackParamList = {
   EventManagerWeddingDetails: { weddingId: number };
   CreateAdminWedding: undefined;
   AdminWeddingDetails: { weddingId: number };
+  ReportUser: { userId: number };
+  AdminReports: undefined;
+  AdminReportDetails: { reportId: number };
 };
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
@@ -97,6 +103,9 @@ export const MainStack = () => {
       <Stack.Screen name="EventManagerWeddingDetails" component={EventManagerWeddingDetailsScreen} options={{ title: 'פרטי החתונה' }} />
       <Stack.Screen name="CreateAdminWedding" component={CreateAdminWeddingScreen} options={{ title: 'יצירת חתונה (מנהל)' }} />
       <Stack.Screen name="AdminWeddingDetails" component={AdminWeddingDetailsScreen} options={{ title: 'פרטי החתונה (מנהל)' }} />
+      <Stack.Screen name="ReportUser" component={ReportUserScreen} options={{ title: 'דיווח על משתמש' }} />
+      <Stack.Screen name="AdminReports" component={AdminReportsScreen} options={{ title: 'ניהול דיווחים' }} />
+      <Stack.Screen name="AdminReportDetails" component={AdminReportDetailsScreen} options={{ title: 'פרטי דיווח' }} />
     </Stack.Navigator>
   );
 };

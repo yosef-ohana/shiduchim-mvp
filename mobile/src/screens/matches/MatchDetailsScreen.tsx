@@ -165,6 +165,13 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
             loading={dislikeLoading}
             disabled={dislikeLoading}
           />
+          {profile.userId ? (
+            <AppButton
+              title="דווח על משתמש"
+              onPress={() => navigation.navigate('ReportUser', { userId: profile.userId })}
+              style={styles.reportButton}
+            />
+          ) : null}
         </View>
 
         {/* Basic Info Section */}
@@ -340,5 +347,9 @@ const styles = StyleSheet.create({
   },
   spacing: {
     height: theme.spacing.xl,
+  },
+  reportButton: {
+    marginTop: theme.spacing.s,
+    borderColor: theme.colors.error,
   },
 });

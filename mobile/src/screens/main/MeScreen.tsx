@@ -235,6 +235,11 @@ export const MeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('CreateEventManager')}
               style={styles.button}
             />
+            <AppButton
+              title="ניהול דיווחים"
+              onPress={() => navigation.navigate('AdminReports')}
+              style={styles.button}
+            />
           </>
         )}
 

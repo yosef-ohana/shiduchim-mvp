@@ -132,6 +132,14 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
           </View>
         </View>
 
+        <View style={styles.section}>
+          <AppButton
+            title="דווח על משתמש"
+            onPress={() => navigation.navigate('ReportUser', { userId })}
+            style={styles.reportButton}
+          />
+        </View>
+
         <View style={styles.spacing} />
       </ScrollView>
     </Screen>
@@ -267,5 +275,9 @@ const styles = StyleSheet.create({
   },
   spacing: {
     height: theme.spacing.xl,
+  },
+  reportButton: {
+    marginTop: theme.spacing.m,
+    borderColor: theme.colors.error,
   },
 });
