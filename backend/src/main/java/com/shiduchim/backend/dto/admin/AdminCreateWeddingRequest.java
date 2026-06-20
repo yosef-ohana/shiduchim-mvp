@@ -1,11 +1,19 @@
 package com.shiduchim.backend.dto.admin;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 public class AdminCreateWeddingRequest {
+    @NotBlank(message = "must not be blank")
     private String name;
+
+    @NotBlank(message = "must not be blank")
     private String city;
+
+    @NotNull(message = "must not be null")
     private LocalDate weddingDate;
+
     private String accessCode;
     private Long ownerUserId;
 

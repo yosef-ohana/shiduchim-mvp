@@ -124,7 +124,7 @@ export const adminApi = {
 
   uploadWeddingBackground: async (weddingId: number, imageUri: string, mimeType?: string, fileName?: string): Promise<AdminWeddingResponse> => {
     const formData = new FormData();
-    formData.append('image', {
+    formData.append('file', {
       uri: imageUri,
       type: mimeType || 'image/jpeg',
       name: fileName || 'wedding-bg.jpg',

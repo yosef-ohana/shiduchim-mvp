@@ -29,7 +29,7 @@ public class WeddingController {
     }
 
     @PostMapping("/event-manager/weddings")
-    public WeddingResponse createWedding(@RequestBody WeddingCreateRequest request,
+    public WeddingResponse createWedding(@jakarta.validation.Valid @RequestBody WeddingCreateRequest request,
                                          @AuthenticationPrincipal User currentUser) {
         return weddingService.createWedding(request, currentUser);
     }

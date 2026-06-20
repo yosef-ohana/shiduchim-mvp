@@ -8,6 +8,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
 
 import java.time.Instant;
 
@@ -28,8 +30,31 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException ex, HttpServletRequest request) {
+        String message = "Validation error";
+        if (ex.getBindingResult().hasErrors() && ex.getBindingResult().getFieldError() != null) {
+            FieldError fieldError = ex.getBindingResult().getFieldError();
+            message = fieldError.getField() + " " + fieldError.getDefaultMessage();
+        }
         ErrorResponse errorResponse = new ErrorResponse(
-            "Validation error",
+            message,
+            HttpStatus.BAD_REQUEST.value(),
+            request.getRequestURI(),
+            Instant.now()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        String message = "Malformed request body";
+        if (ex.getMessage() != null && (ex.getMessage().contains("LocalDate") || ex.getMessage().contains("java.time.LocalDate"))) {
+            message = "Invalid date format. Expected YYYY-MM-DD.";
+        } else if (ex.getCause() != null && ex.getCause().getMessage() != null && ex.getCause().getMessage().contains("LocalDate")) {
+            message = "Invalid date format. Expected YYYY-MM-DD.";
+        }
+
+        ErrorResponse errorResponse = new ErrorResponse(
+            message,
             HttpStatus.BAD_REQUEST.value(),
             request.getRequestURI(),
             Instant.now()

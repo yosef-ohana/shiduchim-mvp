@@ -70,7 +70,7 @@ export const restoreInvite = async (weddingId: number, inviteId: number): Promis
 
 export const uploadWeddingBackground = async (weddingId: number, imageUri: string, mimeType?: string, fileName?: string): Promise<WeddingResponse> => {
   const formData = new FormData();
-  formData.append('image', {
+  formData.append('file', {
     uri: imageUri,
     type: mimeType || 'image/jpeg',
     name: fileName || 'wedding-bg.jpg',

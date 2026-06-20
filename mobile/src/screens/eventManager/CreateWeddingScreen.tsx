@@ -5,6 +5,7 @@ import { AppButton } from '../../components/AppButton';
 import { createWedding } from '../../api/eventManagerApi';
 import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+import { isValidDateString } from '../../utils/validation';
 
 export const CreateWeddingScreen = ({ navigation }: any) => {
   const [name, setName] = useState('');
@@ -14,18 +15,28 @@ export const CreateWeddingScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
 
   const handleCreate = async () => {
-    if (!name.trim() || !city.trim() || !weddingDate.trim()) {
+    const trimmedName = name.trim();
+    const trimmedCity = city.trim();
+    const trimmedDate = weddingDate.trim();
+    const trimmedAccessCode = accessCode.trim();
+
+    if (!trimmedName || !trimmedCity || !trimmedDate) {
       Alert.alert('שגיאת אימות', 'שם, עיר ותאריך הם שדות חובה.');
+      return;
+    }
+
+    if (!isValidDateString(trimmedDate)) {
+      Alert.alert('שגיאת אימות', 'יש להזין תאריך במבנה YYYY-MM-DD, לדוגמה 2026-07-21.');
       return;
     }
 
     setLoading(true);
     try {
       await createWedding({
-        name,
-        city,
-        weddingDate,
-        accessCode: accessCode.trim() || undefined,
+        name: trimmedName,
+        city: trimmedCity,
+        weddingDate: trimmedDate,
+        accessCode: trimmedAccessCode || undefined,
       });
       Alert.alert('הצלחה', 'החתונה נוצרה בהצלחה', [
         { text: 'אישור', onPress: () => navigation.goBack() }
@@ -71,6 +82,7 @@ export const CreateWeddingScreen = ({ navigation }: any) => {
             onChangeText={setWeddingDate}
             placeholder="2026-06-01"
           />
+          <Text style={styles.helperText}>מבנה נדרש: שנה-חודש-יום, לדוגמה 2026-07-21</Text>
         </View>
 
         <View style={styles.formGroup}>
@@ -79,9 +91,10 @@ export const CreateWeddingScreen = ({ navigation }: any) => {
             style={styles.input}
             value={accessCode}
             onChangeText={setAccessCode}
-            placeholder="השאר ריק ליצירה אוטומטית"
+            placeholder="לדוגמה: חתונה-כהן-123"
             autoCapitalize="none"
           />
+          <Text style={styles.helperText}>אפשר להשאיר ריק ליצירת קוד אוטומטי. לדוגמה: חתונה-כהן-123</Text>
         </View>
 
         <AppButton 
@@ -129,5 +142,11 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: theme.spacing.l,
+  },
+  helperText: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginTop: 4,
+    textAlign: 'right',
   },
 });

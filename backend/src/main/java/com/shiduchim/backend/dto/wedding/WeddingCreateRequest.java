@@ -1,11 +1,19 @@
 package com.shiduchim.backend.dto.wedding;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 public class WeddingCreateRequest {
+    @NotBlank(message = "must not be blank")
     private String name;
+
+    @NotBlank(message = "must not be blank")
     private String city;
+
+    @NotNull(message = "must not be null")
     private LocalDate weddingDate;
+
     private String accessCode;
 
     // Getters and Setters

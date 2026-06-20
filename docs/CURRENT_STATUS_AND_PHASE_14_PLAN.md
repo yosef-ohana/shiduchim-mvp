@@ -211,3 +211,17 @@ During Phase 14.14 (Final Regression QA), developers must manually verify all co
 * **Manual Runtime QA Status**: Still pending for the user (not performed in this session; no manual QA is claimed as passed).
 * **Architecture Constraints Enforced**:
   * No WebSockets, Push notifications, visible read receipts, seen labels, blue checks, Cloudinary/S3, heavy ticketing systems, or admin replies were added.
+
+---
+
+## 12. Batch 2 — Backend Wedding Create & Error Hardening
+* **Status**: Complete at the code/build level.
+* **Changes Implemented**:
+  * **Mobile Staff Wedding UX Fixes**: Added client-side date validation (YYYY-MM-DD), Hebrew helper/error messages, allowed mixed-case/English/Hebrew/symbols in custom access codes without forcing uppercase, and adjusted background upload FormData contract field name to "file".
+  * **Backend Wedding Create Validation & Error Hardening**: Added backend validation checks for required fields (name, city, weddingDate) returning HTTP 400 instead of HTTP 500. Configured exception handling for malformed JSON/date parsing errors (`HttpMessageNotReadableException`) returning clean HTTP 400 responses with the message `"Invalid date format. Expected YYYY-MM-DD."` (without leaking stack traces). Safe custom accessCode trim/fallback behavior.
+  * **Database**: Explicitly NO database schema, Entity, or migration changes were made.
+* **Automated/Static Checks Status**:
+  * **Backend Package Compilation (`.\mvnw.cmd clean compile`)**: PASS
+  * **Mobile TypeScript Verification (`npx tsc --noEmit`)**: PASS
+  * **Git Diff Formatting Check (`git diff --check`)**: PASS
+* **Manual Runtime QA Status**: Deferred to later user QA cycle.

@@ -83,7 +83,7 @@ public class AdminController {
     }
 
     @PostMapping("/weddings")
-    public AdminWeddingResponse createWedding(@RequestBody AdminCreateWeddingRequest request,
+    public AdminWeddingResponse createWedding(@jakarta.validation.Valid @RequestBody AdminCreateWeddingRequest request,
                                               @AuthenticationPrincipal User currentUser) {
         return adminService.createWedding(request, currentUser);
     }

@@ -181,7 +181,10 @@ public class AdminService {
         }
 
         String code = request.getAccessCode();
-        if (code == null || code.trim().isEmpty()) {
+        if (code != null) {
+            code = code.trim();
+        }
+        if (code == null || code.isEmpty()) {
             code = generateUniqueAccessCode();
         } else {
             if (weddingRepository.existsByAccessCode(code)) {

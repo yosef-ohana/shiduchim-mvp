@@ -8,6 +8,7 @@ import { MainStackParamList } from '../../navigation/MainStack';
 import { theme } from '../../theme/theme';
 import { AdminUserResponse } from '../../types/api';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+import { isValidDateString } from '../../utils/validation';
 
 type NavigationProp = NativeStackNavigationProp<MainStackParamList, 'CreateAdminWedding'>;
 
@@ -34,7 +35,12 @@ export const CreateAdminWeddingScreen = () => {
   }, []);
 
   const handleCreate = async () => {
-    if (!name || !city || !weddingDate) {
+    const trimmedName = name.trim();
+    const trimmedCity = city.trim();
+    const trimmedDate = weddingDate.trim();
+    const trimmedAccessCode = accessCode.trim();
+
+    if (!trimmedName || !trimmedCity || !trimmedDate) {
       Alert.alert('שגיאת אימות', 'שם, עיר ותאריך החתונה הם שדות חובה.');
       return;
     }
@@ -43,14 +49,19 @@ export const CreateAdminWeddingScreen = () => {
       return;
     }
 
+    if (!isValidDateString(trimmedDate)) {
+      Alert.alert('שגיאת אימות', 'יש להזין תאריך במבנה YYYY-MM-DD, לדוגמה 2026-07-21.');
+      return;
+    }
+
     setLoading(true);
     try {
       const ownerId = ownerUserId ? parseInt(ownerUserId, 10) : undefined;
       await adminApi.createWedding({
-        name,
-        city,
-        weddingDate,
-        accessCode: accessCode || undefined,
+        name: trimmedName,
+        city: trimmedCity,
+        weddingDate: trimmedDate,
+        accessCode: trimmedAccessCode || undefined,
         ownerUserId: isNaN(ownerId as number) ? undefined : ownerId,
       });
       Alert.alert('הצלחה', 'החתונה נוצרה בהצלחה');
@@ -89,15 +100,17 @@ export const CreateAdminWeddingScreen = () => {
           onChangeText={setWeddingDate}
           placeholder="YYYY-MM-DD"
         />
+        <Text style={styles.helperText}>מבנה נדרש: שנה-חודש-יום, לדוגמה 2026-07-21</Text>
 
         <Text style={styles.label}>קוד גישה (אופציונלי)</Text>
         <TextInput
           style={styles.input}
           value={accessCode}
           onChangeText={setAccessCode}
-          placeholder="השאר ריק ליצירה אוטומטית"
-          autoCapitalize="characters"
+          placeholder="לדוגמה: חתונה-כהן-123"
+          autoCapitalize="none"
         />
+        <Text style={styles.helperText}>אפשר להשאיר ריק ליצירת קוד אוטומטי. לדוגמה: חתונה-כהן-123</Text>
 
         <Text style={styles.label}>שיוך למנהל אירוע</Text>
         <ScrollView style={styles.managerList} nestedScrollEnabled={true}>
@@ -172,6 +185,13 @@ const styles = StyleSheet.create({
   managerList: {
     maxHeight: 200,
     marginBottom: theme.spacing.m,
+  },
+  helperText: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginTop: -theme.spacing.s,
+    marginBottom: theme.spacing.m,
+    textAlign: 'right',
   },
   managerCard: {
     padding: theme.spacing.m,
