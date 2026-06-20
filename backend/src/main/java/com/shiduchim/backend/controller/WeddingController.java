@@ -10,6 +10,9 @@ import com.shiduchim.backend.entity.User;
 import com.shiduchim.backend.service.WeddingService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import com.shiduchim.backend.service.WeddingBackgroundService;
+import com.shiduchim.backend.entity.Wedding;
 
 import java.util.List;
 
@@ -18,9 +21,11 @@ import java.util.List;
 public class WeddingController {
 
     private final WeddingService weddingService;
+    private final WeddingBackgroundService weddingBackgroundService;
 
-    public WeddingController(WeddingService weddingService) {
+    public WeddingController(WeddingService weddingService, WeddingBackgroundService weddingBackgroundService) {
         this.weddingService = weddingService;
+        this.weddingBackgroundService = weddingBackgroundService;
     }
 
     @PostMapping("/event-manager/weddings")
@@ -50,6 +55,21 @@ public class WeddingController {
     public WeddingResponse cancelWedding(@PathVariable Long id,
                                          @AuthenticationPrincipal User currentUser) {
         return weddingService.cancelWedding(id, currentUser);
+    }
+
+    @PostMapping("/event-manager/weddings/{id}/background")
+    public WeddingResponse uploadWeddingBackground(@PathVariable Long id,
+                                                   @RequestParam("file") MultipartFile file,
+                                                   @AuthenticationPrincipal User currentUser) {
+        Wedding wedding = weddingBackgroundService.uploadBackground(id, file, currentUser);
+        return weddingService.toResponse(wedding);
+    }
+
+    @DeleteMapping("/event-manager/weddings/{id}/background")
+    public WeddingResponse deleteWeddingBackground(@PathVariable Long id,
+                                                   @AuthenticationPrincipal User currentUser) {
+        Wedding wedding = weddingBackgroundService.deleteBackground(id, currentUser);
+        return weddingService.toResponse(wedding);
     }
 
     @PostMapping("/weddings/join")

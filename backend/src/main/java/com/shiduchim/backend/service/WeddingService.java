@@ -119,6 +119,7 @@ public class WeddingService {
                     response.setWeddingStatus(wedding.getStatus());
                     response.setParticipantStatus(participant.getStatus());
                     response.setJoinedAt(participant.getJoinedAt());
+                    response.setBackgroundImageUrl(wedding.getBackgroundImageUrl());
 
                     boolean isEligible = wedding.getStatus() == WeddingStatus.ACTIVE
                             && participant.getStatus() == ParticipantStatus.ACTIVE;
@@ -217,7 +218,7 @@ public class WeddingService {
         return wedding;
     }
 
-    private WeddingResponse toResponse(Wedding wedding) {
+    public WeddingResponse toResponse(Wedding wedding) {
         WeddingResponse response = new WeddingResponse();
         response.setId(wedding.getId());
         response.setName(wedding.getName());
@@ -226,6 +227,7 @@ public class WeddingService {
         response.setAccessCode(wedding.getAccessCode());
         response.setOwnerUserId(wedding.getOwnerUserId());
         response.setStatus(wedding.getStatus());
+        response.setBackgroundImageUrl(wedding.getBackgroundImageUrl());
 
         response.setParticipantsCount(participantRepository.countByWeddingIdAndStatus(wedding.getId(), ParticipantStatus.ACTIVE));
         response.setMatchesCount(matchRepository.countByWeddingIdAndStatus(wedding.getId(), MatchStatus.ACTIVE));
@@ -274,6 +276,7 @@ public class WeddingService {
         response.setCity(wedding.getCity());
         response.setWeddingDate(wedding.getWeddingDate());
         response.setStatus(wedding.getStatus());
+        response.setBackgroundImageUrl(wedding.getBackgroundImageUrl());
 
         if (wedding.getStatus() == WeddingStatus.ACTIVE) {
             response.setJoinAllowed(true);

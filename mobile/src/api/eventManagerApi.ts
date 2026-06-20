@@ -68,3 +68,24 @@ export const restoreInvite = async (weddingId: number, inviteId: number): Promis
   return response.data;
 };
 
+export const uploadWeddingBackground = async (weddingId: number, imageUri: string, mimeType?: string, fileName?: string): Promise<WeddingResponse> => {
+  const formData = new FormData();
+  formData.append('image', {
+    uri: imageUri,
+    type: mimeType || 'image/jpeg',
+    name: fileName || 'wedding-bg.jpg',
+  } as any);
+
+  const response = await apiClient.post<WeddingResponse>(`/event-manager/weddings/${weddingId}/background`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+export const deleteWeddingBackground = async (weddingId: number): Promise<WeddingResponse> => {
+  const response = await apiClient.delete<WeddingResponse>(`/event-manager/weddings/${weddingId}/background`);
+  return response.data;
+};
+

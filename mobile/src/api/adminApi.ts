@@ -121,4 +121,25 @@ export const adminApi = {
   resolveReport: async (reportId: number): Promise<void> => {
     await apiClient.patch(`/admin/reports/${reportId}/resolve`);
   },
+
+  uploadWeddingBackground: async (weddingId: number, imageUri: string, mimeType?: string, fileName?: string): Promise<AdminWeddingResponse> => {
+    const formData = new FormData();
+    formData.append('image', {
+      uri: imageUri,
+      type: mimeType || 'image/jpeg',
+      name: fileName || 'wedding-bg.jpg',
+    } as any);
+
+    const response = await apiClient.post<AdminWeddingResponse>(`/admin/weddings/${weddingId}/background`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  deleteWeddingBackground: async (weddingId: number): Promise<AdminWeddingResponse> => {
+    const response = await apiClient.delete<AdminWeddingResponse>(`/admin/weddings/${weddingId}/background`);
+    return response.data;
+  },
 };

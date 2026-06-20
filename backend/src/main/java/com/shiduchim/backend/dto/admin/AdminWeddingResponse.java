@@ -17,6 +17,7 @@ public class AdminWeddingResponse {
     private String ownerEmail;
     private Long participantsCount;
     private Long matchesCount;
+    private String backgroundImageUrl;
 
     public AdminWeddingResponse() {}
 
@@ -30,6 +31,7 @@ public class AdminWeddingResponse {
         this.ownerUserId = wedding.getOwnerUserId();
         this.participantsCount = participantsCount;
         this.matchesCount = matchesCount;
+        this.backgroundImageUrl = wedding.getBackgroundImageUrl();
     }
 
     public AdminWeddingResponse(Wedding wedding, Long participantsCount, Long matchesCount, String ownerName, String ownerEmail) {
@@ -44,6 +46,7 @@ public class AdminWeddingResponse {
         this.ownerEmail = ownerEmail;
         this.participantsCount = participantsCount;
         this.matchesCount = matchesCount;
+        this.backgroundImageUrl = wedding.getBackgroundImageUrl();
     }
 
     public Long getId() { return id; }
@@ -78,4 +81,7 @@ public class AdminWeddingResponse {
 
     public Long getMatchesCount() { return matchesCount; }
     public void setMatchesCount(Long matchesCount) { this.matchesCount = matchesCount; }
+
+    public String getBackgroundImageUrl() { return backgroundImageUrl; }
+    public void setBackgroundImageUrl(String backgroundImageUrl) { this.backgroundImageUrl = backgroundImageUrl; }
 }

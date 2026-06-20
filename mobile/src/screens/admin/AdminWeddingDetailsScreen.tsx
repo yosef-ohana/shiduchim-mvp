@@ -10,6 +10,7 @@ import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 import { getWeddingStatusLabel, getInviteStatusLabel, formatDisplayDate } from '../../utils/displayLabels';
 import { WeddingJoinQrCard } from '../../components/WeddingJoinQrCard';
+import { WeddingBackgroundManager } from '../../components/WeddingBackgroundManager';
 
 type DetailsRouteProp = RouteProp<MainStackParamList, 'AdminWeddingDetails'>;
 type NavigationProp = NativeStackNavigationProp<MainStackParamList, 'AdminWeddingDetails'>;
@@ -126,6 +127,27 @@ export const AdminWeddingDetailsScreen = () => {
     );
   };
 
+  const handleUploadBackground = async (uri: string, mimeType?: string, fileName?: string) => {
+    try {
+      const updated = await adminApi.uploadWeddingBackground(weddingId, uri, mimeType, fileName);
+      setWedding(updated);
+      Alert.alert('הצלחה', 'תמונת הרקע הועלתה בהצלחה.');
+    } catch (error: any) {
+      console.error(error);
+      throw error;
+    }
+  };
+
+  const handleDeleteBackground = async () => {
+    try {
+      const updated = await adminApi.deleteWeddingBackground(weddingId);
+      setWedding(updated);
+      Alert.alert('הצלחה', 'תמונת הרקע הוסרה בהצלחה.');
+    } catch (error: any) {
+      console.error(error);
+      throw error;
+    }
+  };
 
   if (loading) {
     return (
@@ -161,6 +183,14 @@ export const AdminWeddingDetailsScreen = () => {
             weddingName={wedding.name}
             city={wedding.city}
             weddingDate={wedding.weddingDate}
+          />
+        )}
+
+        {wedding && (
+          <WeddingBackgroundManager
+            backgroundImageUrl={wedding.backgroundImageUrl}
+            onUpload={handleUploadBackground}
+            onDelete={handleDeleteBackground}
           />
         )}
 

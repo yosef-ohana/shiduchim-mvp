@@ -442,3 +442,25 @@ Phase 18 is officially defined as: **"Hebrew UI Localization & RTL Polish"**
 
 ### 20.4 Testing & QA Policy
 - **Deferred Manual QA**: In line with project policy, manual regression QA of broader flows is deferred to a later user-run session. Automated compilation and TypeScript checks are used for current verification.
+
+---
+
+## 21. Cycle 4 Decisions: UI Hardening, Polling, Feedback & Wedding Backgrounds
+
+### 21.1 Locked Gender UX
+- **Locked Display Only**: The gender field must be completely disabled for editing on the basic profile screen. A visible Hebrew alert is displayed notifying users that gender cannot be changed.
+- **API Exclusions**: The mobile app must exclude the `gender` field from profile update JSON payloads to prevent any unauthorized/accidental updates. The backend must enforce that a user's gender remains constant.
+
+### 21.2 ChatScreen Polling
+- **Lightweight Interval Polling**: Implemented standard client-side `setInterval` polling in `ChatScreen.tsx` (every few seconds) to query the messages GET endpoint.
+- **Focus & Request Guardrails**: Polling intervals must be properly registered and cleared during navigation events (focus/blur) and component unmounts to prevent leaks, running in the background, or duplicate concurrent network requests.
+- **Forbidden**: No WebSockets, no push notifications, and no read receipt indicators are displayed to peers.
+
+### 21.3 ProductFeedback System
+- **Strict Isolation from User Reports**: Product Feedback (bug reports and feature suggestions) must remain completely independent of the candidate/User Report safety system. Separate entities, controllers, and services are used.
+- **MVP Dashboard Limits**: Only admin and user-level CRUD operations are supported (list, detail view, status update, creation). No heavy ticket queues, admin reply systems, or email notifications are added.
+
+### 21.4 Wedding Background Images
+- **Local Disk Storage**: Custom wedding backgrounds are saved to the server's local storage directory `/uploads` using the project's existing upload serving pattern.
+- **DTO Sharing**: The background URL is included in all standard wedding DTO responses (Admin, User, Validate Access Code) to ensure styling consistency.
+- **Forbidden**: No Cloudinary, Amazon S3, or third-party image hosting services may be used.

@@ -131,6 +131,7 @@ export interface UserWeddingResponse {
   joinedAt: string;
   isWeddingPoolEligible: boolean;
   weddingPoolEligible?: boolean;
+  backgroundImageUrl?: string | null;
 }
 
 export type DiscoverPool = 'WEDDING' | 'GLOBAL';
@@ -324,6 +325,7 @@ export interface AdminWeddingResponse {
   ownerEmail?: string;
   participantsCount: number;
   matchesCount: number;
+  backgroundImageUrl?: string | null;
 }
 
 export interface AdminCreateWeddingRequest {
@@ -361,6 +363,7 @@ export interface WeddingResponse {
   ownerUserId: number;
   participantsCount: number;
   matchesCount: number;
+  backgroundImageUrl?: string | null;
 }
 
 export interface AddParticipantRequest {
@@ -398,6 +401,7 @@ export interface ValidateWeddingCodeResponse {
   status: 'ACTIVE' | 'CLOSED' | 'CANCELLED' | null;
   joinAllowed: boolean;
   message: string;
+  backgroundImageUrl?: string | null;
 }
 
 export type WeddingInviteStatus = 'PENDING' | 'ACCEPTED' | 'CANCELLED';

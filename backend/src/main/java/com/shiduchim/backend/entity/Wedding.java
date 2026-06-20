@@ -37,6 +37,10 @@ public class Wedding {
 
     private LocalDateTime updatedAt;
 
+    private String backgroundImageUrl;
+
+    private String backgroundStoragePath;
+
     @PrePersist
     protected void onCreate() {
         LocalDateTime now = LocalDateTime.now();
@@ -77,4 +81,10 @@ public class Wedding {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getBackgroundImageUrl() { return backgroundImageUrl; }
+    public void setBackgroundImageUrl(String backgroundImageUrl) { this.backgroundImageUrl = backgroundImageUrl; }
+
+    public String getBackgroundStoragePath() { return backgroundStoragePath; }
+    public void setBackgroundStoragePath(String backgroundStoragePath) { this.backgroundStoragePath = backgroundStoragePath; }
 }

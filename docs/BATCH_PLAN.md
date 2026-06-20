@@ -1000,3 +1000,42 @@ Goal: Run mobile TypeScript checks, perform English user-visible text scans, che
 - **Goal**: Clean up repository junk, run backend compile, run mobile TypeScript compiler check, and update project documentation.
 - **Scope**: Run static checks, ensure zero whitespace errors or leftover junk files, and review/update `BATCH_PLAN.md`, `DECISIONS.md`, `TECH_SPEC.md`, and `API_CONTRACT.md`.
 - **DoD**: Verified repository build and type sanity; updated 4 doc files.
+
+---
+
+## Cycle 4 — UI Hardening, Polling, Feedback & Wedding Backgrounds
+
+### Batch 1 — Locked Gender UX
+- **Goal**: Ensure the gender field is non-editable for regular users on the basic profile screen.
+- **Scope**: Disable gender selection inputs in `BasicProfileScreen.tsx`, render a clear Hebrew warning advising that gender cannot be changed, and filter out the gender property from the profile update API request payload.
+- **DoD**: Mobile UI displays non-editable gender, shows Hebrew warning, and update API payload omits gender.
+
+### Batch 2 — ChatScreen Lightweight Polling
+- **Goal**: Implement simple message polling on the active ChatScreen.
+- **Scope**: Set up interval-based polling in `ChatScreen.tsx` using React Native's lifecycle hooks. Clean up polling intervals properly on blur/unmount to avoid memory leaks or concurrent requests.
+- **DoD**: Message history refreshes at a lightweight interval while chat is open, and is cleaned up correctly when navigating away.
+
+### Batch 3 — ProductFeedback Backend API
+- **Goal**: Build backend infrastructure for registering and managing product feedback.
+- **Scope**: Define `ProductFeedback` entity, enums for status/type, repository, service, and controller layers. Provide public user feedback creation endpoints and restricted admin feedback listing/management endpoints.
+- **DoD**: Compilation successful; product feedback endpoints verified and secured for Admin/User roles.
+
+### Batch 4 — ProductFeedback Mobile Screens
+- **Goal**: Build mobile UI for feedback reporting and admin review.
+- **Scope**: Create feedback API client, submission forms (accessible from `MeScreen.tsx`), and admin screens for listing, viewing details, and updating status of reports.
+- **DoD**: Users can submit feedback, and admins can view and transition feedback statuses from mobile.
+
+### Batch 5 — Wedding Background Backend API
+- **Goal**: Implement background image customization for weddings on the backend.
+- **Scope**: Add `backgroundUrl` to the `Wedding` entity, configure a local disk storage upload service, expose background URLs on wedding DTOs, and write endpoints for admins/event-managers to upload and delete backgrounds.
+- **DoD**: Background file uploads succeed, file references are correctly stored, and URLs are served in DTOs.
+
+### Batch 6 — Wedding Background Mobile UI
+- **Goal**: Enable background image uploading and display on the mobile app.
+- **Scope**: Build `WeddingBackgroundManager.tsx` component, integrate it into the Admin and Event Manager wedding details screens, and render the background image on the public Wedding Join landing page.
+- **DoD**: Staff can manage backgrounds, and the background image displays successfully on the join screen.
+
+### Batch 7 — Cycle 4 Closeout: QA, Docs, Cleanup, Commit & Push
+- **Goal**: Run final compiler, TypeScript, and diff checks, update documentation, remove any junk files, and sync changes to GitHub.
+- **Scope**: Verify builds, run `git diff --check`, update tracking docs, commit and push.
+- **DoD**: Clean checks, minimal documentation updates, repository committed and pushed.

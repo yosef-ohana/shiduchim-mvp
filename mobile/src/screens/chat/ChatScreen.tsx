@@ -28,6 +28,8 @@ export const ChatScreen = ({ route, navigation }: any) => {
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const fetchingRef = useRef(false);
+  const isFirstLoad = useRef(true);
 
   const handleMarkAsRead = async () => {
     try {
@@ -37,13 +39,10 @@ export const ChatScreen = ({ route, navigation }: any) => {
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      handleMarkAsRead();
-    }, [matchId])
-  );
-
   const fetchMessages = async (showLoadingIndicator = true) => {
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
+
     if (showLoadingIndicator) {
       setLoading(true);
     }
@@ -57,19 +56,39 @@ export const ChatScreen = ({ route, navigation }: any) => {
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
+
+      await handleMarkAsRead();
     } catch (err: any) {
-      setError(
-        getFriendlyErrorMessage(err, 'טעינת הודעות הצ׳אט נכשלה.')
-      );
+      if (showLoadingIndicator || refreshing) {
+        setError(
+          getFriendlyErrorMessage(err, 'טעינת הודעות הצ׳אט נכשלה.')
+        );
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
+      fetchingRef.current = false;
     }
   };
 
   useEffect(() => {
-    fetchMessages();
+    isFirstLoad.current = true;
   }, [matchId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchMessages(isFirstLoad.current);
+      isFirstLoad.current = false;
+
+      const intervalId = setInterval(() => {
+        fetchMessages(false);
+      }, 10000);
+
+      return () => {
+        clearInterval(intervalId);
+      };
+    }, [matchId])
+  );
 
   const handleRefresh = () => {
     setRefreshing(true);

@@ -13,6 +13,7 @@ public class ValidateWeddingCodeResponse {
     private WeddingStatus status;
     private boolean joinAllowed;
     private String message;
+    private String backgroundImageUrl;
 
     public boolean isValid() { return valid; }
     public void setValid(boolean valid) { this.valid = valid; }
@@ -37,4 +38,7 @@ public class ValidateWeddingCodeResponse {
 
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
+
+    public String getBackgroundImageUrl() { return backgroundImageUrl; }
+    public void setBackgroundImageUrl(String backgroundImageUrl) { this.backgroundImageUrl = backgroundImageUrl; }
 }

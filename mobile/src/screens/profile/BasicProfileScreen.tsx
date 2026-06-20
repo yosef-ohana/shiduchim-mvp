@@ -7,6 +7,7 @@ import { getMyProfile, updateBasicProfile } from '../../api/profileApi';
 import { theme } from '../../theme/theme';
 import { useAuth } from '../../context/AuthContext';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+import { getGenderLabel } from '../../utils/displayLabels';
 
 const getProfileStatusLabel = (status: string) => {
   switch (status) {
@@ -41,6 +42,7 @@ export const BasicProfileScreen = ({ navigation, route }: any) => {
   const [areaOfResidence, setAreaOfResidence] = useState('');
   const [religiousLevel, setReligiousLevel] = useState('');
   const [phone, setPhone] = useState('');
+  const [gender, setGender] = useState<'MALE' | 'FEMALE' | string | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,6 +68,7 @@ export const BasicProfileScreen = ({ navigation, route }: any) => {
       setAreaOfResidence(data.areaOfResidence || '');
       setReligiousLevel(data.religiousLevel || '');
       setPhone(data.phone || '');
+      setGender(data.gender || null);
     } catch (err: any) {
       setErrorMsg(getFriendlyErrorMessage(err, 'טעינת נתוני הפרופיל נכשלה.'));
     } finally {
@@ -184,6 +187,18 @@ export const BasicProfileScreen = ({ navigation, route }: any) => {
               onChangeText={setFullName}
             />
 
+            <View style={styles.lockedFieldContainer}>
+              <Text style={styles.lockedFieldLabel}>מגדר</Text>
+              <View style={styles.lockedValueBox}>
+                <Text style={styles.lockedValueText}>
+                  {getGenderLabel(gender)}
+                </Text>
+              </View>
+              <Text style={styles.lockedFieldNotice}>
+                לא ניתן לשנות מגדר לאחר יצירת הפרופיל. אם יש בעיה, פנה/י לאדמין.
+              </Text>
+            </View>
+
             <AppInput
               label="גיל"
               placeholder="לדוגמה: 25"
@@ -274,6 +289,35 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: theme.spacing.m,
+  },
+  lockedFieldContainer: {
+    marginBottom: theme.spacing.m,
+    width: '100%',
+  },
+  lockedFieldLabel: {
+    marginBottom: theme.spacing.s,
+    color: theme.colors.text,
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'right',
+  },
+  lockedValueBox: {
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.m,
+    padding: theme.spacing.m,
+    backgroundColor: '#F5F5F5',
+  },
+  lockedValueText: {
+    fontSize: 16,
+    color: theme.colors.textSecondary,
+    textAlign: 'right',
+  },
+  lockedFieldNotice: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginTop: 4,
+    textAlign: 'right',
   },
   errorCard: {
     backgroundColor: '#FFEBEE',

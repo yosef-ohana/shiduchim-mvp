@@ -195,3 +195,19 @@ During Phase 14.14 (Final Regression QA), developers must manually verify all co
 * **Backend Status**: Explicitly NO backend, API, DB, Entity, or DTO changes were made during this cycle.
 * **QA Status**: Code inspection and static checks pass (TypeScript, Git diff). Manual Expo QA deferred as runtime was not performed in this session.
 
+---
+
+## 11. Cycle 4 Status & Verification (Features 13–16)
+* **Status**: Cycle 4 implementation is complete at the code/build level.
+* **Features Implemented (Features 13–16)**:
+  * **Feature 13: Locked Gender UX**: Implemented display-only gender representation on the Basic Profile screen. Gender selection is disabled, a clear Hebrew warning message is displayed, and the update API payload excludes the gender field to ensure no backend updates can occur.
+  * **Feature 14: ChatScreen Polling**: Added lightweight, focus-managed `setInterval` polling in the mobile `ChatScreen` to retrieve new messages and mark them as read. Includes proper cleanup on screen blur or unmount to prevent overlapping requests or memory leaks.
+  * **Feature 15: ProductFeedback**: Implemented an independent product feedback reporting system (backend API, database entity, and mobile UI screens) supporting Admin-only listing, viewing, and status updates, and User-level submissions. Kept strictly isolated from the `UserReport` feature. No heavy ticketing or admin reply systems were introduced.
+  * **Feature 16: Wedding Background**: Added backend and mobile support for custom wedding backgrounds. Allows Admins and Event Managers to upload, replace, or delete background images (stored locally in `/uploads` on the server). Wedding background URLs are returned in wedding responses and rendered on the Join Wedding landing screen. Uses local storage and existing upload serving conventions; no Cloudinary or S3 integration was added.
+* **Automated/Static Checks Status**:
+  * **Backend Package Compilation (`.\mvnw.cmd clean compile`)**: PASS
+  * **Mobile TypeScript Verification (`npx tsc --noEmit`)**: PASS
+  * **Git Diff Formatting Check (`git diff --check`)**: PASS
+* **Manual Runtime QA Status**: Still pending for the user (not performed in this session; no manual QA is claimed as passed).
+* **Architecture Constraints Enforced**:
+  * No WebSockets, Push notifications, visible read receipts, seen labels, blue checks, Cloudinary/S3, heavy ticketing systems, or admin replies were added.

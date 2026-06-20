@@ -13,6 +13,7 @@ public class WeddingResponse {
     private WeddingStatus status;
     private long participantsCount;
     private long matchesCount;
+    private String backgroundImageUrl;
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -41,4 +42,7 @@ public class WeddingResponse {
 
     public long getMatchesCount() { return matchesCount; }
     public void setMatchesCount(long matchesCount) { this.matchesCount = matchesCount; }
+
+    public String getBackgroundImageUrl() { return backgroundImageUrl; }
+    public void setBackgroundImageUrl(String backgroundImageUrl) { this.backgroundImageUrl = backgroundImageUrl; }
 }

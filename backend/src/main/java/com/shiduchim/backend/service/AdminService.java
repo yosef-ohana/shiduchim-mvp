@@ -143,7 +143,7 @@ public class AdminService {
         return new AdminUserResponse(target);
     }
 
-    private AdminWeddingResponse toAdminWeddingResponse(Wedding wedding) {
+    public AdminWeddingResponse toAdminWeddingResponse(Wedding wedding) {
         long participants = weddingParticipantRepository.countByWeddingIdAndStatus(wedding.getId(), ParticipantStatus.ACTIVE);
         long matches = matchRepository.countByWeddingIdAndStatus(wedding.getId(), MatchStatus.ACTIVE);
         String ownerName = null;

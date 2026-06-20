@@ -24,6 +24,8 @@ import {
   formatDisplayDate 
 } from '../../utils/displayLabels';
 import { WeddingJoinQrCard } from '../../components/WeddingJoinQrCard';
+import { WeddingBackgroundManager } from '../../components/WeddingBackgroundManager';
+import { uploadWeddingBackground, deleteWeddingBackground } from '../../api/eventManagerApi';
 
 export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
   const { weddingId } = route.params;
@@ -233,6 +235,28 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
     );
   };
 
+  const handleUploadBackground = async (uri: string, mimeType?: string, fileName?: string) => {
+    try {
+      const updated = await uploadWeddingBackground(weddingId, uri, mimeType, fileName);
+      setWedding(updated);
+      Alert.alert('הצלחה', 'תמונת הרקע הועלתה בהצלחה.');
+    } catch (error: any) {
+      console.error(error);
+      throw error;
+    }
+  };
+
+  const handleDeleteBackground = async () => {
+    try {
+      const updated = await deleteWeddingBackground(weddingId);
+      setWedding(updated);
+      Alert.alert('הצלחה', 'תמונת הרקע הוסרה בהצלחה.');
+    } catch (error: any) {
+      console.error(error);
+      throw error;
+    }
+  };
+
   const renderParticipant = ({ item }: { item: ParticipantResponse }) => (
     <View style={styles.participantCard}>
       {item.participantStatus === 'ACTIVE' && wedding?.status === 'ACTIVE' && (
@@ -359,6 +383,14 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
                 weddingName={wedding.name}
                 city={wedding.city}
                 weddingDate={wedding.weddingDate}
+              />
+            )}
+
+            {wedding && (
+              <WeddingBackgroundManager
+                backgroundImageUrl={wedding.backgroundImageUrl}
+                onUpload={handleUploadBackground}
+                onDelete={handleDeleteBackground}
               />
             )}
 

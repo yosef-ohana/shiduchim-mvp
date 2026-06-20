@@ -189,6 +189,12 @@ export const MeScreen = ({ navigation }: any) => {
               style={styles.button}
             />
 
+            <AppButton
+              title="שליחת באג / בקשת שיפור"
+              onPress={() => navigation.navigate('SendProductFeedback')}
+              style={styles.button}
+            />
+
             <AppButton 
               title="רענון פרופיל" 
               onPress={handleRefresh} 
@@ -250,6 +256,11 @@ export const MeScreen = ({ navigation }: any) => {
             <AppButton
               title="ניהול דיווחים"
               onPress={() => navigation.navigate('AdminReports')}
+              style={styles.button}
+            />
+            <AppButton
+              title="פניות מערכת"
+              onPress={() => navigation.navigate('AdminProductFeedback')}
               style={styles.button}
             />
           </>

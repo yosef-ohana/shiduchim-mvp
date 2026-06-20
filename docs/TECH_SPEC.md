@@ -621,3 +621,40 @@ Phase 18 is officially defined as: **"Hebrew UI Localization & RTL Polish"**
   - `GET /api/opening-messages/sent`: Get sent conversations.
   - `GET /api/opening-messages/{conversationId}`: Get detailed message history.
 - **Mobile Screens**: Added `OpeningMessagesScreen.tsx` (inbox/sent tabs) and `OpeningConversationDetailsScreen.tsx` with composer. Integrated "Send Message" action on `CandidateProfileScreen.tsx`.
+
+---
+
+## 19. Cycle 4 Additions: UI Hardening, Polling, Feedback & Wedding Backgrounds
+
+### 19.1 Locked Gender UX
+- **Mobile Display**: Gender inputs in `BasicProfileScreen.tsx` are disabled for regular users. A Hebrew caution label warns users that gender editing is locked.
+- **API Payload Exclusion**: The client excludes the `gender` field from the profile update requests. The backend maintains database consistency by not altering the gender value during profile updates.
+
+### 19.2 Chat Polling
+- **Lightweight React Native Polling**: In `ChatScreen.tsx`, React Native `useFocusEffect` hooks register a `setInterval` that polls `GET /api/matches/{matchId}/messages` every 3 seconds.
+- **Polled Read Triggers**: Each poll execution triggers the read API `PATCH /api/matches/{matchId}/messages/read` to clear recipient unread counts for that active match.
+- **Resource Management**: The polling interval is automatically cleared when the screen loses focus (e.g. user navigates back or opens another tab) and when the component unmounts.
+
+### 19.3 Product Feedback Reporting
+- **Backend Schema**: Added `ProductFeedback` entity with columns: `id` (Long, PK), `user_id` (FK to `User`), `type` (Enum: `FeedbackType` - `BUG`, `IMPROVEMENT`, `OTHER`), `content` (Text), `status` (Enum: `FeedbackStatus` - `NEW`, `IN_REVIEW`, `RESOLVED`), `created_at` (Timestamp), `updated_at` (Timestamp).
+- **Controller Rules**:
+  - Users submit feedback using `POST /api/feedback`.
+  - Admins list feedback via `GET /api/admin/feedback`, view single feedback via `GET /api/admin/feedback/{feedbackId}`, and update status using `PATCH /api/admin/feedback/{feedbackId}/status`.
+- **Mobile UI**:
+  - Added feedback form accessible from `MeScreen.tsx` (`ProductFeedbackScreen.tsx`).
+  - Added Admin-only feedback review screen (`AdminProductFeedbackScreen.tsx` and `AdminProductFeedbackDetailsScreen.tsx`) for managing reported feedback items.
+
+### 19.4 Wedding Background Images
+- **Backend Storage & Schema**:
+  - Added `background_url` (VARCHAR) to `Wedding` entity.
+  - Implemented `WeddingBackgroundService` to handle saving background image files to local server directories (`/uploads/backgrounds`).
+  - Added file size/type validation to ensure compatibility.
+- **Background API Endpoints**:
+  - `POST /api/admin/weddings/{id}/background` (Admin background upload).
+  - `DELETE /api/admin/weddings/{id}/background` (Admin background deletion).
+  - `POST /api/event-manager/weddings/{id}/background` (Event Manager background upload).
+  - `DELETE /api/event-manager/weddings/{id}/background` (Event Manager background deletion).
+- **Mobile Integration**:
+  - Extracted DTO updates to expose `backgroundUrl` in all wedding details and validation responses.
+  - Implemented `WeddingBackgroundManager.tsx` enabling staff to upload, replace, or delete backgrounds.
+  - Rendered background image as screen backdrop on the public `WeddingJoinLandingScreen.tsx`.

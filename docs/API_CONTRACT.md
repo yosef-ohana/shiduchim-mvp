@@ -180,6 +180,7 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 - `status`
 - `participantsCount`
 - `matchesCount`
+- `backgroundImageUrl`
 
 `JoinWeddingRequest`
 - `accessCode`
@@ -228,6 +229,8 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 - `participantStatus`
 - `joinedAt` (optional)
 - `isWeddingPoolEligible`
+- `backgroundImageUrl`
+
 
 ---
 
@@ -359,6 +362,8 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 - `ownerUserId`
 - `participantsCount`
 - `matchesCount`
+- `backgroundImageUrl`
+
 
 `AdminDashboardResponse`
 - `totalUsers`
@@ -369,6 +374,35 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 - `totalMessages`
 
 ---
+
+### Product Feedback
+
+`CreateProductFeedbackRequest`
+- `type` (Enum: `FeedbackType` - `BUG`, `IMPROVEMENT`, `OTHER`)
+- `text` (String)
+
+`UpdateProductFeedbackStatusRequest`
+- `status` (Enum: `FeedbackStatus` - `NEW`, `IN_REVIEW`, `RESOLVED`)
+
+`ProductFeedbackSummaryResponse`
+- `id` (Long)
+- `senderUserId` (Long)
+- `type` (Enum: `FeedbackType`)
+- `status` (Enum: `FeedbackStatus`)
+- `createdAt` (DateTime)
+
+`ProductFeedbackDetailsResponse`
+- `id` (Long)
+- `senderUserId` (Long)
+- `type` (Enum: `FeedbackType`)
+- `status` (Enum: `FeedbackStatus`)
+- `text` (String)
+- `createdAt` (DateTime)
+- `updatedAt` (DateTime)
+- `resolvedAt` (DateTime, optional)
+
+---
+
 
 ## 3. Endpoints
 
@@ -421,6 +455,9 @@ No Cloudinary. No soft delete. No `deleted` flag.
 | POST | `/api/weddings/join` | USER | `JoinWeddingRequest` | `JoinWeddingResponse` | Join ACTIVE wedding by accessCode; no QR | 400, 401, 403, 404, 409 |
 | POST | `/api/weddings/validate-code` | Public | `ValidateWeddingCodeRequest` | `ValidateWeddingCodeResponse` | Validate wedding access code before auth | 400, 404 |
 | GET | `/api/weddings/my` | USER | — | `List<UserWeddingResponse>` | Returns list of weddings joined by the current user with simple user-safe data | 401, 403 |
+| POST | `/api/event-manager/weddings/{id}/background` | EVENT_MANAGER / ADMIN | multipart image | `WeddingResponse` | Event Manager uploads/replaces wedding background | 400, 401, 403, 404 |
+| DELETE | `/api/event-manager/weddings/{id}/background` | EVENT_MANAGER / ADMIN | — | `WeddingResponse` | Event Manager deletes wedding background | 401, 403, 404 |
+
 
 ---
 
@@ -529,6 +566,9 @@ No WebSocket. No realtime. No attachments. (Note: internal unread count per conv
 | GET | `/api/admin/reports` | ADMIN | — | `List<UserReportSummaryResponse>` | List all user reports | 401, 403 |
 | GET | `/api/admin/reports/{reportId}` | ADMIN | — | `UserReportDetailsResponse` | Get details of a specific report | 401, 403, 404 |
 | PATCH | `/api/admin/reports/{reportId}/resolve` | ADMIN | — | Void | Resolve a report | 401, 403, 404 |
+| POST | `/api/admin/weddings/{weddingId}/background` | ADMIN | multipart image | `AdminWeddingResponse` | Admin uploads/replaces wedding background | 400, 401, 403, 404 |
+| DELETE | `/api/admin/weddings/{weddingId}/background` | ADMIN | — | `AdminWeddingResponse` | Admin deletes wedding background | 401, 403, 404 |
+
 
 ---
 
@@ -559,3 +599,14 @@ No WebSocket. No realtime. No attachments. (Note: internal unread count per conv
 | GET | `/api/opening-messages/inbox` | USER | — | `List<OpeningConversationSummaryResponse>` | View received opening conversations | 401, 403 |
 | GET | `/api/opening-messages/sent` | USER | — | `List<OpeningConversationSummaryResponse>` | View sent opening conversations | 401, 403 |
 | GET | `/api/opening-messages/{conversationId}` | USER | — | `OpeningConversationDetailsResponse` | View details and message history | 401, 403, 404 |
+
+---
+
+### Product Feedback
+
+| Method | Path | Role | Request | Response | Rules | Errors |
+|---|---|---|---|---|---|---|
+| POST | `/api/feedback` | USER | `CreateProductFeedbackRequest` | Void | Users submit product feedback | 400, 401, 403 |
+| GET | `/api/admin/feedback` | ADMIN | — | `List<ProductFeedbackSummaryResponse>` | Admin lists all product feedback | 401, 403 |
+| GET | `/api/admin/feedback/{feedbackId}` | ADMIN | — | `ProductFeedbackDetailsResponse` | Admin views feedback details | 401, 403, 404 |
+| PATCH | `/api/admin/feedback/{feedbackId}/status` | ADMIN | `UpdateProductFeedbackStatusRequest` | `ProductFeedbackDetailsResponse` | Admin updates feedback status | 400, 401, 403, 404 |

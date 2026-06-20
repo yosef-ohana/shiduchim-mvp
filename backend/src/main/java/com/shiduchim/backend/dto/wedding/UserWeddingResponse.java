@@ -15,6 +15,7 @@ public class UserWeddingResponse {
     private ParticipantStatus participantStatus;
     private LocalDateTime joinedAt;
     private boolean isWeddingPoolEligible;
+    private String backgroundImageUrl;
 
     public Long getWeddingId() { return weddingId; }
     public void setWeddingId(Long weddingId) { this.weddingId = weddingId; }
@@ -39,4 +40,7 @@ public class UserWeddingResponse {
 
     public boolean isWeddingPoolEligible() { return isWeddingPoolEligible; }
     public void setWeddingPoolEligible(boolean weddingPoolEligible) { isWeddingPoolEligible = weddingPoolEligible; }
+
+    public String getBackgroundImageUrl() { return backgroundImageUrl; }
+    public void setBackgroundImageUrl(String backgroundImageUrl) { this.backgroundImageUrl = backgroundImageUrl; }
 }

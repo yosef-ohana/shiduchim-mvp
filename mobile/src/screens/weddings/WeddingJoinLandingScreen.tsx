@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { AppInput } from '../../components/AppInput';
 import { AppButton } from '../../components/AppButton';
@@ -11,6 +11,7 @@ import { formatDisplayDate, getWeddingStatusLabel } from '../../utils/displayLab
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { getWeddingReadiness } from '../../utils/weddingReadiness';
+import { getImageUrl } from '../../utils/imageUrl';
 
 export const WeddingJoinLandingScreen = () => {
   const navigation = useNavigation<any>();
@@ -215,6 +216,13 @@ export const WeddingJoinLandingScreen = () => {
             <Text style={styles.title}>החתונה נמצאה!</Text>
 
             <View style={styles.card}>
+              {weddingDetails.backgroundImageUrl && (
+                <Image
+                  source={{ uri: getImageUrl(weddingDetails.backgroundImageUrl) }}
+                  style={styles.backgroundImage}
+                  resizeMode="cover"
+                />
+              )}
               <Text style={styles.weddingName}>{weddingDetails.weddingName}</Text>
               <Text style={styles.weddingDetail}>תאריך: {formatDisplayDate(weddingDetails.weddingDate)}</Text>
               <Text style={styles.weddingDetail}>עיר: {weddingDetails.city}</Text>
@@ -285,6 +293,7 @@ const styles = StyleSheet.create({
   button: { marginTop: theme.spacing.l },
   errorText: { color: theme.colors.error, marginBottom: theme.spacing.m, textAlign: 'center', fontWeight: '500' },
   card: { backgroundColor: theme.colors.surface, padding: theme.spacing.l, borderRadius: theme.borderRadius.m, borderWidth: 1, borderColor: theme.colors.border, marginBottom: theme.spacing.xl, alignItems: 'center' },
+  backgroundImage: { width: '100%', height: 150, borderRadius: theme.borderRadius.s, marginBottom: theme.spacing.m, backgroundColor: theme.colors.border },
   weddingName: { fontSize: 20, fontWeight: 'bold', color: theme.colors.text, marginBottom: theme.spacing.s, textAlign: 'center' },
   weddingDetail: { fontSize: 16, color: theme.colors.textSecondary, marginBottom: theme.spacing.s / 2 },
   actionContainer: { marginTop: theme.spacing.m },

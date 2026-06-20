@@ -30,6 +30,9 @@ import { ReportUserScreen } from '../screens/reports/ReportUserScreen';
 import { BlockedUsersScreen } from '../screens/blocks/BlockedUsersScreen';
 import { OpeningMessagesScreen } from '../screens/opening/OpeningMessagesScreen';
 import { OpeningConversationDetailsScreen } from '../screens/opening/OpeningConversationDetailsScreen';
+import { SendProductFeedbackScreen } from '../screens/feedback/SendProductFeedbackScreen';
+import { AdminProductFeedbackScreen } from '../screens/admin/AdminProductFeedbackScreen';
+import { AdminProductFeedbackDetailsScreen } from '../screens/admin/AdminProductFeedbackDetailsScreen';
 import { DiscoverPool, UserWeddingResponse } from '../types/api';
 
 export type MainStackParamList = {
@@ -78,6 +81,9 @@ export type MainStackParamList = {
   BlockedUsers: undefined;
   OpeningMessages: undefined;
   OpeningConversationDetails: { conversationId: number };
+  SendProductFeedback: undefined;
+  AdminProductFeedback: undefined;
+  AdminProductFeedbackDetails: { feedbackId: number };
 };
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
@@ -115,6 +121,9 @@ export const MainStack = () => {
       <Stack.Screen name="BlockedUsers" component={BlockedUsersScreen} options={{ title: 'משתמשים חסומים' }} />
       <Stack.Screen name="OpeningMessages" component={OpeningMessagesScreen} options={{ title: 'הודעות פתיחה' }} />
       <Stack.Screen name="OpeningConversationDetails" component={OpeningConversationDetailsScreen} options={{ title: 'שיחה' }} />
+      <Stack.Screen name="SendProductFeedback" component={SendProductFeedbackScreen} options={{ title: 'שליחת משוב' }} />
+      <Stack.Screen name="AdminProductFeedback" component={AdminProductFeedbackScreen} options={{ title: 'פניות מערכת' }} />
+      <Stack.Screen name="AdminProductFeedbackDetails" component={AdminProductFeedbackDetailsScreen} options={{ title: 'פרטי פניה' }} />
     </Stack.Navigator>
   );
 };

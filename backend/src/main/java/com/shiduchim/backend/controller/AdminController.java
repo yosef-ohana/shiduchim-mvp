@@ -14,6 +14,9 @@ import com.shiduchim.backend.service.UserReportService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import com.shiduchim.backend.service.WeddingBackgroundService;
+import com.shiduchim.backend.entity.Wedding;
 
 import java.util.List;
 
@@ -23,10 +26,12 @@ public class AdminController {
 
     private final AdminService adminService;
     private final UserReportService userReportService;
+    private final WeddingBackgroundService weddingBackgroundService;
 
-    public AdminController(AdminService adminService, UserReportService userReportService) {
+    public AdminController(AdminService adminService, UserReportService userReportService, WeddingBackgroundService weddingBackgroundService) {
         this.adminService = adminService;
         this.userReportService = userReportService;
+        this.weddingBackgroundService = weddingBackgroundService;
     }
 
     @PostMapping("/event-managers")
@@ -106,6 +111,21 @@ public class AdminController {
     public AdminWeddingResponse assignSelfToWedding(@PathVariable Long weddingId,
                                                     @AuthenticationPrincipal User currentUser) {
         return adminService.assignSelfToWedding(weddingId, currentUser);
+    }
+
+    @PostMapping("/weddings/{weddingId}/background")
+    public AdminWeddingResponse uploadWeddingBackground(@PathVariable Long weddingId,
+                                                        @RequestParam("file") MultipartFile file,
+                                                        @AuthenticationPrincipal User currentUser) {
+        Wedding wedding = weddingBackgroundService.uploadBackground(weddingId, file, currentUser);
+        return adminService.toAdminWeddingResponse(wedding);
+    }
+
+    @DeleteMapping("/weddings/{weddingId}/background")
+    public AdminWeddingResponse deleteWeddingBackground(@PathVariable Long weddingId,
+                                                        @AuthenticationPrincipal User currentUser) {
+        Wedding wedding = weddingBackgroundService.deleteBackground(weddingId, currentUser);
+        return adminService.toAdminWeddingResponse(wedding);
     }
 
     @GetMapping("/dashboard")
