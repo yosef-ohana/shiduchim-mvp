@@ -1039,3 +1039,26 @@ Goal: Run mobile TypeScript checks, perform English user-visible text scans, che
 - **Goal**: Run final compiler, TypeScript, and diff checks, update documentation, remove any junk files, and sync changes to GitHub.
 - **Scope**: Verify builds, run `git diff --check`, update tracking docs, commit and push.
 - **DoD**: Clean checks, minimal documentation updates, repository committed and pushed.
+
+---
+
+## Cycle 5 — Focused QA-Fix Series
+
+A focused series of QA fixes to stabilize features 1–16 across both the backend and mobile clients.
+
+### Batches 1–7 — Verification and Defect Resolution
+- **Goal**: Resolve all critical functional gaps and regression bugs discovered in features 1–16.
+- **Completed Areas**:
+  - **A1 Active Match Cross-Context**: Excluded users with active matches in any context from discovery feeds, incoming Liked Me lists, outgoing user actions, and opening message initiations.
+  - **D1 Full Profile Eligibility Audit**: Ensured profile discovery and global candidate matching fully respect basic profile completions and validations.
+  - **B1/F1 Inactive Wedding Safety**: Blocked background image modifications (upload/delete) on inactive weddings in both backend service guards and mobile details screens. Added Hebrew confirmation dialogs for closing or cancelling weddings.
+  - **C1–C3 Opening Messages UX**: Retained candidates in the discover feed after sending an opening message, indicating pending/sent statuses correctly. Enforced mutual match creation statuses and blocked pre-match chats.
+  - **E1 Admin Reports/ProductFeedback**: Exposed human-readable names and emails for reporters, reported users, and feedback senders on all summary and detail views.
+  - **E2 Admin Navigation**: Enabled navigating from admin report detail screens to a focused, highlighted user card view in `AdminUsersScreen`.
+- **Deferred Items** (remain unimplemented/out of scope):
+  - **C4**: My Weddings Opening indication.
+  - **F2**: Restore Wedding.
+  - **F3**: Delete Wedding.
+  - **E3**: Event Manager reports.
+  - **B2**: Deep Link Dev Build verification.
+- **DoD**: Stable builds, TypeScript checks pass, no compiler warnings, docs synced, clean git state.

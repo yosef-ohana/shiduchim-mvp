@@ -605,7 +605,7 @@ Phase 18 is officially defined as: **"Hebrew UI Localization & RTL Polish"**
 
 ### 18.3 OpeningMessages before Match
 - **Backend Schema**:
-  - Added `OpeningConversation` entity with columns: `id` (PK), `opener_id` (FK to `User`), `recipient_id` (FK to `User`), `status` (Enum: `OpeningConversationStatus` - `PENDING`, `REPLIED`, `CONVERTED`), `created_at` (Timestamp), `updated_at` (Timestamp).
+  - Added `OpeningConversation` entity with columns: `id` (PK), `opener_id` (FK to `User`), `recipient_id` (FK to `User`), `status` (Enum: `OpeningConversationStatus` - `OPEN`, `MATCH_CREATED`), `created_at` (Timestamp), `updated_at` (Timestamp).
   - Added `OpeningMessage` entity with columns: `id` (PK), `conversation_id` (FK to `OpeningConversation`), `sender_id` (FK to `User`), `content` (Text), `created_at` (Timestamp).
 - **Core Rules**:
   - Allows sending a single initial message to a candidate before a match is made.
@@ -613,7 +613,7 @@ Phase 18 is officially defined as: **"Hebrew UI Localization & RTL Polish"**
 - **Conversion Flow**:
   - `POST /api/opening-messages/{conversationId}/messages`: Allows recipient to reply.
   - If request body specifies `confirmCreateMatch=true`, the conversation converts to a standard mutual `Match`.
-  - Upon conversion, a `Match` record is created, and the opening message history is copied over as standard `ChatMessage` records in order. The `OpeningConversation` status changes to `CONVERTED`.
+  - Upon conversion, a `Match` record is created, and the opening message history is copied over as standard `ChatMessage` records in order. The `OpeningConversation` status changes to `MATCH_CREATED`.
 - **Endpoints**:
   - `POST /api/opening-messages/{targetUserId}`: Send initial message.
   - `POST /api/opening-messages/{conversationId}/messages`: Send reply or convert to match.
