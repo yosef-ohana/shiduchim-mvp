@@ -67,7 +67,7 @@ export const BlockedUsersScreen = ({ navigation }: any) => {
           </View>
         ) : (
           users.map((user) => (
-            <View key={user.userId} style={styles.card}>
+            <View key={user.blockedUserId} style={styles.card}>
               <View style={styles.userInfo}>
                 {user.primaryPhotoUrl ? (
                   <Image source={{ uri: getImageUrl(user.primaryPhotoUrl) }} style={styles.avatar} />
@@ -80,7 +80,7 @@ export const BlockedUsersScreen = ({ navigation }: any) => {
               </View>
               <AppButton
                 title="הסר חסימה"
-                onPress={() => handleUnblock(user.userId, user.fullName)}
+                onPress={() => handleUnblock(user.blockedUserId, user.fullName)}
                 style={styles.unblockButton}
               />
             </View>

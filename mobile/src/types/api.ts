@@ -458,10 +458,11 @@ export interface UserReportDetailsResponse {
 }
 
 export interface BlockedUserResponse {
-  userId: number;
+  id: number;
+  blockedUserId: number;
   fullName: string;
   primaryPhotoUrl?: string | null;
-  blockedAt: string;
+  createdAt: string;
 }
 
 export type OpeningConversationStatus = 'OPEN' | 'CONVERTED' | 'EXPIRED' | 'REJECTED';
