@@ -38,6 +38,10 @@ public class WeddingBackgroundService {
     public Wedding uploadBackground(Long weddingId, MultipartFile file, User currentUser) {
         Wedding wedding = getWeddingAndCheckPermissions(weddingId, currentUser);
 
+        if (wedding.getStatus() != com.shiduchim.backend.enums.WeddingStatus.ACTIVE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot upload background for non-active wedding");
+        }
+
         if (file == null || file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Image file is required and must not be empty");
         }
@@ -64,6 +68,10 @@ public class WeddingBackgroundService {
     @Transactional
     public Wedding deleteBackground(Long weddingId, User currentUser) {
         Wedding wedding = getWeddingAndCheckPermissions(weddingId, currentUser);
+
+        if (wedding.getStatus() != com.shiduchim.backend.enums.WeddingStatus.ACTIVE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete background for non-active wedding");
+        }
 
         deleteFileQuietly(wedding.getBackgroundStoragePath());
 

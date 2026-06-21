@@ -83,23 +83,49 @@ export const AdminWeddingDetailsScreen = () => {
   };
 
   const handleClose = async () => {
-    try {
-      const updated = await adminApi.closeWedding(weddingId);
-      setWedding(updated);
-      Alert.alert('הצלחה', 'החתונה נסגרה בהצלחה');
-    } catch (error: any) {
-      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'סגירת החתונה נכשלה.'));
-    }
+    Alert.alert(
+      'סגירת חתונה',
+      'האם אתה בטוח שברצונך לסגור חתונה זו? החתונה תפסיק להיות פעילה ולא ניתן יהיה לנהל עבורה את הרקע.',
+      [
+        { text: 'ביטול', style: 'cancel' },
+        {
+          text: 'סגור חתונה',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const updated = await adminApi.closeWedding(weddingId);
+              setWedding(updated);
+              Alert.alert('הצלחה', 'החתונה נסגרה בהצלחה');
+            } catch (error: any) {
+              Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'סגירת החתונה נכשלה.'));
+            }
+          }
+        }
+      ]
+    );
   };
 
   const handleCancel = async () => {
-    try {
-      const updated = await adminApi.cancelWedding(weddingId);
-      setWedding(updated);
-      Alert.alert('הצלחה', 'החתונה בוטלה בהצלחה');
-    } catch (error: any) {
-      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'ביטול החתונה נכשל.'));
-    }
+    Alert.alert(
+      'ביטול חתונה',
+      'האם אתה בטוח שברצונך לבטל חתונה זו? החתונה תפסיק להיות פעילה ולא ניתן יהיה לנהל עבורה את הרקע.',
+      [
+        { text: 'ביטול', style: 'cancel' },
+        {
+          text: 'בטל חתונה',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const updated = await adminApi.cancelWedding(weddingId);
+              setWedding(updated);
+              Alert.alert('הצלחה', 'החתונה בוטלה בהצלחה');
+            } catch (error: any) {
+              Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'ביטול החתונה נכשל.'));
+            }
+          }
+        }
+      ]
+    );
   };
 
   const handleRestoreInvite = async (inviteId: number) => {
@@ -191,6 +217,7 @@ export const AdminWeddingDetailsScreen = () => {
             backgroundImageUrl={wedding.backgroundImageUrl}
             onUpload={handleUploadBackground}
             onDelete={handleDeleteBackground}
+            status={wedding.status}
           />
         )}
 

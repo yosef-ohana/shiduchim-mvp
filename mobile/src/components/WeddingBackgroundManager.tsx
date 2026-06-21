@@ -9,12 +9,14 @@ interface WeddingBackgroundManagerProps {
   backgroundImageUrl?: string | null;
   onUpload: (uri: string, mimeType?: string, fileName?: string) => Promise<void>;
   onDelete: () => Promise<void>;
+  status?: string;
 }
 
 export const WeddingBackgroundManager: React.FC<WeddingBackgroundManagerProps> = ({
   backgroundImageUrl,
   onUpload,
   onDelete,
+  status,
 }) => {
   const [loading, setLoading] = useState(false);
 
@@ -77,7 +79,11 @@ export const WeddingBackgroundManager: React.FC<WeddingBackgroundManagerProps> =
         <ActivityIndicator size="large" color={theme.colors.primary} style={styles.loader} />
       ) : (
         <View>
-          {backgroundImageUrl ? (
+          {status && status !== 'ACTIVE' ? (
+            <View style={styles.noImageContainer}>
+              <Text style={styles.noImageText}>החתונה סגורה/מבוטלת — לא ניתן לנהל רקע.</Text>
+            </View>
+          ) : backgroundImageUrl ? (
             <View style={styles.previewContainer}>
               <Image source={{ uri: getImageUrl(backgroundImageUrl) }} style={styles.previewImage} resizeMode="cover" />
               <View style={styles.actionsContainer}>

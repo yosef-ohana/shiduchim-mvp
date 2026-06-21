@@ -391,6 +391,7 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
                 backgroundImageUrl={wedding.backgroundImageUrl}
                 onUpload={handleUploadBackground}
                 onDelete={handleDeleteBackground}
+                status={wedding.status}
               />
             )}
 
