@@ -101,7 +101,7 @@ export const AdminProductFeedbackDetailsScreen = ({ route, navigation }: any) =>
 
           <View style={styles.row}>
             <Text style={styles.label}>מזהה משתמש:</Text>
-            <Text style={styles.value}>{item.userId}</Text>
+            <Text style={styles.value}>{item.senderUserId}</Text>
           </View>
 
           <Text style={styles.textLabel}>תוכן הפניה:</Text>

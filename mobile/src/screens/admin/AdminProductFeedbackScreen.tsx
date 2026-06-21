@@ -72,7 +72,7 @@ export const AdminProductFeedbackScreen = ({ navigation }: any) => {
       </View>
       <View style={styles.cardRow}>
         <Text style={styles.cardLabel}>משתמש:</Text>
-        <Text style={styles.cardValue}>{item.userId}</Text>
+        <Text style={styles.cardValue}>{item.senderUserId}</Text>
       </View>
     </TouchableOpacity>
   );

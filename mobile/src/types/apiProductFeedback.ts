@@ -8,7 +8,7 @@ export interface CreateProductFeedbackRequest {
 
 export interface ProductFeedbackListItemResponse {
   id: number;
-  userId: number;
+  senderUserId: number;
   type: FeedbackType;
   status: FeedbackStatus;
   hasText: boolean;
@@ -17,7 +17,7 @@ export interface ProductFeedbackListItemResponse {
 
 export interface ProductFeedbackDetailsResponse {
   id: number;
-  userId: number;
+  senderUserId: number;
   type: FeedbackType;
   status: FeedbackStatus;
   text: string;

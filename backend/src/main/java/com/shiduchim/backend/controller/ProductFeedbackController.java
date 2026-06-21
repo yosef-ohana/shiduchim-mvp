@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/api/feedback")
@@ -21,8 +22,9 @@ public class ProductFeedbackController {
     }
 
     @PostMapping
-    public void createFeedback(@Valid @RequestBody CreateProductFeedbackRequest request,
+    public ResponseEntity<Void> createFeedback(@Valid @RequestBody CreateProductFeedbackRequest request,
                                @AuthenticationPrincipal User currentUser) {
         feedbackService.createFeedback(currentUser, request);
+        return ResponseEntity.ok().build();
     }
 }

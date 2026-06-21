@@ -8,6 +8,7 @@ import com.shiduchim.backend.service.ProductFeedbackService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -33,9 +34,10 @@ public class AdminProductFeedbackController {
     }
 
     @PatchMapping("/{feedbackId}/status")
-    public void updateFeedbackStatus(@PathVariable Long feedbackId,
+    public ResponseEntity<Void> updateFeedbackStatus(@PathVariable Long feedbackId,
                                      @Valid @RequestBody UpdateProductFeedbackStatusRequest request,
                                      @AuthenticationPrincipal User currentUser) {
         feedbackService.updateFeedbackStatus(feedbackId, request, currentUser);
+        return ResponseEntity.ok().build();
     }
 }
