@@ -9,14 +9,6 @@ import { theme } from '../theme/theme';
 export const AppNavigator = () => {
   const { user, loading } = useAuth();
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
-    );
-  }
-
   const linking = React.useMemo(() => ({
     prefixes: ['shiduchim://'],
     config: {
@@ -25,6 +17,14 @@ export const AppNavigator = () => {
         : { WeddingCodeEntry: 'join-wedding/:accessCode' },
     },
   }), [user]);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <NavigationContainer linking={linking}>
