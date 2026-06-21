@@ -66,7 +66,7 @@ export type MainStackParamList = {
   MatchDetails: { matchId: number };
   Chat: { matchId: number };
   Chats: undefined;
-  AdminUsers: undefined;
+  AdminUsers: { focusUserId?: number } | undefined;
   AdminWeddings: undefined;
   AdminEventManagers: undefined;
   CreateEventManager: undefined;

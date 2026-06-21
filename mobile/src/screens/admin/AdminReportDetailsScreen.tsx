@@ -86,6 +86,12 @@ export const AdminReportDetailsScreen = () => {
         </View>
 
         <View style={styles.row}>
+          <TouchableOpacity
+            style={styles.inlineButton}
+            onPress={() => navigation.navigate('AdminUsers', { focusUserId: report.reporterUserId })}
+          >
+            <Text style={styles.inlineButtonText}>פתח מדווח</Text>
+          </TouchableOpacity>
           <Text style={styles.label}>מזהה מדווח:</Text>
           <Text style={styles.value}>{report.reporterUserId}</Text>
         </View>
@@ -96,6 +102,12 @@ export const AdminReportDetailsScreen = () => {
         </View>
 
         <View style={styles.row}>
+          <TouchableOpacity
+            style={styles.inlineButton}
+            onPress={() => navigation.navigate('AdminUsers', { focusUserId: report.reportedUserId })}
+          >
+            <Text style={styles.inlineButtonText}>פתח המשתמש שעליו דווח</Text>
+          </TouchableOpacity>
           <Text style={styles.label}>מזהה נילון:</Text>
           <Text style={styles.value}>{report.reportedUserId}</Text>
         </View>
@@ -176,6 +188,18 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     marginBottom: 10,
     alignItems: 'center',
+  },
+  inlineButton: {
+    backgroundColor: '#007bff',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginRight: 'auto',
+  },
+  inlineButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   label: {
     fontWeight: 'bold',
