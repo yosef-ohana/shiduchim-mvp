@@ -9,6 +9,7 @@ import com.shiduchim.backend.entity.User;
 import com.shiduchim.backend.enums.FeedbackStatus;
 import com.shiduchim.backend.enums.UserRole;
 import com.shiduchim.backend.repository.ProductFeedbackRepository;
+import com.shiduchim.backend.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,15 +17,20 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 @Service
 public class ProductFeedbackService {
 
     private final ProductFeedbackRepository feedbackRepository;
+    private final UserRepository userRepository;
 
-    public ProductFeedbackService(ProductFeedbackRepository feedbackRepository) {
+    public ProductFeedbackService(ProductFeedbackRepository feedbackRepository, UserRepository userRepository) {
         this.feedbackRepository = feedbackRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -56,13 +62,29 @@ public class ProductFeedbackService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin access required");
         }
 
-        return feedbackRepository.findAllByOrderByCreatedAtDesc().stream().map(feedback -> {
+        List<ProductFeedback> feedbacks = feedbackRepository.findAllByOrderByCreatedAtDesc();
+
+        Set<Long> userIds = feedbacks.stream()
+                .map(ProductFeedback::getSenderUserId)
+                .collect(Collectors.toSet());
+
+        Map<Long, User> userMap = userRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(User::getId, user -> user));
+
+        return feedbacks.stream().map(feedback -> {
             ProductFeedbackSummaryResponse response = new ProductFeedbackSummaryResponse();
             response.setId(feedback.getId());
             response.setSenderUserId(feedback.getSenderUserId());
             response.setType(feedback.getType());
             response.setStatus(feedback.getStatus());
             response.setCreatedAt(feedback.getCreatedAt());
+
+            User sender = userMap.get(feedback.getSenderUserId());
+            if (sender != null) {
+                response.setSenderName(sender.getFullName());
+                response.setSenderEmail(sender.getEmail());
+            }
+
             return response;
         }).collect(Collectors.toList());
     }
@@ -85,6 +107,11 @@ public class ProductFeedbackService {
         response.setCreatedAt(feedback.getCreatedAt());
         response.setUpdatedAt(feedback.getUpdatedAt());
         response.setResolvedAt(feedback.getResolvedAt());
+
+        userRepository.findById(feedback.getSenderUserId()).ifPresent(user -> {
+            response.setSenderName(user.getFullName());
+            response.setSenderEmail(user.getEmail());
+        });
 
         return response;
     }

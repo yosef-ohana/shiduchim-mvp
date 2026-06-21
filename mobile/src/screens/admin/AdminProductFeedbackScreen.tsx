@@ -71,7 +71,11 @@ export const AdminProductFeedbackScreen = ({ navigation }: any) => {
         <Text style={styles.cardValue}>{new Date(item.createdAt).toLocaleDateString('he-IL')}</Text>
       </View>
       <View style={styles.cardRow}>
-        <Text style={styles.cardLabel}>משתמש:</Text>
+        <Text style={styles.cardLabel}>שולח:</Text>
+        <Text style={styles.cardValue}>{item.senderName || 'לא ידוע'} ({item.senderEmail || 'לא ידוע'})</Text>
+      </View>
+      <View style={styles.cardRow}>
+        <Text style={styles.cardLabel}>מזהה משתמש:</Text>
         <Text style={styles.cardValue}>{item.senderUserId}</Text>
       </View>
     </TouchableOpacity>

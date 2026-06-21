@@ -62,10 +62,11 @@ export const AdminReportsScreen = () => {
         <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString('he-IL')}</Text>
       </View>
       <View style={styles.cardBody}>
-        <Text style={styles.text}>מדווח: {item.reporterUserId}</Text>
-        <Text style={styles.text}>נילון: {item.reportedUserId}</Text>
+        <Text style={styles.text}>מדווח: {item.reporterName || 'לא ידוע'} ({item.reporterEmail || 'לא ידוע'})</Text>
+        <Text style={styles.text}>נילון: {item.reportedUserName || 'לא ידוע'} ({item.reportedUserEmail || 'לא ידוע'})</Text>
         <Text style={styles.text}>סיבה: {getReasonText(item.reasonType)}</Text>
         <Text style={styles.text}>פירוט: {item.hasText ? 'כן' : 'לא'}</Text>
+        <Text style={styles.secondaryText}>מזהה מדווח: {item.reporterUserId} | מזהה נילון: {item.reportedUserId}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -148,6 +149,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     textAlign: 'right',
+  },
+  secondaryText: {
+    fontSize: 12,
+    color: '#888',
+    textAlign: 'right',
+    marginTop: 2,
   },
   emptyText: {
     textAlign: 'center',

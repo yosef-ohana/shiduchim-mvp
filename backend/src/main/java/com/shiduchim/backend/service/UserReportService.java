@@ -16,6 +16,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 @Service
@@ -70,7 +73,18 @@ public class UserReportService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin access required");
         }
 
-        return userReportRepository.findAllByOrderByCreatedAtDesc().stream().map(report -> {
+        List<UserReport> reports = userReportRepository.findAllByOrderByCreatedAtDesc();
+
+        Set<Long> userIds = new HashSet<>();
+        for (UserReport report : reports) {
+            userIds.add(report.getReporterUserId());
+            userIds.add(report.getReportedUserId());
+        }
+
+        Map<Long, User> userMap = userRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(User::getId, user -> user));
+
+        return reports.stream().map(report -> {
             UserReportSummaryResponse response = new UserReportSummaryResponse();
             response.setId(report.getId());
             response.setReporterUserId(report.getReporterUserId());
@@ -79,6 +93,18 @@ public class UserReportService {
             response.setReasonType(report.getReasonType());
             response.setHasText(report.getText() != null && !report.getText().trim().isEmpty());
             response.setCreatedAt(report.getCreatedAt());
+
+            User reporter = userMap.get(report.getReporterUserId());
+            if (reporter != null) {
+                response.setReporterName(reporter.getFullName());
+                response.setReporterEmail(reporter.getEmail());
+            }
+            User reported = userMap.get(report.getReportedUserId());
+            if (reported != null) {
+                response.setReportedUserName(reported.getFullName());
+                response.setReportedUserEmail(reported.getEmail());
+            }
+
             return response;
         }).collect(Collectors.toList());
     }
@@ -101,7 +127,16 @@ public class UserReportService {
         response.setText(report.getText());
         response.setCreatedAt(report.getCreatedAt());
         response.setResolvedAt(report.getResolvedAt());
-        
+
+        userRepository.findById(report.getReporterUserId()).ifPresent(user -> {
+            response.setReporterName(user.getFullName());
+            response.setReporterEmail(user.getEmail());
+        });
+        userRepository.findById(report.getReportedUserId()).ifPresent(user -> {
+            response.setReportedUserName(user.getFullName());
+            response.setReportedUserEmail(user.getEmail());
+        });
+
         return response;
     }
 

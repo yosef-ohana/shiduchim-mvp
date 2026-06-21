@@ -448,6 +448,10 @@ export interface UserReportSummaryResponse {
   reasonType: ReportReasonType;
   hasText: boolean;
   createdAt: string;
+  reporterName?: string;
+  reporterEmail?: string;
+  reportedUserName?: string;
+  reportedUserEmail?: string;
 }
 
 export interface UserReportDetailsResponse {
@@ -459,6 +463,10 @@ export interface UserReportDetailsResponse {
   text: string | null;
   createdAt: string;
   resolvedAt: string | null;
+  reporterName?: string;
+  reporterEmail?: string;
+  reportedUserName?: string;
+  reportedUserEmail?: string;
 }
 
 export interface BlockedUserResponse {

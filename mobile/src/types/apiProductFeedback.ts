@@ -13,6 +13,8 @@ export interface ProductFeedbackListItemResponse {
   status: FeedbackStatus;
   hasText: boolean;
   createdAt: string;
+  senderName?: string;
+  senderEmail?: string;
 }
 
 export interface ProductFeedbackDetailsResponse {
@@ -23,6 +25,8 @@ export interface ProductFeedbackDetailsResponse {
   text: string;
   createdAt: string;
   resolvedAt: string | null;
+  senderName?: string;
+  senderEmail?: string;
 }
 
 export interface UpdateFeedbackStatusRequest {

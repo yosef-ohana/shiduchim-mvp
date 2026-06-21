@@ -81,12 +81,22 @@ export const AdminReportDetailsScreen = () => {
         </View>
 
         <View style={styles.row}>
-          <Text style={styles.label}>מדווח (מזהה):</Text>
+          <Text style={styles.label}>מדווח:</Text>
+          <Text style={styles.value}>{report.reporterName || 'לא ידוע'} ({report.reporterEmail || 'לא ידוע'})</Text>
+        </View>
+
+        <View style={styles.row}>
+          <Text style={styles.label}>מזהה מדווח:</Text>
           <Text style={styles.value}>{report.reporterUserId}</Text>
         </View>
 
         <View style={styles.row}>
-          <Text style={styles.label}>נילון (מזהה):</Text>
+          <Text style={styles.label}>נילון:</Text>
+          <Text style={styles.value}>{report.reportedUserName || 'לא ידוע'} ({report.reportedUserEmail || 'לא ידוע'})</Text>
+        </View>
+
+        <View style={styles.row}>
+          <Text style={styles.label}>מזהה נילון:</Text>
           <Text style={styles.value}>{report.reportedUserId}</Text>
         </View>
 

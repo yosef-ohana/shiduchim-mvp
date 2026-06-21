@@ -11,6 +11,8 @@ public class ProductFeedbackSummaryResponse {
     private FeedbackType type;
     private FeedbackStatus status;
     private LocalDateTime createdAt;
+    private String senderName;
+    private String senderEmail;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -26,4 +28,10 @@ public class ProductFeedbackSummaryResponse {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getSenderName() { return senderName; }
+    public void setSenderName(String senderName) { this.senderName = senderName; }
+
+    public String getSenderEmail() { return senderEmail; }
+    public void setSenderEmail(String senderEmail) { this.senderEmail = senderEmail; }
 }

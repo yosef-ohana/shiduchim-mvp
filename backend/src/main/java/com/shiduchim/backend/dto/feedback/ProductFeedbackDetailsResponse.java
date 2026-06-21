@@ -14,6 +14,8 @@ public class ProductFeedbackDetailsResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime resolvedAt;
+    private String senderName;
+    private String senderEmail;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -38,4 +40,10 @@ public class ProductFeedbackDetailsResponse {
 
     public LocalDateTime getResolvedAt() { return resolvedAt; }
     public void setResolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; }
+
+    public String getSenderName() { return senderName; }
+    public void setSenderName(String senderName) { this.senderName = senderName; }
+
+    public String getSenderEmail() { return senderEmail; }
+    public void setSenderEmail(String senderEmail) { this.senderEmail = senderEmail; }
 }

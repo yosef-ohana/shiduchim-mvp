@@ -100,6 +100,11 @@ export const AdminProductFeedbackDetailsScreen = ({ route, navigation }: any) =>
           )}
 
           <View style={styles.row}>
+            <Text style={styles.label}>שולח:</Text>
+            <Text style={styles.value}>{item.senderName || 'לא ידוע'} ({item.senderEmail || 'לא ידוע'})</Text>
+          </View>
+
+          <View style={styles.row}>
             <Text style={styles.label}>מזהה משתמש:</Text>
             <Text style={styles.value}>{item.senderUserId}</Text>
           </View>
