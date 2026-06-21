@@ -143,6 +143,11 @@ public class OpeningMessageService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid pool type");
         }
 
+        // Cross-context active match validation
+        if (matchRepository.existsActiveMatchBetweenUsers(currentUser.getId(), targetUserId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "An active match already exists between these users in another context");
+        }
+
         // Match validation
         List<Match> existingMatches = matchRepository.findByUser1IdOrUser2Id(currentUser.getId(), currentUser.getId());
         for (Match match : existingMatches) {

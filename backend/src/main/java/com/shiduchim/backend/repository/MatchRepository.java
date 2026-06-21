@@ -32,6 +32,11 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     @org.springframework.data.jpa.repository.Query("SELECT m FROM Match m WHERE (m.user1Id = :userId OR m.user2Id = :userId) AND m.status = :status")
     List<Match> findByUserIdAndStatus(@org.springframework.data.repository.query.Param("userId") Long userId, @org.springframework.data.repository.query.Param("status") com.shiduchim.backend.enums.MatchStatus status);
 
+    @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM Match m " +
+           "WHERE m.status = com.shiduchim.backend.enums.MatchStatus.ACTIVE " +
+           "AND ((m.user1Id = :userAId AND m.user2Id = :userBId) OR (m.user1Id = :userBId AND m.user2Id = :userAId))")
+    boolean existsActiveMatchBetweenUsers(@Param("userAId") Long userAId, @Param("userBId") Long userBId);
+
     /**
      * Find a match between two users (in canonical user1/user2 order) in a given pool/wedding context,
      * filtered by status. Used by OpeningMessageService during conversion to detect duplicate/blocked matches.

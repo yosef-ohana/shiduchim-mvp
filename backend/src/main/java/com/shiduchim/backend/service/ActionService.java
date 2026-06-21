@@ -61,6 +61,10 @@ public class ActionService {
     public ActionResponse handleAction(User actor, Long targetUserId, ActionType actionType, PoolType poolType, Long weddingId) {
         validateAction(actor, targetUserId, poolType, weddingId);
 
+        if (matchRepository.existsActiveMatchBetweenUsers(actor.getId(), targetUserId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "An active match already exists between these users.");
+        }
+
         Optional<UserAction> existingActionOpt = userActionRepository.findByActorUserIdAndTargetUserIdAndPoolTypeAndWeddingId(
                 actor.getId(), targetUserId, poolType, weddingId);
 

@@ -68,8 +68,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "                      OR (oc.openerUserId = u.id AND oc.recipientUserId = :currentUserId))) " +
            "  AND NOT EXISTS (SELECT 1 FROM Match m " +
            "                  WHERE m.status = com.shiduchim.backend.enums.MatchStatus.ACTIVE " +
-           "                    AND m.poolType = com.shiduchim.backend.enums.PoolType.WEDDING " +
-           "                    AND m.weddingId = :weddingId " +
            "                    AND ((m.user1Id = :currentUserId AND m.user2Id = u.id) " +
            "                      OR (m.user1Id = u.id AND m.user2Id = :currentUserId)))")
     List<Object[]> findWeddingCandidatesWithPhoto(
@@ -116,8 +114,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "                      OR (oc.openerUserId = u.id AND oc.recipientUserId = :currentUserId))) " +
            "  AND NOT EXISTS (SELECT 1 FROM Match m " +
            "                  WHERE m.status = com.shiduchim.backend.enums.MatchStatus.ACTIVE " +
-           "                    AND m.poolType = com.shiduchim.backend.enums.PoolType.GLOBAL " +
-           "                    AND m.weddingId IS NULL " +
            "                    AND ((m.user1Id = :currentUserId AND m.user2Id = u.id) " +
            "                      OR (m.user1Id = u.id AND m.user2Id = :currentUserId)))")
     List<Object[]> findGlobalCandidatesWithPhoto(

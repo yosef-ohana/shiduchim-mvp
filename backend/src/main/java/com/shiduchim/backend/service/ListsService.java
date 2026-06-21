@@ -64,14 +64,11 @@ public class ListsService {
 
         List<ActionListItemResponse> responseList = new ArrayList<>();
         
-        Set<String> activeMatchContextKeys = null;
+        Set<Long> activeMatchPartnerIds = null;
         if (actionType == ActionType.LIKE) {
             List<Match> activeMatches = matchRepository.findByUserIdAndStatus(currentUser.getId(), MatchStatus.ACTIVE);
-            activeMatchContextKeys = activeMatches.stream()
-                    .map(m -> {
-                        Long partnerId = m.getUser1Id().equals(currentUser.getId()) ? m.getUser2Id() : m.getUser1Id();
-                        return partnerId + "_" + m.getPoolType() + "_" + m.getWeddingId();
-                    })
+            activeMatchPartnerIds = activeMatches.stream()
+                    .map(m -> m.getUser1Id().equals(currentUser.getId()) ? m.getUser2Id() : m.getUser1Id())
                     .collect(Collectors.toSet());
         }
 
@@ -86,9 +83,8 @@ public class ListsService {
                 continue;
             }
 
-            if (actionType == ActionType.LIKE && activeMatchContextKeys != null) {
-                String contextKey = targetUser.getId() + "_" + action.getPoolType() + "_" + action.getWeddingId();
-                if (activeMatchContextKeys.contains(contextKey)) {
+            if (actionType == ActionType.LIKE && activeMatchPartnerIds != null) {
+                if (activeMatchPartnerIds.contains(targetUser.getId())) {
                     continue;
                 }
             }
@@ -133,13 +129,10 @@ public class ListsService {
             }
         }
 
-        // Fetch active matches for current user to filter out active matches in the same context
+        // Fetch active matches for current user to filter out active matches across all contexts
         List<Match> activeMatches = matchRepository.findByUserIdAndStatus(currentUser.getId(), MatchStatus.ACTIVE);
-        Set<String> activeMatchContextKeys = activeMatches.stream()
-                .map(m -> {
-                    Long partnerId = m.getUser1Id().equals(currentUser.getId()) ? m.getUser2Id() : m.getUser1Id();
-                    return partnerId + "_" + m.getPoolType() + "_" + m.getWeddingId();
-                })
+        Set<Long> activeMatchPartnerIds = activeMatches.stream()
+                .map(m -> m.getUser1Id().equals(currentUser.getId()) ? m.getUser2Id() : m.getUser1Id())
                 .collect(Collectors.toSet());
 
         List<LikedMeItemResponse> responseList = new ArrayList<>();
@@ -154,9 +147,8 @@ public class ListsService {
                 continue;
             }
 
-            // Check if there is an active match in the same context
-            String contextKey = liker.getId() + "_" + action.getPoolType() + "_" + action.getWeddingId();
-            if (activeMatchContextKeys.contains(contextKey)) {
+            // Check if there is an active match in any context
+            if (activeMatchPartnerIds.contains(liker.getId())) {
                 continue;
             }
 
