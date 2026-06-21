@@ -149,6 +149,10 @@ export interface PublicUserCardResponse {
   lookingForShort?: string;
   poolType?: string;
   weddingId?: number;
+  hasOpenOpeningConversation?: boolean;
+  openingConversationId?: number;
+  openingConversationDirection?: 'SENT' | 'RECEIVED';
+  openingConversationStatus?: string;
 }
 
 export interface DiscoverResponse {
@@ -465,7 +469,7 @@ export interface BlockedUserResponse {
   createdAt: string;
 }
 
-export type OpeningConversationStatus = 'OPEN' | 'CONVERTED' | 'EXPIRED' | 'REJECTED';
+export type OpeningConversationStatus = 'OPEN' | 'MATCH_CREATED' | 'EXPIRED' | 'REJECTED';
 
 export interface OpeningMessageResponse {
   id: number;

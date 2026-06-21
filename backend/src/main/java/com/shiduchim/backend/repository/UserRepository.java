@@ -60,12 +60,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "                  WHERE ub.status = com.shiduchim.backend.enums.UserBlockStatus.ACTIVE " +
            "                    AND ((ub.blockerUserId = :currentUserId AND ub.blockedUserId = u.id) " +
            "                      OR (ub.blockerUserId = u.id AND ub.blockedUserId = :currentUserId))) " +
-           "  AND NOT EXISTS (SELECT 1 FROM OpeningConversation oc " +
-           "                  WHERE oc.status = com.shiduchim.backend.enums.OpeningConversationStatus.OPEN " +
-           "                    AND oc.poolType = com.shiduchim.backend.enums.PoolType.WEDDING " +
-           "                    AND oc.weddingId = :weddingId " +
-           "                    AND ((oc.openerUserId = :currentUserId AND oc.recipientUserId = u.id) " +
-           "                      OR (oc.openerUserId = u.id AND oc.recipientUserId = :currentUserId))) " +
            "  AND NOT EXISTS (SELECT 1 FROM Match m " +
            "                  WHERE m.status = com.shiduchim.backend.enums.MatchStatus.ACTIVE " +
            "                    AND ((m.user1Id = :currentUserId AND m.user2Id = u.id) " +
@@ -106,12 +100,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "                  WHERE ub.status = com.shiduchim.backend.enums.UserBlockStatus.ACTIVE " +
            "                    AND ((ub.blockerUserId = :currentUserId AND ub.blockedUserId = u.id) " +
            "                      OR (ub.blockerUserId = u.id AND ub.blockedUserId = :currentUserId))) " +
-           "  AND NOT EXISTS (SELECT 1 FROM OpeningConversation oc " +
-           "                  WHERE oc.status = com.shiduchim.backend.enums.OpeningConversationStatus.OPEN " +
-           "                    AND oc.poolType = com.shiduchim.backend.enums.PoolType.GLOBAL " +
-           "                    AND oc.weddingId IS NULL " +
-           "                    AND ((oc.openerUserId = :currentUserId AND oc.recipientUserId = u.id) " +
-           "                      OR (oc.openerUserId = u.id AND oc.recipientUserId = :currentUserId))) " +
            "  AND NOT EXISTS (SELECT 1 FROM Match m " +
            "                  WHERE m.status = com.shiduchim.backend.enums.MatchStatus.ACTIVE " +
            "                    AND ((m.user1Id = :currentUserId AND m.user2Id = u.id) " +

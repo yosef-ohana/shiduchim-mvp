@@ -103,6 +103,8 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
                   setCandidates((prev) => prev.filter((c) => c.userId !== item.userId));
                 }}
                 onOpeningMessagePress={() => setComposerTargetId(item.userId)}
+                hasOpenOpeningConversation={item.hasOpenOpeningConversation}
+                openingConversationDirection={item.openingConversationDirection}
               />
             }
           />
@@ -131,7 +133,13 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
               weddingId: weddingId,
             });
             setMatchMessage('ההודעה נשלחה בהצלחה');
-            setCandidates((prev) => prev.filter((c) => c.userId !== composerTargetId));
+            setCandidates((prev) =>
+              prev.map((c) =>
+                c.userId === composerTargetId
+                  ? { ...c, hasOpenOpeningConversation: true, openingConversationDirection: 'SENT' }
+                  : c
+              )
+            );
           }
         }}
       />

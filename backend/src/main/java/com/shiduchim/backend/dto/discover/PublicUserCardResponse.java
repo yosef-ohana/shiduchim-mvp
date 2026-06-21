@@ -15,6 +15,10 @@ public class PublicUserCardResponse {
     private String lookingForShort;
     private PoolType poolType;
     private Long weddingId;
+    private Boolean hasOpenOpeningConversation;
+    private Long openingConversationId;
+    private String openingConversationDirection; // "SENT" or "RECEIVED"
+    private String openingConversationStatus;
 
     public PublicUserCardResponse() {
     }
@@ -51,4 +55,16 @@ public class PublicUserCardResponse {
 
     public Long getWeddingId() { return weddingId; }
     public void setWeddingId(Long weddingId) { this.weddingId = weddingId; }
+
+    public Boolean getHasOpenOpeningConversation() { return hasOpenOpeningConversation; }
+    public void setHasOpenOpeningConversation(Boolean hasOpenOpeningConversation) { this.hasOpenOpeningConversation = hasOpenOpeningConversation; }
+
+    public Long getOpeningConversationId() { return openingConversationId; }
+    public void setOpeningConversationId(Long openingConversationId) { this.openingConversationId = openingConversationId; }
+
+    public String getOpeningConversationDirection() { return openingConversationDirection; }
+    public void setOpeningConversationDirection(String openingConversationDirection) { this.openingConversationDirection = openingConversationDirection; }
+
+    public String getOpeningConversationStatus() { return openingConversationStatus; }
+    public void setOpeningConversationStatus(String openingConversationStatus) { this.openingConversationStatus = openingConversationStatus; }
 }

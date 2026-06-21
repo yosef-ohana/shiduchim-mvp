@@ -136,7 +136,7 @@ export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => 
   }
 
   const isOpener = user?.id === details?.openerUserId;
-  const isMatchCreated = details?.status === 'CONVERTED';
+  const isMatchCreated = details?.status === 'MATCH_CREATED';
 
   return (
     <Screen>

@@ -12,6 +12,8 @@ interface ActionButtonsProps {
   weddingId?: number;
   onActionCompleted: (matchCreated: boolean) => void;
   onOpeningMessagePress?: () => void;
+  hasOpenOpeningConversation?: boolean;
+  openingConversationDirection?: 'SENT' | 'RECEIVED';
 }
 
 export const ActionButtons: React.FC<ActionButtonsProps> = ({
@@ -20,6 +22,8 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   weddingId,
   onActionCompleted,
   onOpeningMessagePress,
+  hasOpenOpeningConversation,
+  openingConversationDirection,
 }) => {
   const [loadingAction, setLoadingAction] = useState<'LIKE' | 'DISLIKE' | 'FREEZE' | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -106,11 +110,20 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
           style={[styles.button, styles.likeButton]}
         />
       </View>
-      {onOpeningMessagePress && (
+      {onOpeningMessagePress && !hasOpenOpeningConversation && (
         <AppButton
           title="הודעת פתיחה"
           onPress={onOpeningMessagePress}
           disabled={isAnyLoading}
+          style={styles.openingMessageButton}
+          variant="secondary"
+        />
+      )}
+      {hasOpenOpeningConversation && (
+        <AppButton
+          title={openingConversationDirection === 'RECEIVED' ? "התקבלה הודעת פתיחה" : "הודעת פתיחה נשלחה"}
+          onPress={() => {}}
+          disabled={true}
           style={styles.openingMessageButton}
           variant="secondary"
         />

@@ -10,6 +10,7 @@ import com.shiduchim.backend.repository.UserPhotoRepository;
 import com.shiduchim.backend.repository.UserRepository;
 import com.shiduchim.backend.repository.WeddingParticipantRepository;
 import com.shiduchim.backend.repository.WeddingRepository;
+import com.shiduchim.backend.repository.OpeningConversationRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -26,15 +27,18 @@ public class DiscoverService {
     private final UserPhotoRepository userPhotoRepository;
     private final WeddingRepository weddingRepository;
     private final WeddingParticipantRepository weddingParticipantRepository;
+    private final OpeningConversationRepository openingConversationRepository;
 
     public DiscoverService(UserRepository userRepository,
                            UserPhotoRepository userPhotoRepository,
                            WeddingRepository weddingRepository,
-                           WeddingParticipantRepository weddingParticipantRepository) {
+                           WeddingParticipantRepository weddingParticipantRepository,
+                           OpeningConversationRepository openingConversationRepository) {
         this.userRepository = userRepository;
         this.userPhotoRepository = userPhotoRepository;
         this.weddingRepository = weddingRepository;
         this.weddingParticipantRepository = weddingParticipantRepository;
+        this.openingConversationRepository = openingConversationRepository;
     }
 
     public DiscoverResponse getDiscover(User authenticatedUser, PoolType pool, Long weddingId, Integer limit) {
@@ -71,7 +75,23 @@ public class DiscoverService {
         for (Object[] row : results) {
             User candidate = (User) row[0];
             String primaryPhotoUrl = (String) row[1];
-            items.add(mapToCardResponse(candidate, primaryPhotoUrl, pool, weddingId));
+            PublicUserCardResponse dto = mapToCardResponse(candidate, primaryPhotoUrl, pool, weddingId);
+
+            // Batch 5: Populate OpeningConversation status
+            openingConversationRepository.findExistingConversationBetweenUsersInContext(
+                    currentUser.getId(), candidate.getId(), pool, weddingId, OpeningConversationStatus.OPEN)
+                    .ifPresent(oc -> {
+                        dto.setHasOpenOpeningConversation(true);
+                        dto.setOpeningConversationId(oc.getId());
+                        dto.setOpeningConversationStatus(oc.getStatus().name());
+                        if (oc.getOpenerUserId().equals(currentUser.getId())) {
+                            dto.setOpeningConversationDirection("SENT");
+                        } else {
+                            dto.setOpeningConversationDirection("RECEIVED");
+                        }
+                    });
+
+            items.add(dto);
         }
 
         return new DiscoverResponse(items);
