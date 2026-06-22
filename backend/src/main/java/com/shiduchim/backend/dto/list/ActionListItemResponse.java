@@ -20,6 +20,11 @@ public class ActionListItemResponse {
     private Long weddingId;
     private LocalDateTime actionUpdatedAt;
 
+    private Boolean hasOpenOpeningConversation;
+    private Long openingConversationId;
+    private String openingConversationDirection;
+    private String openingConversationStatus;
+
     public ActionListItemResponse() {}
 
     public ActionListItemResponse(Long userId, String primaryPhotoUrl, String fullName, Integer age, Integer heightCm,
@@ -78,4 +83,16 @@ public class ActionListItemResponse {
 
     public LocalDateTime getActionUpdatedAt() { return actionUpdatedAt; }
     public void setActionUpdatedAt(LocalDateTime actionUpdatedAt) { this.actionUpdatedAt = actionUpdatedAt; }
+
+    public Boolean getHasOpenOpeningConversation() { return hasOpenOpeningConversation; }
+    public void setHasOpenOpeningConversation(Boolean hasOpenOpeningConversation) { this.hasOpenOpeningConversation = hasOpenOpeningConversation; }
+
+    public Long getOpeningConversationId() { return openingConversationId; }
+    public void setOpeningConversationId(Long openingConversationId) { this.openingConversationId = openingConversationId; }
+
+    public String getOpeningConversationDirection() { return openingConversationDirection; }
+    public void setOpeningConversationDirection(String openingConversationDirection) { this.openingConversationDirection = openingConversationDirection; }
+
+    public String getOpeningConversationStatus() { return openingConversationStatus; }
+    public void setOpeningConversationStatus(String openingConversationStatus) { this.openingConversationStatus = openingConversationStatus; }
 }

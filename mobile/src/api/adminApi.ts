@@ -9,7 +9,9 @@ import {
   CreateWeddingInviteRequest,
   AdminDashboardResponse,
   UserReportSummaryResponse,
-  UserReportDetailsResponse
+  UserReportDetailsResponse,
+  ParticipantResponse,
+  AddParticipantRequest
 } from '../types/api';
 
 export const adminApi = {
@@ -140,6 +142,21 @@ export const adminApi = {
 
   deleteWeddingBackground: async (weddingId: number): Promise<AdminWeddingResponse> => {
     const response = await apiClient.delete<AdminWeddingResponse>(`/admin/weddings/${weddingId}/background`);
+    return response.data;
+  },
+
+  getParticipants: async (weddingId: number): Promise<ParticipantResponse[]> => {
+    const response = await apiClient.get<ParticipantResponse[]>(`/admin/weddings/${weddingId}/participants`);
+    return response.data;
+  },
+
+  addParticipant: async (weddingId: number, data: AddParticipantRequest): Promise<ParticipantResponse> => {
+    const response = await apiClient.post<ParticipantResponse>(`/admin/weddings/${weddingId}/participants`, data);
+    return response.data;
+  },
+
+  removeParticipant: async (weddingId: number, userId: number): Promise<ParticipantResponse> => {
+    const response = await apiClient.delete<ParticipantResponse>(`/admin/weddings/${weddingId}/participants/${userId}`);
     return response.data;
   },
 };

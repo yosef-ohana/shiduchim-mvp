@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -65,13 +66,20 @@ public class ActionService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "An active match already exists between these users.");
         }
 
-        Optional<UserAction> existingActionOpt = userActionRepository.findByActorUserIdAndTargetUserIdAndPoolTypeAndWeddingId(
-                actor.getId(), targetUserId, poolType, weddingId);
+        List<UserAction> existingActions = userActionRepository.findByActorUserIdAndTargetUserIdOrderByUpdatedAtDesc(
+                actor.getId(), targetUserId);
 
-        if (existingActionOpt.isPresent()) {
-            UserAction action = existingActionOpt.get();
-            action.setActionType(actionType);
-            userActionRepository.save(action);
+        if (!existingActions.isEmpty()) {
+            UserAction primaryAction = existingActions.get(0);
+            primaryAction.setActionType(actionType);
+            primaryAction.setPoolType(poolType);
+            primaryAction.setWeddingId(weddingId);
+            userActionRepository.save(primaryAction);
+
+            // Clean up duplicates for this exact actor+target pair
+            for (int i = 1; i < existingActions.size(); i++) {
+                userActionRepository.delete(existingActions.get(i));
+            }
         } else {
             UserAction newAction = new UserAction();
             newAction.setActorUserId(actor.getId());
@@ -89,14 +97,14 @@ public class ActionService {
         Long user1Id = Math.min(actor.getId(), targetUserId);
         Long user2Id = Math.max(actor.getId(), targetUserId);
 
-        Optional<Match> existingMatchOpt = matchRepository.findByUser1IdAndUser2IdAndPoolTypeAndWeddingId(
-                user1Id, user2Id, poolType, weddingId);
+        List<Match> matches = matchRepository.findByUser1IdAndUser2Id(user1Id, user2Id);
+        Optional<Match> existingMatchOpt = matches.isEmpty() ? Optional.empty() : Optional.of(matches.get(0));
 
         if (actionType == ActionType.LIKE) {
-            Optional<UserAction> oppositeActionOpt = userActionRepository.findByActorUserIdAndTargetUserIdAndPoolTypeAndWeddingId(
-                    targetUserId, actor.getId(), poolType, weddingId);
+            List<UserAction> oppositeActions = userActionRepository.findByActorUserIdAndTargetUserIdOrderByUpdatedAtDesc(
+                    targetUserId, actor.getId());
 
-            if (oppositeActionOpt.isPresent() && oppositeActionOpt.get().getActionType() == ActionType.LIKE) {
+            if (!oppositeActions.isEmpty() && oppositeActions.get(0).getActionType() == ActionType.LIKE) {
                 Match match = existingMatchOpt.orElseGet(() -> {
                     Match m = new Match();
                     m.setUser1Id(user1Id);
@@ -140,14 +148,16 @@ public class ActionService {
     public UnfreezeResponse unfreeze(User actor, Long targetUserId, PoolType poolType, Long weddingId) {
         validateActorAndContext(actor, targetUserId, poolType, weddingId);
 
-        Optional<UserAction> existingActionOpt = userActionRepository.findByActorUserIdAndTargetUserIdAndPoolTypeAndWeddingId(
-                actor.getId(), targetUserId, poolType, weddingId);
+        List<UserAction> existingActions = userActionRepository.findByActorUserIdAndTargetUserIdOrderByUpdatedAtDesc(
+                actor.getId(), targetUserId);
 
         boolean removed = false;
-        if (existingActionOpt.isPresent()) {
-            UserAction action = existingActionOpt.get();
+        if (!existingActions.isEmpty()) {
+            UserAction action = existingActions.get(0);
             if (action.getActionType() == ActionType.FREEZE) {
-                userActionRepository.delete(action);
+                for (UserAction ua : existingActions) {
+                    userActionRepository.delete(ua);
+                }
                 removed = true;
             }
         }
@@ -169,13 +179,15 @@ public class ActionService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot remove action when an ACTIVE Match exists.");
         }
 
-        Optional<UserAction> existingActionOpt = userActionRepository.findByActorUserIdAndTargetUserIdAndPoolTypeAndWeddingId(
-                actor.getId(), targetUserId, poolType, weddingId);
+        List<UserAction> existingActions = userActionRepository.findByActorUserIdAndTargetUserIdOrderByUpdatedAtDesc(
+                actor.getId(), targetUserId);
 
         ActionType removedType = null;
-        if (existingActionOpt.isPresent()) {
-            removedType = existingActionOpt.get().getActionType();
-            userActionRepository.delete(existingActionOpt.get());
+        if (!existingActions.isEmpty()) {
+            removedType = existingActions.get(0).getActionType();
+            for (UserAction action : existingActions) {
+                userActionRepository.delete(action);
+            }
         }
 
         return new RemoveActionResponse(

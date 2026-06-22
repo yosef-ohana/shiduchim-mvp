@@ -33,6 +33,7 @@ import { OpeningConversationDetailsScreen } from '../screens/opening/OpeningConv
 import { SendProductFeedbackScreen } from '../screens/feedback/SendProductFeedbackScreen';
 import { AdminProductFeedbackScreen } from '../screens/admin/AdminProductFeedbackScreen';
 import { AdminProductFeedbackDetailsScreen } from '../screens/admin/AdminProductFeedbackDetailsScreen';
+import { WeddingParticipantsScreen } from '../screens/weddings/WeddingParticipantsScreen';
 import { DiscoverPool, UserWeddingResponse } from '../types/api';
 
 export type MainStackParamList = {
@@ -75,6 +76,12 @@ export type MainStackParamList = {
   EventManagerWeddingDetails: { weddingId: number };
   CreateAdminWedding: undefined;
   AdminWeddingDetails: { weddingId: number };
+  WeddingParticipants: {
+    weddingId: number;
+    mode: 'ADMIN' | 'EVENT_MANAGER';
+    weddingName?: string;
+    weddingStatus?: string;
+  };
   ReportUser: { userId: number };
   AdminReports: undefined;
   AdminReportDetails: { reportId: number };
@@ -115,6 +122,7 @@ export const MainStack = () => {
       <Stack.Screen name="EventManagerWeddingDetails" component={EventManagerWeddingDetailsScreen} options={{ title: 'פרטי החתונה' }} />
       <Stack.Screen name="CreateAdminWedding" component={CreateAdminWeddingScreen} options={{ title: 'יצירת חתונה (מנהל)' }} />
       <Stack.Screen name="AdminWeddingDetails" component={AdminWeddingDetailsScreen} options={{ title: 'פרטי החתונה (מנהל)' }} />
+      <Stack.Screen name="WeddingParticipants" component={WeddingParticipantsScreen} options={{ title: 'משתתפי החתונה' }} />
       <Stack.Screen name="ReportUser" component={ReportUserScreen} options={{ title: 'דיווח על משתמש' }} />
       <Stack.Screen name="AdminReports" component={AdminReportsScreen} options={{ title: 'ניהול דיווחים' }} />
       <Stack.Screen name="AdminReportDetails" component={AdminReportDetailsScreen} options={{ title: 'פרטי דיווח' }} />

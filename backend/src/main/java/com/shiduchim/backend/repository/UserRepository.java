@@ -53,9 +53,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "                AND wp.status = com.shiduchim.backend.enums.ParticipantStatus.ACTIVE) " +
            "  AND NOT EXISTS (SELECT 1 FROM UserAction ua " +
            "                  WHERE ua.actorUserId = :currentUserId " +
-           "                    AND ua.targetUserId = u.id " +
-           "                    AND ua.poolType = com.shiduchim.backend.enums.PoolType.WEDDING " +
-           "                    AND ua.weddingId = :weddingId) " +
+           "                    AND ua.targetUserId = u.id) " +
            "  AND NOT EXISTS (SELECT 1 FROM UserBlock ub " +
            "                  WHERE ub.status = com.shiduchim.backend.enums.UserBlockStatus.ACTIVE " +
            "                    AND ((ub.blockerUserId = :currentUserId AND ub.blockedUserId = u.id) " +
@@ -93,9 +91,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "  AND u.profileStatus = com.shiduchim.backend.enums.ProfileStatus.FULL " +
            "  AND NOT EXISTS (SELECT 1 FROM UserAction ua " +
            "                  WHERE ua.actorUserId = :currentUserId " +
-           "                    AND ua.targetUserId = u.id " +
-           "                    AND ua.poolType = com.shiduchim.backend.enums.PoolType.GLOBAL " +
-           "                    AND ua.weddingId IS NULL) " +
+           "                    AND ua.targetUserId = u.id) " +
            "  AND NOT EXISTS (SELECT 1 FROM UserBlock ub " +
            "                  WHERE ub.status = com.shiduchim.backend.enums.UserBlockStatus.ACTIVE " +
            "                    AND ((ub.blockerUserId = :currentUserId AND ub.blockedUserId = u.id) " +

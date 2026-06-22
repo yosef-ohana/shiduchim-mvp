@@ -202,6 +202,18 @@ export const AdminWeddingDetailsScreen = () => {
           <Text style={styles.info}>שידוכים: {wedding.matchesCount}</Text>
         </View>
 
+        <TouchableOpacity
+          style={[styles.fullBtn, { backgroundColor: theme.colors.primary }]}
+          onPress={() => navigation.navigate('WeddingParticipants', {
+            weddingId: wedding.id,
+            mode: 'ADMIN',
+            weddingName: wedding.name,
+            weddingStatus: wedding.status
+          })}
+        >
+          <Text style={styles.btnText}>צפייה וניהול משתתפי החתונה</Text>
+        </TouchableOpacity>
+
         {wedding && (
           <WeddingJoinQrCard
             accessCode={wedding.accessCode}

@@ -8,6 +8,8 @@ import { getLikes, getDislikes, getFreezes, getLikedMe } from '../../api/listsAp
 import { likeUser, dislikeUser, removeAction } from '../../api/actionsApi';
 import { PoolType } from '../../types/api';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+import { OpeningMessageComposer } from '../../components/OpeningMessageComposer';
+import { sendOpeningMessage } from '../../api/openingMessagesApi';
 
 type TabType = 'likes' | 'dislikes' | 'freezes' | 'liked-me';
 
@@ -17,6 +19,7 @@ export const ListsScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<number | null>(null);
+  const [composerTarget, setComposerTarget] = useState<{ userId: number; poolType: PoolType; weddingId?: number } | null>(null);
 
   const tabs: { id: TabType; label: string }[] = [
     { id: 'likes', label: 'לייקים' },
@@ -154,6 +157,38 @@ export const ListsScreen = ({ navigation }: any) => {
     navigation.navigate('CandidateProfile', { userId });
   };
 
+  const renderOpeningMessageButton = (item: any) => {
+    if (item.hasOpenOpeningConversation) {
+      let title = 'יש הודעת פתיחה פעילה';
+      if (item.openingConversationDirection === 'SENT') {
+        title = 'הודעת פתיחה נשלחה';
+      } else if (item.openingConversationDirection === 'RECEIVED') {
+        title = 'התקבלה הודעת פתיחה';
+      }
+      return (
+        <AppButton
+          title={title}
+          disabled={true}
+          style={styles.actionButton}
+        />
+      );
+    }
+
+    return (
+      <AppButton
+        title="הודעת פתיחה"
+        onPress={() =>
+          setComposerTarget({
+            userId: item.userId,
+            poolType: item.poolType,
+            weddingId: item.weddingId,
+          })
+        }
+        style={styles.actionButton}
+      />
+    );
+  };
+
   return (
     <Screen>
       {/* Segmented Buttons/Tabs */}
@@ -204,18 +239,21 @@ export const ListsScreen = ({ navigation }: any) => {
                 <View style={styles.actionsContainer}>
                   {activeTab === 'likes' && (
                     <>
+                      {renderOpeningMessageButton(item)}
                       <AppButton title="לא מתאים" onPress={() => handleDislike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
                       <AppButton title="החזרה לפיד" onPress={() => handleRemoveAction(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.returnButton} />
                     </>
                   )}
                   {activeTab === 'dislikes' && (
                     <>
+                      {renderOpeningMessageButton(item)}
                       <AppButton title="לייק" onPress={() => handleLike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
                       <AppButton title="החזרה לפיד" onPress={() => handleRemoveAction(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.returnButton} />
                     </>
                   )}
                   {activeTab === 'freezes' && (
                     <>
+                      {renderOpeningMessageButton(item)}
                       <AppButton title="לייק" onPress={() => handleLike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
                       <AppButton title="לא מתאים" onPress={() => handleDislike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
                       <AppButton title="החזרה לפיד" onPress={() => handleRemoveAction(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.returnButton} />
@@ -244,6 +282,21 @@ export const ListsScreen = ({ navigation }: any) => {
           }
         />
       )}
+      <OpeningMessageComposer
+        visible={composerTarget !== null}
+        onClose={() => setComposerTarget(null)}
+        onSend={async (content) => {
+          if (composerTarget !== null) {
+            await sendOpeningMessage(composerTarget.userId, {
+              content,
+              poolType: composerTarget.poolType,
+              weddingId: composerTarget.weddingId,
+            });
+            Alert.alert('הצלחה', 'הודעת הפתיחה נשלחה בהצלחה.');
+            fetchList(activeTab);
+          }
+        }}
+      />
     </Screen>
   );
 };

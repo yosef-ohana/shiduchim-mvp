@@ -22,6 +22,8 @@ public interface UserActionRepository extends JpaRepository<UserAction, Long> {
             Long weddingId
     );
 
+    List<UserAction> findByActorUserIdAndTargetUserIdOrderByUpdatedAtDesc(Long actorUserId, Long targetUserId);
+
     List<UserAction> findByActorUserIdAndPoolType(Long actorUserId, PoolType poolType);
 
     List<UserAction> findByActorUserIdAndActionType(Long actorUserId, com.shiduchim.backend.enums.ActionType actionType);

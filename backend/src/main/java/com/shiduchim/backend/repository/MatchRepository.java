@@ -21,6 +21,8 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
             Long weddingId
     );
 
+    List<Match> findByUser1IdAndUser2Id(Long user1Id, Long user2Id);
+
     List<Match> findByUser1IdOrUser2Id(Long user1Id, Long user2Id);
 
     List<Match> findByUser1IdAndPoolType(Long user1Id, PoolType poolType);

@@ -14,6 +14,9 @@ import com.shiduchim.backend.repository.UserActionRepository;
 import com.shiduchim.backend.repository.UserRepository;
 import com.shiduchim.backend.repository.UserPhotoRepository;
 import com.shiduchim.backend.repository.MatchRepository;
+import com.shiduchim.backend.repository.OpeningConversationRepository;
+import com.shiduchim.backend.entity.OpeningConversation;
+import com.shiduchim.backend.enums.OpeningConversationStatus;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -31,18 +34,21 @@ public class ListsService {
     private final UserPhotoRepository userPhotoRepository;
     private final MatchRepository matchRepository;
     private final UserBlockService userBlockService;
+    private final OpeningConversationRepository openingConversationRepository;
 
     public ListsService(
             UserActionRepository userActionRepository,
             UserRepository userRepository,
             UserPhotoRepository userPhotoRepository,
             MatchRepository matchRepository,
-            UserBlockService userBlockService) {
+            UserBlockService userBlockService,
+            OpeningConversationRepository openingConversationRepository) {
         this.userActionRepository = userActionRepository;
         this.userRepository = userRepository;
         this.userPhotoRepository = userPhotoRepository;
         this.matchRepository = matchRepository;
         this.userBlockService = userBlockService;
+        this.openingConversationRepository = openingConversationRepository;
     }
 
     public List<ActionListItemResponse> getOutgoingActionsList(User currentUser, ActionType actionType, PoolType poolType, Long weddingId) {
@@ -92,7 +98,7 @@ public class ListsService {
             String primaryPhotoUrl = userPhotoRepository.findByUserIdAndIsPrimaryTrue(targetUser.getId())
                     .map(UserPhoto::getImageUrl).orElse(null);
 
-            responseList.add(new ActionListItemResponse(
+            ActionListItemResponse itemResponse = new ActionListItemResponse(
                     targetUser.getId(),
                     primaryPhotoUrl,
                     targetUser.getFullName(),
@@ -106,7 +112,24 @@ public class ListsService {
                     action.getPoolType(),
                     action.getWeddingId(),
                     action.getUpdatedAt()
-            ));
+            );
+
+            java.util.Optional<OpeningConversation> convOpt = openingConversationRepository.findExistingConversationBetweenUsersInContext(
+                    currentUser.getId(), targetUser.getId(), action.getPoolType(), action.getWeddingId(), OpeningConversationStatus.OPEN);
+
+            if (convOpt.isPresent()) {
+                OpeningConversation conv = convOpt.get();
+                itemResponse.setHasOpenOpeningConversation(true);
+                itemResponse.setOpeningConversationId(conv.getId());
+                itemResponse.setOpeningConversationDirection(
+                        conv.getOpenerUserId().equals(currentUser.getId()) ? "SENT" : "RECEIVED"
+                );
+                itemResponse.setOpeningConversationStatus(conv.getStatus().name());
+            } else {
+                itemResponse.setHasOpenOpeningConversation(false);
+            }
+
+            responseList.add(itemResponse);
         }
 
         return responseList;

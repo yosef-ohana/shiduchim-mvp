@@ -211,6 +211,10 @@ export interface ActionListItemResponse {
   poolType: PoolType;
   weddingId?: number;
   actionUpdatedAt: string;
+  hasOpenOpeningConversation?: boolean;
+  openingConversationId?: number;
+  openingConversationDirection?: 'SENT' | 'RECEIVED' | string;
+  openingConversationStatus?: string;
 }
 
 export interface LikedMeItemResponse {

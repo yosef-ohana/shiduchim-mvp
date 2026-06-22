@@ -225,3 +225,21 @@ During Phase 14.14 (Final Regression QA), developers must manually verify all co
   * **Mobile TypeScript Verification (`npx tsc --noEmit`)**: PASS
   * **Git Diff Formatting Check (`git diff --check`)**: PASS
 * **Manual Runtime QA Status**: Deferred to later user QA cycle.
+
+---
+
+## 13. Cycle 5 & QA Closeout Status (UserAction Refactor, Opening Messages, Admin Participants API, Shared WeddingParticipantsScreen)
+* **Status**: Completed and fully verified.
+* **Changes Implemented**:
+  * **UserAction User-Level Cross-Context Backend Fix**: Refactored user actions so they function at a user-to-user level instead of a context-specific level. Candidate filtering in `UserRepository` now correctly excludes previously acted-upon users. `ActionService` handles cross-context action updates and mutual matches. Mutual likes across contexts generate exactly one Match.
+  * **Opening Messages Lists**: Restored capability to view and send opening messages directly from Likes, Dislikes, and Freezes lists without creating a standard Chat before a Match.
+  * **Admin Participants API**: Created a backend API controller (`AdminParticipantController`) for Admins to view, add, and remove wedding participants.
+  * **Shared WeddingParticipantsScreen**: Created a shared mobile wedding participants management screen for Admins and Event Managers. Inline participant lists were replaced with a dedicated Hebrew navigation button in wedding details screens.
+  * **Return to Feed**: Removes the user-level action.
+* **QA Status**:
+  * Focused regression QA and remaining manual QA checks passed successfully with zero known bugs, crashes, blockers, or unauthorized access.
+  * Checked repository for temporary QA/scratch/artifact files; all were cleaned up or verified to be located outside the repository.
+* **Final Static Checks**:
+  * Backend clean compile & tests run successfully.
+  * Mobile TypeScript checks pass without errors.
+  * No code behavior changed outside the approved scope.

@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Alert, TextInput, TouchableOpacity } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
 import { 
   getEventManagerWedding, 
-  getParticipants, 
-  addParticipant, 
-  removeParticipant,
   closeWedding,
   cancelWedding,
   getInvites,
@@ -14,12 +11,11 @@ import {
   cancelInvite,
   restoreInvite
 } from '../../api/eventManagerApi';
-import { WeddingResponse, ParticipantResponse, WeddingInviteResponse } from '../../types/api';
+import { WeddingResponse, WeddingInviteResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 import { 
   getWeddingStatusLabel, 
-  getParticipantStatusLabel, 
   getInviteStatusLabel, 
   formatDisplayDate 
 } from '../../utils/displayLabels';
@@ -27,13 +23,11 @@ import { WeddingJoinQrCard } from '../../components/WeddingJoinQrCard';
 import { WeddingBackgroundManager } from '../../components/WeddingBackgroundManager';
 import { uploadWeddingBackground, deleteWeddingBackground } from '../../api/eventManagerApi';
 
-export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
+export const EventManagerWeddingDetailsScreen = ({ route, navigation }: any) => {
   const { weddingId } = route.params;
   const [wedding, setWedding] = useState<WeddingResponse | null>(null);
-  const [participants, setParticipants] = useState<ParticipantResponse[]>([]);
   const [invites, setInvites] = useState<WeddingInviteResponse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newEmail, setNewEmail] = useState('');
   const [newInviteName, setNewInviteName] = useState('');
   const [newInviteEmail, setNewInviteEmail] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
@@ -45,38 +39,17 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [weddingData, participantsData, invitesData] = await Promise.all([
+      const [weddingData, invitesData] = await Promise.all([
         getEventManagerWedding(weddingId),
-        getParticipants(weddingId),
         getInvites(weddingId).catch(() => [])
       ]);
       setWedding(weddingData);
-      setParticipants(participantsData);
       setInvites(invitesData);
     } catch (error) {
       console.error(error);
       Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'טעינת פרטי החתונה נכשלה.'));
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleAddParticipant = async () => {
-    if (!newEmail.trim()) {
-      Alert.alert('שגיאת אימות', 'אנא הזן כתובת אימייל תקינה.');
-      return;
-    }
-    setActionLoading(true);
-    try {
-      await addParticipant(weddingId, { email: newEmail.trim() });
-      Alert.alert('הצלחה', `המשתתף ${newEmail.trim()} נוסף לחתונה.`);
-      setNewEmail('');
-      await loadData();
-    } catch (error: any) {
-      console.error(error);
-      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'הוספת המשתתף נכשלה.'));
-    } finally {
-      setActionLoading(false);
     }
   };
 
@@ -144,34 +117,6 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
             } catch (error: any) {
               console.error(error);
               Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'החזרת ההזמנה נכשלה.'));
-            } finally {
-              setActionLoading(false);
-            }
-          }
-        }
-      ]
-    );
-  };
-
-
-  const handleRemoveParticipant = async (userId: number, email: string) => {
-    Alert.alert(
-      'הסרת משתתף',
-      `האם אתה בטוח שברצונך להסיר את המשתתף ${email} מחתונה זו?`,
-      [
-        { text: 'ביטול', style: 'cancel' },
-        { 
-          text: 'הסרה', 
-          style: 'destructive',
-          onPress: async () => {
-            setActionLoading(true);
-            try {
-              await removeParticipant(weddingId, userId);
-              Alert.alert('הצלחה', `המשתתף ${email} הוסר.`);
-              await loadData();
-            } catch (error: any) {
-              console.error(error);
-              Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'הסרת המשתתף נכשלה.'));
             } finally {
               setActionLoading(false);
             }
@@ -257,34 +202,6 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
     }
   };
 
-  const renderParticipant = ({ item }: { item: ParticipantResponse }) => (
-    <View style={styles.participantCard}>
-      {item.participantStatus === 'ACTIVE' && wedding?.status === 'ACTIVE' && (
-        <TouchableOpacity 
-          style={styles.removeButton}
-          onPress={() => handleRemoveParticipant(item.userId, item.email)}
-        >
-          <Text style={styles.removeButtonText}>הסרה</Text>
-        </TouchableOpacity>
-      )}
-      <View style={styles.participantInfo}>
-        <Text style={styles.participantName}>{item.fullName}</Text>
-        <Text style={styles.participantDetail}>{item.email}</Text>
-        <View style={styles.participantStatusContainer}>
-          <Text style={styles.profileLabel}>
-            פרופיל: {item.profileStatus}
-          </Text>
-          <Text style={[
-            styles.statusLabel,
-            item.participantStatus === 'ACTIVE' ? styles.statusActive : styles.statusRemoved
-          ]}>
-            סטטוס: {getParticipantStatusLabel(item.participantStatus)}
-          </Text>
-        </View>
-      </View>
-    </View>
-  );
-
   const getStatusBadgeStyle = (status?: string) => {
     switch (status) {
       case 'ACTIVE':
@@ -308,204 +225,175 @@ export const EventManagerWeddingDetailsScreen = ({ route }: any) => {
     );
   }
 
-
-
   return (
     <Screen>
-      <FlatList
-        data={participants}
-        keyExtractor={(item) => item.userId.toString()}
-        renderItem={renderParticipant}
+      <ScrollView
         contentContainerStyle={styles.listContainer}
-        refreshing={loading}
-        onRefresh={loadData}
-        ListHeaderComponent={
-          <View style={styles.headerContainer}>
-            {wedding && (
-              <View style={styles.detailsCard}>
-                <View style={styles.titleRow}>
-                  <View style={[styles.statusBadge, getStatusBadgeStyle(wedding.status)]}>
-                    <Text style={styles.statusText}>{getWeddingStatusLabel(wedding.status)}</Text>
-                  </View>
-                  <Text style={styles.title}>{wedding.name}</Text>
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={loadData} />
+        }
+      >
+        <View style={styles.headerContainer}>
+          {wedding && (
+            <View style={styles.detailsCard}>
+              <View style={styles.titleRow}>
+                <View style={[styles.statusBadge, getStatusBadgeStyle(wedding.status)]}>
+                  <Text style={styles.statusText}>{getWeddingStatusLabel(wedding.status)}</Text>
                 </View>
-
-                <Text style={styles.detail}>עיר: <Text style={styles.detailValue}>{wedding.city}</Text></Text>
-                <Text style={styles.detail}>תאריך: <Text style={styles.detailValue}>{formatDisplayDate(wedding.weddingDate)}</Text></Text>
-                {wedding.ownerUserId && (
-                  <Text style={styles.detail}>מזהה משתמש בעלים: <Text style={styles.detailValue}>{wedding.ownerUserId}</Text></Text>
-                )}
-
-                <View style={styles.accessCodeBox}>
-                  <Text style={styles.accessCodeLabel}>קוד גישה</Text>
-                  <Text style={styles.accessCodeValue} selectable={true}>{wedding.accessCode}</Text>
-                  <Text style={styles.accessCodeHint}>(לחץ לחיצה ארוכה להעתקה)</Text>
-                </View>
-
-                <View style={styles.statsContainer}>
-                  <View style={styles.statBox}>
-                    <Text style={styles.statNum}>{wedding.participantsCount ?? participants.length}</Text>
-                    <Text style={styles.statLabel}>משתתפים</Text>
-                  </View>
-                  <View style={styles.statBox}>
-                    <Text style={styles.statNum}>
-                      {wedding.matchesCount !== undefined && wedding.matchesCount !== null 
-                        ? wedding.matchesCount 
-                        : 'N/A'}
-                    </Text>
-                    <Text style={styles.statLabel}>שידוכים פעילים</Text>
-                  </View>
-                </View>
-
-                {wedding.status === 'ACTIVE' && (
-                  <View style={styles.actionsRow}>
-                    <AppButton
-                      title="סגירת חתונה"
-                      onPress={handleCloseWedding}
-                      loading={actionLoading}
-                      style={styles.closeButton}
-                    />
-                    <AppButton
-                      title="ביטול חתונה"
-                      onPress={handleCancelWedding}
-                      loading={actionLoading}
-                      style={styles.cancelButton}
-                    />
-                  </View>
-                )}
+                <Text style={styles.title}>{wedding.name}</Text>
               </View>
-            )}
 
-            {wedding && (
-              <WeddingJoinQrCard
-                accessCode={wedding.accessCode}
-                status={wedding.status}
-                weddingName={wedding.name}
-                city={wedding.city}
-                weddingDate={wedding.weddingDate}
+              <Text style={styles.detail}>עיר: <Text style={styles.detailValue}>{wedding.city}</Text></Text>
+              <Text style={styles.detail}>תאריך: <Text style={styles.detailValue}>{formatDisplayDate(wedding.weddingDate)}</Text></Text>
+              {wedding.ownerUserId && (
+                <Text style={styles.detail}>מזהה משתמש בעלים: <Text style={styles.detailValue}>{wedding.ownerUserId}</Text></Text>
+              )}
+
+              <View style={styles.accessCodeBox}>
+                <Text style={styles.accessCodeLabel}>קוד גישה</Text>
+                <Text style={styles.accessCodeValue} selectable={true}>{wedding.accessCode}</Text>
+                <Text style={styles.accessCodeHint}>(לחץ לחיצה ארוכה להעתקה)</Text>
+              </View>
+
+              <View style={styles.statsContainer}>
+                <View style={styles.statBox}>
+                  <Text style={styles.statNum}>{wedding.participantsCount ?? 0}</Text>
+                  <Text style={styles.statLabel}>משתתפים</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statNum}>
+                    {wedding.matchesCount !== undefined && wedding.matchesCount !== null
+                      ? wedding.matchesCount
+                      : 'N/A'}
+                  </Text>
+                  <Text style={styles.statLabel}>שידוכים פעילים</Text>
+                </View>
+              </View>
+
+              <AppButton
+                title="צפייה וניהול משתתפי החתונה"
+                onPress={() => navigation.navigate('WeddingParticipants', {
+                  weddingId: wedding.id,
+                  mode: 'EVENT_MANAGER',
+                  weddingName: wedding.name,
+                  weddingStatus: wedding.status
+                })}
+                style={styles.participantsButton}
               />
-            )}
 
-            {wedding && (
-              <WeddingBackgroundManager
-                backgroundImageUrl={wedding.backgroundImageUrl}
-                onUpload={handleUploadBackground}
-                onDelete={handleDeleteBackground}
-                status={wedding.status}
-              />
-            )}
-
-            {wedding && wedding.status === 'ACTIVE' && (
-              <View style={styles.addParticipantContainer}>
-                <Text style={styles.sectionTitle}>הזמנת משתמש חדש</Text>
-                <Text style={styles.addParticipantSubtitle}>
-                  הזמן משתמש חדש להצטרף לחתונה.
-                </Text>
-                <View style={styles.addFormCol}>
-                  <TextInput
-                    style={[styles.input, { marginBottom: theme.spacing.s, width: '100%' }]}
-                    value={newInviteName}
-                    onChangeText={setNewInviteName}
-                    placeholder="שם מלא"
-                    autoCapitalize="words"
-                  />
-                  <TextInput
-                    style={[styles.input, { marginBottom: theme.spacing.s, width: '100%' }]}
-                    value={newInviteEmail}
-                    onChangeText={setNewInviteEmail}
-                    placeholder="כתובת אימייל"
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                  />
-                  <AppButton 
-                    title="יצירת הזמנה" 
-                    onPress={handleCreateInvite} 
+              {wedding.status === 'ACTIVE' && (
+                <View style={styles.actionsRow}>
+                  <AppButton
+                    title="סגירת חתונה"
+                    onPress={handleCloseWedding}
                     loading={actionLoading}
-                    style={styles.addButton}
+                    style={styles.closeButton}
+                  />
+                  <AppButton
+                    title="ביטול חתונה"
+                    onPress={handleCancelWedding}
+                    loading={actionLoading}
+                    style={styles.cancelButton}
                   />
                 </View>
-              </View>
-            )}
+              )}
+            </View>
+          )}
 
-            {invites.length > 0 && (
-              <View style={styles.addParticipantContainer}>
-                <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.sectionTitle}>הזמנות</Text>
-                  <Text style={styles.listCount}>({invites.length})</Text>
-                </View>
-                {invites.map(invite => (
-                  <View key={`invite-${invite.id}`} style={styles.participantCard}>
-                    {invite.status === 'PENDING' && wedding?.status === 'ACTIVE' && (
-                      <TouchableOpacity 
-                        style={styles.removeButton}
-                        onPress={() => handleCancelInvite(invite.id)}
-                      >
-                        <Text style={styles.removeButtonText}>ביטול</Text>
-                      </TouchableOpacity>
-                    )}
-                    {invite.status === 'CANCELLED' && wedding?.status === 'ACTIVE' && (
-                      <TouchableOpacity 
-                        style={styles.restoreButton}
-                        onPress={() => handleRestoreInvite(invite.id)}
-                      >
-                        <Text style={styles.restoreButtonText}>החזרת הזמנה</Text>
-                      </TouchableOpacity>
-                    )}
-                    <View style={styles.participantInfo}>
-                      <Text style={styles.participantName}>{invite.fullName}</Text>
-                      <Text style={styles.participantDetail}>{invite.email}</Text>
-                      <View style={styles.participantStatusContainer}>
-                        <Text style={[
-                          styles.statusLabel,
-                          invite.status === 'ACCEPTED' ? styles.statusActive : 
-                          invite.status === 'CANCELLED' ? styles.statusRemoved : { color: '#FF9800', fontWeight: '600' }
-                        ]}>
-                          סטטוס: {getInviteStatusLabel(invite.status)}
-                        </Text>
-                      </View>
+          {wedding && (
+            <WeddingJoinQrCard
+              accessCode={wedding.accessCode}
+              status={wedding.status}
+              weddingName={wedding.name}
+              city={wedding.city}
+              weddingDate={wedding.weddingDate}
+            />
+          )}
+
+          {wedding && (
+            <WeddingBackgroundManager
+              backgroundImageUrl={wedding.backgroundImageUrl}
+              onUpload={handleUploadBackground}
+              onDelete={handleDeleteBackground}
+              status={wedding.status}
+            />
+          )}
+
+          {wedding && wedding.status === 'ACTIVE' && (
+            <View style={styles.addParticipantContainer}>
+              <Text style={styles.sectionTitle}>הזמנת משתמש חדש</Text>
+              <Text style={styles.addParticipantSubtitle}>
+                הזמן משתמש חדש להצטרף לחתונה.
+              </Text>
+              <View style={styles.addFormCol}>
+                <TextInput
+                  style={[styles.input, { marginBottom: theme.spacing.s, width: '100%' }]}
+                  value={newInviteName}
+                  onChangeText={setNewInviteName}
+                  placeholder="שם מלא"
+                  autoCapitalize="words"
+                />
+                <TextInput
+                  style={[styles.input, { marginBottom: theme.spacing.s, width: '100%' }]}
+                  value={newInviteEmail}
+                  onChangeText={setNewInviteEmail}
+                  placeholder="כתובת אימייל"
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+                <AppButton
+                  title="יצירת הזמנה"
+                  onPress={handleCreateInvite}
+                  loading={actionLoading}
+                  style={styles.addButton}
+                />
+              </View>
+            </View>
+          )}
+
+          {invites.length > 0 && (
+            <View style={styles.addParticipantContainer}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.sectionTitle}>הזמנות</Text>
+                <Text style={styles.listCount}>({invites.length})</Text>
+              </View>
+              {invites.map(invite => (
+                <View key={`invite-${invite.id}`} style={styles.participantCard}>
+                  {invite.status === 'PENDING' && wedding?.status === 'ACTIVE' && (
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() => handleCancelInvite(invite.id)}
+                    >
+                      <Text style={styles.removeButtonText}>ביטול</Text>
+                    </TouchableOpacity>
+                  )}
+                  {invite.status === 'CANCELLED' && wedding?.status === 'ACTIVE' && (
+                    <TouchableOpacity
+                      style={styles.restoreButton}
+                      onPress={() => handleRestoreInvite(invite.id)}
+                    >
+                      <Text style={styles.restoreButtonText}>החזרת הזמנה</Text>
+                    </TouchableOpacity>
+                  )}
+                  <View style={styles.participantInfo}>
+                    <Text style={styles.participantName}>{invite.fullName}</Text>
+                    <Text style={styles.participantDetail}>{invite.email}</Text>
+                    <View style={styles.participantStatusContainer}>
+                      <Text style={[
+                        styles.statusLabel,
+                        invite.status === 'ACCEPTED' ? styles.statusActive :
+                        invite.status === 'CANCELLED' ? styles.statusRemoved : { color: '#FF9800', fontWeight: '600' }
+                      ]}>
+                        סטטוס: {getInviteStatusLabel(invite.status)}
+                      </Text>
                     </View>
                   </View>
-                ))}
-              </View>
-            )}
-
-            {wedding && wedding.status === 'ACTIVE' && (
-              <View style={styles.addParticipantContainer}>
-                <Text style={styles.sectionTitle}>הוספת משתמש קיים לפי אימייל</Text>
-                <Text style={styles.addParticipantSubtitle}>
-                  הוספת משתמש רשום קיים באמצעות כתובת האימייל שלו.
-                </Text>
-                <View style={styles.addFormRow}>
-                  <TextInput
-                    style={styles.input}
-                    value={newEmail}
-                    onChangeText={setNewEmail}
-                    placeholder="כתובת אימייל של המשתמש"
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                  />
-                  <AppButton 
-                    title="הוספה" 
-                    onPress={handleAddParticipant} 
-                    loading={actionLoading}
-                    style={styles.addButton}
-                  />
                 </View>
-              </View>
-            )}
-
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>רשימת משתתפים</Text>
-              <Text style={styles.listCount}>({participants.length})</Text>
+              ))}
             </View>
-          </View>
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>עדיין לא נמצאו משתתפים לחתונה זו.</Text>
-          </View>
-        }
-      />
+          )}
+        </View>
+      </ScrollView>
     </Screen>
   );
 };
@@ -629,6 +517,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textSecondary,
     marginTop: 2,
+  },
+  participantsButton: {
+    backgroundColor: theme.colors.primary,
+    marginTop: theme.spacing.m,
   },
   actionsRow: {
     flexDirection: 'row-reverse',
