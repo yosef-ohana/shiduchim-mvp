@@ -156,27 +156,60 @@ export const BasicProfileScreen = ({ navigation, route }: any) => {
             ) : (
               <Text style={styles.successDetails}>אין שדות חסרים לקבלת סטטוס פרופיל מלא!</Text>
             )}
-            {returnToWedding && returnWeddingId ? (
-              <AppButton
-                title="חזרה לפרטי החתונה"
-                onPress={() => navigation.navigate('JoinWedding', {
-                  weddingId: returnWeddingId,
-                  weddingSnapshot: returnWeddingSnapshot,
-                  source: 'returnFlow'
-                })}
-                style={styles.successButton}
-              />
-            ) : null}
-            <AppButton
-              title="מעבר לפרופיל שלי"
-              onPress={() => navigation.navigate('Profile')}
-              style={styles.successButton}
-            />
-            <AppButton
-              title="חזרה לדף הבית"
-              onPress={() => navigation.navigate('Me')}
-              style={[styles.successButton, styles.successButtonSecondary]}
-            />
+            {route.params?.continueToFullAfterBasic ? (
+              <>
+                <View style={{ marginVertical: theme.spacing.m, width: '100%' }}>
+                  <Text style={[styles.successDetails, { fontWeight: 'bold', fontSize: 16, color: '#2E7D32' }]}>
+                    הפרופיל הבסיסי נשמר! באפשרותך להמשיך כעת לפרופיל המלא, או לסיים כאן ולהישאר עם פרופיל בסיסי.
+                  </Text>
+                </View>
+                <AppButton
+                  title="המשך למילוי פרופיל מלא"
+                  onPress={() => navigation.navigate('FullProfile')}
+                  style={styles.successButton}
+                />
+                <AppButton
+                  title="סיום כעת והישארות עם פרופיל בסיסי"
+                  onPress={() => navigation.navigate('Me')}
+                  style={[styles.successButton, styles.successButtonSecondary]}
+                />
+                {returnToWedding && returnWeddingId ? (
+                  <AppButton
+                    title="חזרה לפרטי החתונה"
+                    onPress={() => navigation.navigate('JoinWedding', {
+                      weddingId: returnWeddingId,
+                      weddingSnapshot: returnWeddingSnapshot,
+                      source: 'returnFlow'
+                    })}
+                    style={styles.successButton}
+                  />
+                ) : null}
+              </>
+            ) : (
+              <>
+                {returnToWedding && returnWeddingId ? (
+                  <AppButton
+                    title="חזרה לפרטי החתונה"
+                    onPress={() => navigation.navigate('JoinWedding', {
+                      weddingId: returnWeddingId,
+                      weddingSnapshot: returnWeddingSnapshot,
+                      source: 'returnFlow'
+                    })}
+                    style={styles.successButton}
+                  />
+                ) : null}
+                <AppButton
+                  title="מעבר לפרופיל שלי"
+                  onPress={() => navigation.navigate('Profile')}
+                  style={styles.successButton}
+                />
+                <AppButton
+                  title="חזרה לדף הבית"
+                  onPress={() => navigation.navigate('Me')}
+                  style={[styles.successButton, styles.successButtonSecondary]}
+                />
+              </>
+            )}
           </View>
         ) : (
           <View style={styles.formCard}>

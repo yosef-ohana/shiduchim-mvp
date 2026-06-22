@@ -38,12 +38,14 @@ import { DiscoverPool, UserWeddingResponse } from '../types/api';
 
 export type MainStackParamList = {
   Me: undefined;
-  Profile: undefined;
+  Profile: { focusSection?: 'profile' | 'photos' | 'full' } | undefined;
   BasicProfile: {
     returnToWedding?: boolean;
     returnWeddingId?: number;
     returnWeddingSnapshot?: UserWeddingResponse;
     source?: 'weddingHub' | 'returnFlow';
+    continueToFullAfterBasic?: boolean;
+    returnToProfile?: boolean;
   } | undefined;
   FullProfile: undefined;
   Photos: {

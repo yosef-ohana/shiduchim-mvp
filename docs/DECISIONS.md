@@ -464,3 +464,24 @@ Phase 18 is officially defined as: **"Hebrew UI Localization & RTL Polish"**
 - **Local Disk Storage**: Custom wedding backgrounds are saved to the server's local storage directory `/uploads` using the project's existing upload serving pattern.
 - **DTO Sharing**: The background URL is included in all standard wedding DTO responses (Admin, User, Validate Access Code) to ensure styling consistency.
 - **Forbidden**: No Cloudinary, Amazon S3, or third-party image hosting services may be used.
+
+---
+
+## 22. Cycle 6 Decisions: Profile and Photos UX improvements
+
+### 22.1 Profile Service Guard
+- **Strict Order Enforcement**: Enforced on the backend that a user cannot save or update their Full Profile questionnaire unless they have already completed and saved their Basic Profile.
+
+### 22.2 Mobile Guided Flow & Onboarding Navigation
+- **Navigation Safety**: Maintained TypeScript safety in main navigation params and state structures.
+- **Guidance Elements**: Added dynamic helper boxes and profile setup instructions on the `MeScreen.tsx` contextually driven by the user's status (`NONE`, `BASIC`, `FULL`).
+- **Flow Progression**: Basic Profile save transitions seamlessly to offer guided options for completing the Full Profile.
+- **Guard and Caution Context**: Added a warning overlay or redirection check on `FullProfileScreen.tsx` to prevent users with `NONE` or `BASIC` status from accessing the full questionnaire prematurely.
+
+### 22.3 Status-Aware ProfileScreen Display
+- **Condition-Based Fields**: Basic profile users must not see empty full profile fields. The display adapts dynamically to the current completion status.
+
+### 22.4 Reusable Profile Photos Manager
+- **Extraction to Reusable Component**: Extracted the core photo uploading, deletion, primary photo selection, and error checking into a modular `ProfilePhotosManager.tsx` component.
+- **Embedding**: Embedded the component directly in the main `ProfileScreen.tsx` to provide a unified editing experience.
+- **PhotosScreen Wrapper**: Preserved `PhotosScreen.tsx` as a functional wrapper around `ProfilePhotosManager.tsx` to prevent breaking existing navigation paths (e.g. from wedding join flows).

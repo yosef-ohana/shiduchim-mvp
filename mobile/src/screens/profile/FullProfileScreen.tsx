@@ -42,7 +42,8 @@ export const FullProfileScreen = ({ navigation }: any) => {
   const [headCovering, setHeadCovering] = useState('');
   const [hasDrivingLicense, setHasDrivingLicense] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [profileStatus, setProfileStatus] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successInfo, setSuccessInfo] = useState<{
@@ -68,6 +69,7 @@ export const FullProfileScreen = ({ navigation }: any) => {
       setFamilyDescription(data.familyDescription || '');
       setHeadCovering(data.headCovering || '');
       setHasDrivingLicense(data.hasDrivingLicense ?? false);
+      setProfileStatus(data.profileStatus);
     } catch (err: any) {
       setErrorMsg(getFriendlyErrorMessage(err, 'טעינת נתוני הפרופיל נכשלה.'));
     } finally {
@@ -121,6 +123,21 @@ export const FullProfileScreen = ({ navigation }: any) => {
     );
   }
 
+  if (profileStatus === 'NONE') {
+    return (
+      <Screen style={styles.centerContainer}>
+        <View style={styles.blockedCard}>
+          <Text style={styles.blockedText}>קודם צריך להשלים פרופיל בסיסי.</Text>
+          <AppButton
+            title="מעבר לפרופיל בסיסי"
+            onPress={() => navigation.navigate('BasicProfile', { continueToFullAfterBasic: true })}
+            style={styles.blockedButton}
+          />
+        </View>
+      </Screen>
+    );
+  }
+
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.container}>
@@ -170,6 +187,13 @@ export const FullProfileScreen = ({ navigation }: any) => {
           </View>
         ) : (
           <View style={styles.formCard}>
+            {profileStatus === 'BASIC' && (
+              <View style={styles.noteCard}>
+                <Text style={styles.noteText}>
+                  לתשומת לבך: ניתן לעצור את מילוי הפרטים בכל שלב. הפרופיל שלך יישאר בסטטוס "פרופיל בסיסי" בלבד, ולא ישתנה לפרופיל מלא עד לשמירת הטופס.
+                </Text>
+              </View>
+            )}
             <AppInput
               label="השכלה"
               placeholder="לדוגמה: ישיבה / מדרשה / תואר אקדמי"
@@ -368,5 +392,43 @@ const styles = StyleSheet.create({
   },
   successButtonSecondary: {
     backgroundColor: '#4A4A4A',
+  },
+  blockedCard: {
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.l,
+    borderRadius: theme.borderRadius.l,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+    width: '90%',
+  },
+  blockedText: {
+    color: theme.colors.text,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: theme.spacing.l,
+  },
+  blockedButton: {
+    width: '100%',
+  },
+  noteCard: {
+    backgroundColor: '#E3F2FD',
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.m,
+    borderWidth: 1,
+    borderColor: '#90CAF9',
+    marginBottom: theme.spacing.m,
+  },
+  noteText: {
+    color: '#0D47A1',
+    fontSize: 14,
+    textAlign: 'right',
+    lineHeight: 20,
   },
 });

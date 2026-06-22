@@ -1062,3 +1062,17 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
   - **E3**: Event Manager reports.
   - **B2**: Deep Link Dev Build verification.
 - **DoD**: Stable builds, TypeScript checks pass, no compiler warnings, docs synced, clean git state.
+
+---
+
+## Cycle 6 — Profile & Photos UX improvements
+
+### Batches 1–5 — Implementation & Unified UX Flow
+- **Goal**: Implement guided basic/full profile onboarding, enforce profile constraints contextually, and embed a reusable photo manager inside the profile view.
+- **Completed Areas**:
+  - **Profile Service Guard**: Blocked saving Full Profile questionnaire before Basic Profile is completed on the backend.
+  - **Mobile Guided Flow**: Added navigation param safety, status-aware callouts/buttons on `MeScreen.tsx` (for `NONE`/`BASIC`/`FULL` profiles), post-save continuation link in `BasicProfileScreen.tsx`, and a guard warning context on `FullProfileScreen.tsx`.
+  - **Status-Aware Profile Display**: Adjusted `ProfileScreen.tsx` layout to hide empty fields for Basic Profile users and display onboarding actions.
+  - **Embedded Photo Management**: Extracted photo logic to `ProfilePhotosManager.tsx` and embedded it directly inside the main `ProfileScreen.tsx` view.
+  - **PhotosScreen Wrapper**: Preserved `PhotosScreen.tsx` as a functional wrapper around the new manager component to protect existing navigation.
+- **DoD**: Compilation successful; mobile TypeScript typechecks pass; unified UX flows operate correctly.

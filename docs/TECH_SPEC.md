@@ -658,3 +658,30 @@ Phase 18 is officially defined as: **"Hebrew UI Localization & RTL Polish"**
   - Extracted DTO updates to expose `backgroundUrl` in all wedding details and validation responses.
   - Implemented `WeddingBackgroundManager.tsx` enabling staff to upload, replace, or delete backgrounds.
   - Rendered background image as screen backdrop on the public `WeddingJoinLandingScreen.tsx`.
+
+## 20. Cycle 6 Additions: Profile and Photos UX improvements
+
+### 20.1 Profile Service Guard
+- **Backend Order Validation**:
+  - Implemented validation in `ProfileService.java` to prevent saving a Full Profile questionnaire before the corresponding Basic Profile has been created/saved.
+
+### 20.2 Mobile Guided Flow & Onboarding Navigation
+- **Navigation Safety & Param Updates**:
+  - Updated screen navigation parameter structures to pass necessary state context safely.
+- **Guidance & Callouts**:
+  - Added dynamic, status-aware helper callout components in `MeScreen.tsx` (for users with `NONE`, `BASIC`, or `FULL` profile states) directing them on their next onboarding steps.
+  - Implemented a post-save continuation button in `BasicProfileScreen.tsx` redirecting to the full questionnaire flow.
+  - Implemented a warning notice and navigation check in `FullProfileScreen.tsx` to prevent access to the full profile if the basic profile is missing.
+
+### 20.3 Status-Aware ProfileScreen Display
+- **Layout Adaptations**:
+  - Updated `ProfileScreen.tsx` to dynamically hide empty full profile questionnaire details for users who have only completed their basic profile.
+  - Rendered intuitive setup calls to action based on user completion state.
+
+### 20.4 Reusable Profile Photos Manager
+- **Component Isolation**:
+  - Extracted the profile photo grids, add/delete mechanisms, and primary photo settings into a reusable `ProfilePhotosManager.tsx` component.
+- **Profile Integration**:
+  - Embedded `ProfilePhotosManager.tsx` directly into the unified `ProfileScreen.tsx` layout.
+- **PhotosScreen Compatibility Wrapper**:
+  - Re-routed `PhotosScreen.tsx` to serve as a wrapper around the `ProfilePhotosManager.tsx` component to retain backward-compatible navigation from wedding join and other flows.

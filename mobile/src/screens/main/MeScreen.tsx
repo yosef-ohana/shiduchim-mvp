@@ -159,23 +159,48 @@ export const MeScreen = ({ navigation }: any) => {
               style={styles.button}
             />
 
-            <AppButton
-              title="השלמת פרופיל בסיסי"
-              onPress={() => navigation.navigate('BasicProfile')}
-              style={styles.button}
-            />
+            {user.profileStatus === 'NONE' && (
+              <View style={styles.guidedCard}>
+                <Text style={styles.guidedTitle}>השלמת הפרופיל שלך</Text>
+                <Text style={styles.guidedText}>
+                  על מנת שתוכל/י להשתלב במאגרים, עליך להשלים את פרטי הפרופיל ותמונה ראשית.
+                </Text>
+                <Text style={styles.guidedBullet}>
+                  • <Text style={styles.boldText}>פרופיל בסיסי + תמונה ראשית</Text> מספיקים על מנת להצטרף ולהופיע במאגר חתונה (מאגר מקומי).
+                </Text>
+                <Text style={styles.guidedBullet}>
+                  • <Text style={styles.boldText}>פרופיל מלא + תמונה ראשית</Text> נדרשים כדי להופיע במאגר הגלובלי לחיפוש כללי.
+                </Text>
 
-            <AppButton 
-              title="השלמת פרופיל מלא" 
-              onPress={() => navigation.navigate('FullProfile')}
-              style={styles.button}
-            />
+                <AppButton
+                  title="פרופיל בסיסי — מתאים למאגר חתונה"
+                  onPress={() => navigation.navigate('BasicProfile')}
+                  style={styles.guidedButton}
+                />
 
-            <AppButton 
-              title="התמונות שלי" 
-              onPress={() => navigation.navigate('Photos')}
-              style={styles.button}
-            />
+                <AppButton
+                  title="פרופיל מלא — מתאים גם למאגר גלובלי"
+                  onPress={() => navigation.navigate('BasicProfile', { continueToFullAfterBasic: true })}
+                  style={[styles.guidedButton, styles.guidedButtonPrimary]}
+                />
+              </View>
+            )}
+
+            {user.profileStatus === 'BASIC' && (
+              <AppButton
+                title="השלם/י לפרופיל מלא"
+                onPress={() => navigation.navigate('FullProfile')}
+                style={styles.button}
+              />
+            )}
+
+            {user.profileStatus === 'FULL_INCOMPLETE_BLOCKED' && (
+              <AppButton
+                title="עריכת פרופיל מלא"
+                onPress={() => navigation.navigate('FullProfile')}
+                style={styles.button}
+              />
+            )}
 
             <AppButton 
               title="החתונות שלי" 
@@ -396,5 +421,49 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.m,
     textAlign: 'center',
     fontWeight: '500',
+  },
+  guidedCard: {
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.l,
+    borderRadius: theme.borderRadius.l,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    marginBottom: theme.spacing.xl,
+  },
+  guidedTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.m,
+    textAlign: 'right',
+  },
+  guidedText: {
+    fontSize: 15,
+    color: theme.colors.text,
+    lineHeight: 22,
+    textAlign: 'right',
+    marginBottom: theme.spacing.s,
+  },
+  guidedBullet: {
+    fontSize: 14,
+    color: theme.colors.text,
+    lineHeight: 20,
+    textAlign: 'right',
+    marginBottom: theme.spacing.s,
+    paddingRight: theme.spacing.s,
+  },
+  guidedButton: {
+    marginTop: theme.spacing.m,
+  },
+  guidedButtonPrimary: {
+    backgroundColor: theme.colors.primary,
+  },
+  boldText: {
+    fontWeight: 'bold',
   },
 });

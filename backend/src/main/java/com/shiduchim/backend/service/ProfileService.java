@@ -100,6 +100,10 @@ public class ProfileService {
     public FullProfileResponse updateFullProfile(User user, FullProfileRequest request) {
         requireUserRole(user);
 
+        if (user.getProfileStatus() == ProfileStatus.NONE || !computeBasicMissingFields(user).isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Basic Profile must be completed before Full Profile");
+        }
+
         // Apply full fields
         user.setEducation(request.getEducation());
         user.setOccupation(request.getOccupation());
