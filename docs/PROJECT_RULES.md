@@ -38,7 +38,6 @@ Do not add:
 - AI
 - match scoring
 - matchmakers
-- opening message
 - real QR
 - real OTP
 - Push
@@ -46,7 +45,7 @@ Do not add:
 - WebSocket
 - realtime chat
 - notifications
-- read receipts / seen / blue checks / readAt per message (Note: internal unread count per conversation & total unread count are allowed in Phase 17 as internal badges only, no read receipts exposed to the other user)
+- read receipts / seen / blue checks / readAt per message (Note: internal unread count per conversation & total unread count are allowed, no read receipts exposed to the other user)
 - attachments
 - heavy reports
 - heavy logs
@@ -54,14 +53,11 @@ Do not add:
 - background jobs
 - full SystemRules
 - full UserStateEvaluator
-- wedding backgrounds
 - broadcast
 - Cloudinary unless later approved
 - advanced filters
 - profile view counter
 - inquiry phone
-- user reports
-- user-to-user blocking
 - complex permission system
 - heavy dashboards
 - extra libraries without approval

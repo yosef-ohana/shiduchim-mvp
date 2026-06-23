@@ -1076,3 +1076,21 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
   - **Embedded Photo Management**: Extracted photo logic to `ProfilePhotosManager.tsx` and embedded it directly inside the main `ProfileScreen.tsx` view.
   - **PhotosScreen Wrapper**: Preserved `PhotosScreen.tsx` as a functional wrapper around the new manager component to protect existing navigation.
 - **DoD**: Compilation successful; mobile TypeScript typechecks pass; unified UX flows operate correctly.
+
+---
+
+## Cycle 7 — Final manual Runtime QA Cycle
+
+### Batches 0–7 — Full Integration Manual Verification
+- **Goal**: Run the final manual Runtime QA cycle to verify Shiduchim MVP+ functionality, stability, and UX polish.
+- **QA Results**: All batches passed successfully. No blockers, crashes, unexpected permissions, duplicate matches, or duplicate opening messages were found. Inactive wedding rules and cross-context boundaries are fully enforced.
+- **Verifications**:
+  - **Batch 0**: Database reset, environment startup, and seed QA data generation.
+  - **Batch 1**: Profile basic vs full guided onboarding flow, backend profile status checks, and embedded profile photo manager verification.
+  - **Batch 2**: Cross-context Like/Dislike/Freeze decisions and active match-hiding behaviors.
+  - **Batch 3**: Pre-match opening message sandbox, inbox/sent views, and reply match-conversion confirmation flow.
+  - **Batch 4**: Event Manager/Admin participant management dedicated views, non-owner restrictions, and user block rules.
+  - **Batch 5**: Closed/Cancelled wedding transition confirmations, background manager modification blocks, and active participant action disables.
+  - **Batch 6**: Admin reports (human-readable sender/reporter details, resolve action) and product feedback management, with focused navigation to AdminUsersScreen.
+  - **Batch 7**: Sanity check (Me screen loads, active discover pools load, matches/chats operate normally, chat before match blocked).
+- **DoD**: All 8 QA batches verified as passed. Backlog of future improvements documented separately.

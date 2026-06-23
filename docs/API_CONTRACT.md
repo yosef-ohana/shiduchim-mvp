@@ -412,7 +412,7 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 |---|---|---|---|---|---|---|
 | POST | `/api/auth/register` | Public | `RegisterRequest` | `AuthResponse` | Creates USER; email unique; gender required for USER; no OTP/email verification/device token | 400, 409 |
 | POST | `/api/auth/login` | Public | `LoginRequest` | `AuthResponse` | Validates email/password; returns token | 400, 401 |
-| POST | `/api/auth/staff-login` | Public | `LoginRequest` | `AuthResponse` | [Phase 15 Planned] Validates credentials and returns token; role must be ADMIN or EVENT_MANAGER | 400, 401, 403 |
+| POST | `/api/auth/staff-login` | Public | `LoginRequest` | `AuthResponse` | Validates credentials and returns token; role must be ADMIN or EVENT_MANAGER | 400, 401, 403 |
 | GET | `/api/users/me` | USER / EVENT_MANAGER / ADMIN | — | `MeResponse` | Returns current authenticated user | 401 |
 
 ---
@@ -447,7 +447,7 @@ No Cloudinary. No soft delete. No `deleted` flag.
 | Method | Path | Role | Request | Response | Rules | Errors |
 |---|---|---|---|---|---|---|
 | POST | `/api/event-manager/weddings` | EVENT_MANAGER / ADMIN | `WeddingCreateRequest` | `WeddingResponse` | Create wedding; accessCode manual or auto-generated; unique | 400, 401, 403, 409 |
-| PUT | `/api/event-manager/weddings/{id}` | EVENT_MANAGER / ADMIN | `WeddingCreateRequest` | `WeddingResponse` | [Phase 15 Planned] Edit wedding details (name, city, weddingDate); owner or ADMIN only | 400, 401, 403, 404 |
+| PUT | `/api/event-manager/weddings/{id}` | EVENT_MANAGER / ADMIN | `WeddingCreateRequest` | `WeddingResponse` | Edit wedding details (name, city, weddingDate); owner or ADMIN only | 400, 401, 403, 404 |
 | GET | `/api/event-manager/weddings` | EVENT_MANAGER / ADMIN | — | `List<WeddingResponse>` | Manager sees own weddings; admin sees admin list | 401, 403 |
 | GET | `/api/event-manager/weddings/{id}` | EVENT_MANAGER / ADMIN | — | `WeddingResponse` | Owner or ADMIN only | 401, 403, 404 |
 | PATCH | `/api/event-manager/weddings/{id}/close` | EVENT_MANAGER / ADMIN | — | `WeddingResponse` | Owner/Admin; status CLOSED | 401, 403, 404 |
@@ -561,8 +561,8 @@ No WebSocket. No realtime. No attachments. (Note: internal unread count per conv
 | PATCH | `/api/admin/users/{userId}/unblock` | ADMIN | — | `AdminUserResponse` | Sets `adminBlocked=false` | 401, 403, 404 |
 | GET | `/api/admin/weddings` | ADMIN | — | `List<AdminWeddingResponse>` | Basic wedding list | 401, 403 |
 | PATCH | `/api/admin/weddings/{weddingId}/assign-self` | ADMIN | — | `WeddingResponse` | Admin assigns self to manage wedding | 401, 403, 404 |
-| PUT | `/api/admin/weddings/{weddingId}/owner` | ADMIN | `{ "ownerUserId": Long }` | `WeddingResponse` | [Phase 15 Planned] Admin assigns Event Manager to wedding | 400, 401, 403, 404 |
-| GET | `/api/admin/dashboard` | ADMIN | — | `AdminDashboardResponse` | [Phase 15 Planned] Returns basic admin dashboard counters | 401, 403 |
+| PUT | `/api/admin/weddings/{weddingId}/owner` | ADMIN | `{ "ownerUserId": Long }` | `WeddingResponse` | Admin assigns Event Manager to wedding | 400, 401, 403, 404 |
+| GET | `/api/admin/dashboard` | ADMIN | — | `AdminDashboardResponse` | Returns basic admin dashboard counters | 401, 403 |
 | GET | `/api/admin/reports` | ADMIN | — | `List<UserReportSummaryResponse>` | List all user reports | 401, 403 |
 | GET | `/api/admin/reports/{reportId}` | ADMIN | — | `UserReportDetailsResponse` | Get details of a specific report | 401, 403, 404 |
 | PATCH | `/api/admin/reports/{reportId}/resolve` | ADMIN | — | Void | Resolve a report | 401, 403, 404 |

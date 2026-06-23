@@ -180,9 +180,7 @@ Constraints:
 - If empty, server generates a short random code.
 - Owner must be EVENT_MANAGER or ADMIN.
 - Only owner or ADMIN can manage wedding.
-- CLOSED/CANCELLED wedding blocks new joins.
-
-Do not add QR, backgrounds, broadcast or reports.
+- CLOSED/CANCELLED wedding blocks new joins, participant management, and background management (Event Manager and Admin cannot upload/delete backgrounds on inactive weddings). Regular users do not receive an active wedding experience for inactive weddings (no Join, no Discover, no active QR/link/invitation text).
 
 ---
 
@@ -203,6 +201,8 @@ Constraints:
 - User can participate in multiple weddings.
 - REMOVED does not appear in that wedding pool.
 - Removal changes status; it does not physically delete the row.
+- Admin can view and manage wedding participants globally. Event Manager owner can view and manage participants for owned weddings. Non-owner Event Manager cannot manage another manager's wedding. Regular users cannot access participant management.
+- Participants are shown in a dedicated screen, not inline inside wedding details. Invites remain in the wedding details screen and are not broken. Participant management is blocked/unavailable for inactive weddings.
 
 ---
 
@@ -398,6 +398,7 @@ No global approval. FULL profile opens global automatically.
 - After Unfreeze, target may return to Discover if still eligible.
 - If there is ACTIVE Match, Dislike/Freeze blocks it.
 - Target is not told whether the user chose Dislike or Freeze.
+- **Cross-Context Actions**: Like, Dislike, and Freeze decisions are treated as user-to-user decisions across contexts. For example, if a user Likes/Dislikes/Freezes someone in a Wedding Discover pool context, that target user is excluded from the viewer's Global Discover pool, and vice versa. Return to Feed removes the user-to-user action and allows the candidate to return to discover feeds according to eligibility.
 
 ---
 
@@ -412,6 +413,7 @@ No global approval. FULL profile opens global automatically.
 - BLOCKED Match is hidden from active Matches.
 - Dislike/Freeze after Match blocks Match and Chat.
 - liked-me hides users who already became ACTIVE Match.
+- **Cross-Context Matches**: An active Match in any context hides both users from each other in both Discover Wedding and Discover Global. It also prevents another Like or Opening Message initiation against the same user. Liked Me does not show a relationship after it has converted into a Match. No duplicate Match can be created.
 
 ---
 
@@ -436,9 +438,7 @@ No global approval. FULL profile opens global automatically.
 ### USER
 
 - Register/Login
-- Basic Profile
-- Full Profile
-- My Photos
+- My Profile (ProfileScreen: unified onboarding and profile center where basic profile, full profile, and photo uploads are managed inline. PhotosScreen exists as a functional wrapper for specific return flows like missing-photo / returnToWedding, but there is no separate "My Photos" button on MeScreen)
 - Join Wedding
 - Pool Selection
 - Discover Cards
@@ -449,7 +449,6 @@ No global approval. FULL profile opens global automatically.
 - Liked Me
 - Matches
 - Chat
-- My Profile
 
 ### EVENT_MANAGER
 
@@ -685,3 +684,17 @@ Phase 18 is officially defined as: **"Hebrew UI Localization & RTL Polish"**
   - Embedded `ProfilePhotosManager.tsx` directly into the unified `ProfileScreen.tsx` layout.
 - **PhotosScreen Compatibility Wrapper**:
   - Re-routed `PhotosScreen.tsx` to serve as a wrapper around the `ProfilePhotosManager.tsx` component to retain backward-compatible navigation from wedding join and other flows.
+
+---
+
+## 21. Final manual Runtime QA Cycle Status
+
+The final manual Runtime QA cycle has passed successfully for the recent Shiduchim MVP+ features (Batches 0–7).
+
+### 21.1 QA Verification Summary
+- **Profile / Photos UX**: Unified Profile UX, onboarding warnings, backend validation order, and embedded photo manager are fully verified. PhotosScreen wrapper is functional.
+- **Cross-Context Actions & Matches**: Like, Dislike, and Freeze are treated as user-to-user decisions globally across contexts. Active matches hide users dynamically in both pools, block opening messages, and prevent new actions.
+- **Opening Messages**: Pre-match isolated sandbox verified. Opener/recipient flow supports inbox/sent list. Message response rules (first reply doesn't create match; second reply/message requires confirmation; confirmation status creates match) are verified. Duplicate messages are blocked.
+- **Participants Management**: Role-based access verified (Admin global; Event Manager owner-only; regular user blocked). Displayed in dedicated screen.
+- **Inactive Weddings**: Inactive status (CLOSED/CANCELLED) blocks joins, participant management, and background updates. Public join cards and invitations warn users.
+- **Admin Reports & Feedback**: Reporter and reported-user details display name and email. ProductFeedback displays sender name/email. Report resolution, feedback status updates, and AdminUsersScreen navigation targeting works as expected. Event Manager cannot access these screens.

@@ -91,7 +91,7 @@ No new stack proposals.
 
 - AI
 - matchmakers
-- opening message
+- opening message (Note: Added in Cycle 3)
 - real QR
 - real OTP
 - Push
@@ -106,15 +106,15 @@ No new stack proposals.
 - jobs
 - full SystemRules
 - full UserStateEvaluator
-- wedding backgrounds
+- wedding backgrounds (Note: Added in Cycle 4)
 - broadcast
 - Cloudinary full integration unless later approved
 - advanced filters
 - match scoring
 - profile view counter
 - inquiry phone
-- user reports
-- user-to-user blocking
+- user reports (Note: Added in Cycle 3)
+- user-to-user blocking (Note: Added in Cycle 3)
 - complex permission system
 - copying old code
 
@@ -163,14 +163,11 @@ No extra MVP entities unless approved.
 Do not add:
 - Notification
 - DeviceToken
-- UserReport
 - LoginAttempt
 - SystemLog
 - SystemRules
 - UserStateEvaluator
 - MatchScore
-- WeddingBackground
-- OpeningMessage
 
 All IDs:
 ```text
@@ -482,6 +479,73 @@ Phase 18 is officially defined as: **"Hebrew UI Localization & RTL Polish"**
 - **Condition-Based Fields**: Basic profile users must not see empty full profile fields. The display adapts dynamically to the current completion status.
 
 ### 22.4 Reusable Profile Photos Manager
-- **Extraction to Reusable Component**: Extracted the core photo uploading, deletion, primary photo selection, and error checking into a modular `ProfilePhotosManager.tsx` component.
+- **Extraction to Reusable Component**: Extracted the profile photo grids, add/delete mechanisms, and primary photo settings into a reusable `ProfilePhotosManager.tsx` component.
 - **Embedding**: Embedded the component directly in the main `ProfileScreen.tsx` to provide a unified editing experience.
 - **PhotosScreen Wrapper**: Preserved `PhotosScreen.tsx` as a functional wrapper around `ProfilePhotosManager.tsx` to prevent breaking existing navigation paths (e.g. from wedding join flows).
+
+### 22.5 Profile Screen Integration & QA
+- **Unified Profile UX**: ProfileScreen is now the center of the USER profile experience. Basic profile, full profile, and photos are presented as one clear user experience. Behind the scenes, the existing BasicProfileScreen, FullProfileScreen, and PhotosScreen flows remain available so existing navigation is not broken. Full Profile is treated as an extension of Basic Profile, and the backend prevents saving Full Profile before Basic Profile is completed. The final manual Runtime QA for this profile UX merge has now passed.
+
+---
+
+## 23. Final manual Runtime QA Cycle & Backlog Decisions
+
+### 23.1 Final manual Runtime QA Cycle Status
+The final manual Runtime QA cycle for the recent Shiduchim MVP+ additions and polish work has been completed. All batches (0–7) passed exactly as expected:
+- **Batch 0 — DB reset, environment startup, and QA data creation**: PASSED
+- **Batch 1 — Profile / Basic / Full / Photos / Eligibility Runtime**: PASSED
+- **Batch 2 — cross-context UserAction + Match + Lists**: PASSED
+- **Batch 3 — Opening Messages from Discover and from Lists**: PASSED
+- **Batch 4 — Admin / Event Manager Participants**: PASSED
+- **Batch 5 — CLOSED / CANCELLED Wedding + Background + Confirmation**: PASSED
+- **Batch 6 — Admin Reports / ProductFeedback / Admin Navigation**: PASSED
+- **Batch 7 — final Sanity**: PASSED
+
+**QA Status Summary:**
+- All batches passed.
+- No blockers were found.
+- No crashes were found.
+- No unexpected permissions were found.
+- No Chat before Match.
+- No duplicate Match.
+- No inconsistent Discover behavior.
+- No duplicate Opening Message.
+- No inactive wedding behaving as active.
+
+**Verified QA Wedding Access Codes:**
+- Active QA wedding: "חתונת QA ליטושים פעילה" — accessCode 1111
+- Closed/cancelled QA wedding: "חתונת QA ליטושים לסגירה" — accessCode 5555
+
+### 23.2 Backlog & Future UX Improvements (Out of MVP Scope)
+These are collected future improvements and are NOT implemented at this stage. They remain in the backlog:
+- **Profile / Onboarding**:
+  - Add a "Join Wedding" button from "My Weddings".
+  - After account creation, guide the user directly into profile completion.
+  - Make Full Profile completion feel like one continuous flow: Basic fields, Full fields, and photo area.
+  - Use one "Edit Profile" flow that adapts to current profile status.
+  - BASIC users should see editable Basic fields and a "Complete Full Profile" button.
+  - FULL users should see all editable profile fields.
+- **Opening Messages**:
+  - Allow sending an Opening Message from "Liked Me" to a user who already liked me, before deciding whether to return Like and create Match.
+- **Participants / Wedding Users**:
+  - Allow Admin to invite a new wedding participant by full name and email, like Event Manager can.
+  - Add that invite option inside the Wedding Participants management screen.
+  - Allow Admin / Event Manager to click a participant and view the full user profile.
+  - From participant details, allow block/remove from a wedding.
+  - Allow choosing which wedding to remove the user from.
+  - Allow undoing that block/removal.
+- **Admin / Event Manager User Visibility**:
+  - Wherever Admin / Event Manager can see users, they should be able to click a user and see the full profile/details.
+  - From that user detail view, allow blocking/removing from a wedding with a specific wedding selector.
+  - Allow cancelling that block/removal.
+- **Wedding Admin UX**:
+  - Show the responsible Event Manager name in Admin wedding screens instead of only ownerId.
+  - In wedding details, clearly show which Event Manager owns the wedding.
+  - Disable assigning the same Event Manager again to the same wedding.
+  - Allow assigning a different Event Manager or the Admin itself where the current product supports it.
+  - Allow restoring CLOSED / CANCELLED weddings back to ACTIVE with all data and participants.
+  - For CLOSED / CANCELLED weddings, show a clear status message and disable actions until restored.
+  - Add a permanent delete option for closed/cancelled weddings, where the wedding disappears from all lists, while users remain in the system.
+- **Reports / ProductFeedback**:
+  - Add a "My Requests" screen for users, showing submitted feedback/history and status such as NEW / IN_PROGRESS / RESOLVED.
+  - In Admin feedback screens, show the user's name, not only userId.
