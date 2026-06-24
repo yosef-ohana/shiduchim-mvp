@@ -518,13 +518,6 @@ The final manual Runtime QA cycle for the recent Shiduchim MVP+ additions and po
 
 ### 23.2 Backlog & Future UX Improvements (Out of MVP Scope)
 These are collected future improvements and are NOT implemented at this stage. They remain in the backlog:
-- **Profile / Onboarding**:
-  - Add a "Join Wedding" button from "My Weddings".
-  - After account creation, guide the user directly into profile completion.
-  - Make Full Profile completion feel like one continuous flow: Basic fields, Full fields, and photo area.
-  - Use one "Edit Profile" flow that adapts to current profile status.
-  - BASIC users should see editable Basic fields and a "Complete Full Profile" button.
-  - FULL users should see all editable profile fields.
 - **Opening Messages**:
   - Allow sending an Opening Message from "Liked Me" to a user who already liked me, before deciding whether to return Like and create Match.
 - **Participants / Wedding Users**:
@@ -549,3 +542,24 @@ These are collected future improvements and are NOT implemented at this stage. T
 - **Reports / ProductFeedback**:
   - Add a "My Requests" screen for users, showing submitted feedback/history and status such as NEW / IN_PROGRESS / RESOLVED.
   - In Admin feedback screens, show the user's name, not only userId.
+
+---
+
+## 24. Development Cycle 1 Decisions: Enhanced Onboarding and Profile UX
+
+### 24.1 Post-Registration Onboarding
+- **Auto-Redirect to Profile**: Upon successful registration, the mobile application sets a temporary `justRegistered` state in `AuthContext` and automatically redirects the new regular user to the `ProfileScreen`.
+- **Pre-Onboarding Guidance**: Users with a profile status of `NONE` are presented with a clear Hebrew explanation on `ProfileScreen` details, explaining the requirements and differences between Basic and Full profile tiers, and highlighting the primary photo requirement to be eligible for matchmaking pools.
+
+### 24.2 Guided Onboarding Flow
+- **Basic -> Full -> Photos Flow**: A continuous guided flow is established.
+  - Basic Profile creation features a conditional call-to-action button to transition to the Full Profile.
+  - Full Profile creation features a conditional call-to-action to proceed directly to Photo Uploads.
+  - Route navigation parameters (`continueToFullAfterBasic` and `continueToPhotosAfterFull`) ensure the flow is focused and sequential.
+
+### 24.3 Unified Edit Profile UX
+- **Merged Profile Screen**: Photos are presented as an integral part of the profile screen via the embedded `ProfilePhotosManager` component.
+- **Two-Photo UI Enforcement**: The upload button is disabled/hidden and a message is displayed when two photos are uploaded, explaining the two-photo limit, while preserving backend enforcement.
+
+### 24.4 My Weddings CTA
+- **Clear Join Action**: Added a clear "הצטרפות לחתונה" CTA button in both empty and populated states of the My Weddings screen that navigates to the existing `JoinWedding` route.

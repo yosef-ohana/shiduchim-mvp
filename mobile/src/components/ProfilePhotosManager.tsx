@@ -49,6 +49,9 @@ export const ProfilePhotosManager: React.FC<ProfilePhotosManagerProps> = ({ onPh
   };
 
   const handlePickAndUpload = async () => {
+    if (photos.length >= 2) {
+      return;
+    }
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('הרשאה נדחתה', 'סליחה, אנו זקוקים להרשאת גישה לגלריית התמונות כדי להמשיך!');
@@ -110,7 +113,8 @@ export const ProfilePhotosManager: React.FC<ProfilePhotosManagerProps> = ({ onPh
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>התמונות שלי</Text>
+      <Text style={styles.title}>תמונות הפרופיל</Text>
+      <Text style={styles.helperText}>תמונה ראשית נדרשת כדי להופיע במאגרים.</Text>
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -153,8 +157,12 @@ export const ProfilePhotosManager: React.FC<ProfilePhotosManagerProps> = ({ onPh
         title="בחירת והעלאת תמונה"
         onPress={handlePickAndUpload}
         loading={actionLoading}
+        disabled={photos.length >= 2}
         style={styles.uploadButton}
       />
+      {photos.length >= 2 && (
+        <Text style={styles.limitText}>הגעת לגבול המקסימלי של 2 תמונות. לא ניתן להעלות תמונות נוספות.</Text>
+      )}
     </View>
   );
 };
@@ -240,5 +248,18 @@ const styles = StyleSheet.create({
   },
   uploadButton: {
     marginTop: theme.spacing.s,
+  },
+  helperText: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: theme.spacing.m,
+  },
+  limitText: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    marginTop: theme.spacing.s,
+    fontWeight: '500',
   },
 });

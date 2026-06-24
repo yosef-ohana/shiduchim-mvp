@@ -20,10 +20,12 @@ const getProfileStatusLabel = (status: string) => {
   }
 };
 
-export const ProfileScreen = ({ navigation }: any) => {
+export const ProfileScreen = ({ navigation, route }: any) => {
+  const focusSection = route?.params?.focusSection;
   const [profile, setProfile] = useState<ProfileMeResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showEditChoices, setShowEditChoices] = useState(false);
 
   const fetchProfile = async () => {
     try {
@@ -40,6 +42,7 @@ export const ProfileScreen = ({ navigation }: any) => {
   useFocusEffect(
     useCallback(() => {
       fetchProfile();
+      setShowEditChoices(false);
     }, [])
   );
 
@@ -135,14 +138,27 @@ export const ProfileScreen = ({ navigation }: any) => {
         {/* Case NONE: show guidance card to complete Basic Profile */}
         {status === 'NONE' && (
           <View style={styles.guidedCard}>
-            <Text style={styles.guidedTitle}>בניית פרופיל בסיסי</Text>
+            <Text style={styles.guidedTitle}>השלמת הפרופיל שלך</Text>
             <Text style={styles.guidedText}>
-              על מנת שתוכל/י להשתמש באפליקציה ולהשתלב במאגרים, עליך להגדיר תחילה את פרטי הפרופיל הבסיסיים שלך.
+              כדי להשתמש במאגרים צריך להשלים פרופיל ותמונה ראשית. תמונה ראשית היא חלק מתנאי הזכאות למאגרים.
             </Text>
+            <Text style={styles.guidedBullet}>
+              • <Text style={styles.boldText}>פרופיל בסיסי + תמונה ראשית</Text> מאפשרים שימוש במאגרי חתונה (מאגר מקומי).
+            </Text>
+            <Text style={styles.guidedBullet}>
+              • <Text style={styles.boldText}>פרופיל מלא</Text> כולל קודם את הפרופיל הבסיסי, ויחד עם תמונה ראשית מאפשר גם את המאגר הגלובלי.
+            </Text>
+
             <AppButton
-              title="התחל/י בניית פרופיל בסיסי"
+              title="התחלה מהירה: פרופיל בסיסי"
               onPress={() => navigation.navigate('BasicProfile')}
               style={styles.guidedButton}
+            />
+
+            <AppButton
+              title="מסלול מלא: פרופיל בסיסי ואז מלא"
+              onPress={() => navigation.navigate('BasicProfile', { continueToFullAfterBasic: true })}
+              style={[styles.guidedButton, styles.guidedButtonPrimary]}
             />
           </View>
         )}
@@ -206,33 +222,67 @@ export const ProfileScreen = ({ navigation }: any) => {
         {/* Photos Info Section (shown to BASIC, FULL, FULL_INCOMPLETE_BLOCKED) */}
         {status !== 'NONE' && (
           <View style={styles.section}>
+            {focusSection === 'photos' && (
+              <View style={styles.photosGuidanceCard}>
+                <Text style={styles.photosGuidanceTitle}>השלב הבא: העלאת תמונה ראשית</Text>
+                <Text style={styles.photosGuidanceText}>
+                  תמונה ראשית נדרשת כדי להופיע במאגרי החתונה ובמאגר הגלובלי לפי זכאות הפרופיל.
+                </Text>
+              </View>
+            )}
             <ProfilePhotosManager onPhotosChanged={fetchProfile} />
           </View>
         )}
 
         {/* Navigation CTAs / Action Buttons */}
         {status === 'BASIC' && (
-          <AppButton
-            title="השלם/י לפרופיל מלא"
-            onPress={() => navigation.navigate('FullProfile')}
-            style={[styles.button, styles.primaryCtaButton]}
-          />
-        )}
-
-        {status !== 'NONE' && (
           <>
             <AppButton
-              title="עריכת פרופיל בסיסי"
+              title="עריכת פרופיל"
               onPress={() => navigation.navigate('BasicProfile')}
               style={styles.button}
             />
+            <AppButton
+              title="השלמה לפרופיל מלא"
+              onPress={() => navigation.navigate('FullProfile')}
+              style={[styles.button, styles.primaryCtaButton]}
+            />
+          </>
+        )}
 
-            {(status === 'FULL' || status === 'FULL_INCOMPLETE_BLOCKED') && (
+        {(status === 'FULL' || status === 'FULL_INCOMPLETE_BLOCKED') && (
+          <>
+            {!showEditChoices ? (
               <AppButton
-                title="עריכת פרופיל מלא"
-                onPress={() => navigation.navigate('FullProfile')}
-                style={[styles.button, styles.secondaryButton]}
+                title="עריכת פרופיל"
+                onPress={() => setShowEditChoices(true)}
+                style={styles.button}
               />
+            ) : (
+              <View style={styles.editChoicesContainer}>
+                <AppButton
+                  title="עריכת פרטים בסיסיים"
+                  onPress={() => {
+                    setShowEditChoices(false);
+                    navigation.navigate('BasicProfile');
+                  }}
+                  style={styles.button}
+                />
+                <AppButton
+                  title="עריכת פרטים מלאים"
+                  onPress={() => {
+                    setShowEditChoices(false);
+                    navigation.navigate('FullProfile');
+                  }}
+                  style={[styles.button, styles.secondaryButton]}
+                />
+                <AppButton
+                  title="ביטול"
+                  onPress={() => setShowEditChoices(false)}
+                  variant="secondary"
+                  style={styles.button}
+                />
+              </View>
             )}
           </>
         )}
@@ -375,10 +425,24 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     lineHeight: 20,
     textAlign: 'right',
-    marginBottom: theme.spacing.m,
+    marginBottom: theme.spacing.s,
+  },
+  guidedBullet: {
+    fontSize: 14,
+    color: theme.colors.text,
+    lineHeight: 20,
+    textAlign: 'right',
+    marginBottom: theme.spacing.s,
+    paddingRight: theme.spacing.s,
+  },
+  boldText: {
+    fontWeight: 'bold',
   },
   guidedButton: {
-    marginTop: theme.spacing.s,
+    marginTop: theme.spacing.m,
+  },
+  guidedButtonPrimary: {
+    backgroundColor: theme.colors.primary,
   },
   warningCard: {
     backgroundColor: theme.colors.surface,
@@ -416,5 +480,29 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginRight: theme.spacing.s,
     lineHeight: 20,
+  },
+  photosGuidanceCard: {
+    backgroundColor: '#E8F5E9',
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.m,
+    borderWidth: 1,
+    borderColor: '#C8E6C9',
+    marginBottom: theme.spacing.m,
+  },
+  photosGuidanceTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2E7D32',
+    marginBottom: 4,
+    textAlign: 'right',
+  },
+  photosGuidanceText: {
+    fontSize: 14,
+    color: theme.colors.text,
+    lineHeight: 20,
+    textAlign: 'right',
+  },
+  editChoicesContainer: {
+    width: '100%',
   },
 });

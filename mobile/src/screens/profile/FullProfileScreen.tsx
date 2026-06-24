@@ -31,8 +31,9 @@ const translateFieldName = (field: string) => {
   }
 };
 
-export const FullProfileScreen = ({ navigation }: any) => {
+export const FullProfileScreen = ({ navigation, route }: any) => {
   const { refreshMe } = useAuth();
+  const continueToPhotosAfterFull = route.params?.continueToPhotosAfterFull;
   const [education, setEducation] = useState('');
   const [occupation, setOccupation] = useState('');
   const [selfDescription, setSelfDescription] = useState('');
@@ -174,16 +175,43 @@ export const FullProfileScreen = ({ navigation }: any) => {
               <Text style={styles.successDetails}>כל השדות הושלמו!</Text>
             )}
 
-            <AppButton
-              title="מעבר לפרופיל שלי"
-              onPress={() => navigation.navigate('Profile')}
-              style={styles.successButton}
-            />
-            <AppButton
-              title="חזרה לדף הבית"
-              onPress={() => navigation.navigate('Me')}
-              style={[styles.successButton, styles.successButtonSecondary]}
-            />
+            {continueToPhotosAfterFull ? (
+              <>
+                <View style={{ marginVertical: theme.spacing.m, width: '100%' }}>
+                  <Text style={[styles.successDetails, { fontWeight: 'bold', fontSize: 16, color: '#2E7D32' }]}>
+                    כדי להופיע במאגרים צריך להעלות תמונה ראשית.
+                  </Text>
+                </View>
+                <AppButton
+                  title="המשך להעלאת תמונה ראשית"
+                  onPress={() => navigation.navigate('Profile', { focusSection: 'photos' })}
+                  style={styles.successButton}
+                />
+                <AppButton
+                  title="מעבר לפרופיל שלי"
+                  onPress={() => navigation.navigate('Profile')}
+                  style={[styles.successButton, styles.successButtonSecondary]}
+                />
+                <AppButton
+                  title="חזרה לדף הבית"
+                  onPress={() => navigation.navigate('Me')}
+                  style={[styles.successButton, styles.successButtonSecondary]}
+                />
+              </>
+            ) : (
+              <>
+                <AppButton
+                  title="מעבר לפרופיל שלי"
+                  onPress={() => navigation.navigate('Profile')}
+                  style={styles.successButton}
+                />
+                <AppButton
+                  title="חזרה לדף הבית"
+                  onPress={() => navigation.navigate('Me')}
+                  style={[styles.successButton, styles.successButtonSecondary]}
+                />
+              </>
+            )}
           </View>
         ) : (
           <View style={styles.formCard}>

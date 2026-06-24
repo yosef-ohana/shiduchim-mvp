@@ -1094,3 +1094,47 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
   - **Batch 6**: Admin reports (human-readable sender/reporter details, resolve action) and product feedback management, with focused navigation to AdminUsersScreen.
   - **Batch 7**: Sanity check (Me screen loads, active discover pools load, matches/chats operate normally, chat before match blocked).
 - **DoD**: All 8 QA batches verified as passed. Backlog of future improvements documented separately.
+
+---
+
+## Development Cycle 8 (Development Cycle 1: Onboarding, Unified Profile and My Weddings CTA)
+
+### Batch 0 — Pre-flight snapshot and baseline checks
+- **Goal**: Establish a baseline code and project state compile snapshot.
+- **Scope**: Run static analysis, verify Maven compile on backend, and run TypeScript check on mobile.
+- **DoD**: Clean compile status, git state snapshotted, all base tests pass.
+
+### Batch 1 — My Weddings CTA Button
+- **Goal**: Add Join Wedding CTA to My Weddings screen.
+- **Scope**: Add Hebrew "הצטרפות לחתונה" CTA button in both empty and populated states inside `MyWeddingsScreen.tsx` redirecting users to the existing `JoinWedding` route.
+- **DoD**: CTA button rendered, functional, and navigates successfully.
+
+### Batch 2 — Post-Registration Onboarding
+- **Goal**: Redirect new users to profile guidance after registration.
+- **Scope**:
+  - Implement a `justRegistered` state in `AuthContext.tsx` set upon registration.
+  - Redirect new regular users to `ProfileScreen.tsx` immediately after registration.
+  - Render clear Hebrew explanations of eligibility requirements (Basic/Full profile, primary photo) for users with `NONE` profile status.
+- **DoD**: New registered users land on profile screen with Israel/Hebrew guidelines.
+
+### Batch 3 — Guided Onboarding Flow
+- **Goal**: Implement Basic -> Full -> Photos onboarding flow.
+- **Scope**:
+  - Add call-to-actions in profile completion screens.
+  - Route navigation params (`continueToFullAfterBasic` and `continueToPhotosAfterFull`) to guide user through basic, full, and photo stages.
+- **DoD**: Complete sequential onboarding flow validated on mobile screens.
+
+### Batch 4 — Unified Edit Profile UX
+- **Goal**: Unify edit profile and photo manager views.
+- **Scope**:
+  - Embed `ProfilePhotosManager.tsx` directly in `ProfileScreen.tsx`.
+  - Disable and explain third photo uploads in mobile UI (limit of exactly 2 photos), maintaining backend validation.
+- **DoD**: Photos editable inline on the profile screen with a 2-photo maximum limit check.
+
+### Batch 5 — Final QA, Docs-if-needed, Cleanup
+- **Goal**: Run compiler verification, clean repo, update documentation, and prepare user QA reports.
+- **Scope**:
+  - Verify Maven and TypeScript compilation.
+  - Update `DECISIONS.md`, `TECH_SPEC.md`, and `BATCH_PLAN.md`.
+  - Check repository for unwanted files and verify git clean state.
+- **DoD**: Verification completed successfully; documentation up to date.

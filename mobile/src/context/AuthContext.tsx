@@ -14,6 +14,8 @@ interface AuthContextData {
   staffLogin: (data: StaffLoginRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshMe: () => Promise<void>;
+  justRegistered: boolean;
+  consumeJustRegistered: () => void;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -22,6 +24,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<MeResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [justRegistered, setJustRegistered] = useState(false);
+
+  const consumeJustRegistered = React.useCallback(() => {
+    setJustRegistered(false);
+  }, []);
 
   useEffect(() => {
     bootstrapAuth();
@@ -74,6 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
       
+      setJustRegistered(true);
       await refreshMe();
     } catch (e: any) {
       throw new Error(e.response?.data?.message || 'Registration failed');
@@ -130,7 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, register, staffLogin, logout, refreshMe }}>
+    <AuthContext.Provider value={{ user, loading, error, login, register, staffLogin, logout, refreshMe, justRegistered, consumeJustRegistered }}>
       {children}
     </AuthContext.Provider>
   );

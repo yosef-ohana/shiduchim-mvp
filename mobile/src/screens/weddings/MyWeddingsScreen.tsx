@@ -9,6 +9,8 @@ import { getWeddingStatusLabel, getParticipantStatusLabel, formatDisplayDate } f
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { getWeddingReadiness } from '../../utils/weddingReadiness';
+import { AppButton } from '../../components/AppButton';
+
 
 export const MyWeddingsScreen = () => {
   const navigation = useNavigation<any>();
@@ -177,19 +179,26 @@ export const MyWeddingsScreen = () => {
             <Text style={styles.errorText}>{errorMsg}</Text>
           </View>
         ) : (
-          <FlatList
-            data={weddings}
-            keyExtractor={(item) => item.weddingId.toString()}
-            renderItem={renderItem}
-            contentContainerStyle={styles.list}
-            refreshing={loading}
-            onRefresh={fetchWeddings}
-            ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>עדיין לא הצטרפת לאף חתונה.</Text>
-              </View>
-            }
-          />
+          <>
+            <FlatList
+              data={weddings}
+              keyExtractor={(item) => item.weddingId.toString()}
+              renderItem={renderItem}
+              contentContainerStyle={styles.list}
+              refreshing={loading}
+              onRefresh={fetchWeddings}
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>עדיין לא הצטרפת לאף חתונה.</Text>
+                </View>
+              }
+            />
+            <AppButton
+              title="הצטרפות לחתונה"
+              onPress={() => navigation.navigate('JoinWedding')}
+              style={styles.joinButton}
+            />
+          </>
         )}
       </View>
     </Screen>
@@ -312,5 +321,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: theme.colors.textSecondary,
     textAlign: 'center',
+  },
+  joinButton: {
+    marginTop: theme.spacing.m,
+    marginBottom: theme.spacing.s,
   },
 });

@@ -163,23 +163,23 @@ export const MeScreen = ({ navigation }: any) => {
               <View style={styles.guidedCard}>
                 <Text style={styles.guidedTitle}>השלמת הפרופיל שלך</Text>
                 <Text style={styles.guidedText}>
-                  על מנת שתוכל/י להשתלב במאגרים, עליך להשלים את פרטי הפרופיל ותמונה ראשית.
+                  כדי להשתמש במאגרים צריך להשלים פרופיל ותמונה ראשית. תמונה ראשית היא חלק מתנאי הזכאות למאגרים.
                 </Text>
                 <Text style={styles.guidedBullet}>
-                  • <Text style={styles.boldText}>פרופיל בסיסי + תמונה ראשית</Text> מספיקים על מנת להצטרף ולהופיע במאגר חתונה (מאגר מקומי).
+                  • <Text style={styles.boldText}>פרופיל בסיסי + תמונה ראשית</Text> מאפשרים שימוש במאגרי חתונה (מאגר מקומי).
                 </Text>
                 <Text style={styles.guidedBullet}>
-                  • <Text style={styles.boldText}>פרופיל מלא + תמונה ראשית</Text> נדרשים כדי להופיע במאגר הגלובלי לחיפוש כללי.
+                  • <Text style={styles.boldText}>פרופיל מלא</Text> כולל קודם את הפרופיל הבסיסי, ויחד עם תמונה ראשית מאפשר גם את המאגר הגלובלי.
                 </Text>
 
                 <AppButton
-                  title="פרופיל בסיסי — מתאים למאגר חתונה"
+                  title="פרופיל בסיסי — מתאים למאגרי חתונה"
                   onPress={() => navigation.navigate('BasicProfile')}
                   style={styles.guidedButton}
                 />
 
                 <AppButton
-                  title="פרופיל מלא — מתאים גם למאגר גלובלי"
+                  title="פרופיל מלא — מתאים גם למאגר הגלובלי"
                   onPress={() => navigation.navigate('BasicProfile', { continueToFullAfterBasic: true })}
                   style={[styles.guidedButton, styles.guidedButtonPrimary]}
                 />

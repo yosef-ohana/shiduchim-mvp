@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useAuth } from '../context/AuthContext';
 import { MeScreen } from '../screens/main/MeScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { BasicProfileScreen } from '../screens/profile/BasicProfileScreen';
@@ -47,7 +48,9 @@ export type MainStackParamList = {
     continueToFullAfterBasic?: boolean;
     returnToProfile?: boolean;
   } | undefined;
-  FullProfile: undefined;
+  FullProfile: {
+    continueToPhotosAfterFull?: boolean;
+  } | undefined;
   Photos: {
     returnToWedding?: boolean;
     returnWeddingId?: number;
@@ -98,8 +101,18 @@ export type MainStackParamList = {
 const Stack = createNativeStackNavigator<MainStackParamList>();
 
 export const MainStack = () => {
+  const { user, justRegistered, consumeJustRegistered } = useAuth();
+
+  useEffect(() => {
+    if (justRegistered && user?.role === 'USER') {
+      consumeJustRegistered();
+    }
+  }, [justRegistered, user, consumeJustRegistered]);
+
+  const initialRoute = (justRegistered && user?.role === 'USER') ? 'Profile' : 'Me';
+
   return (
-    <Stack.Navigator screenOptions={{ headerTitle: 'שידוכים MVP' }}>
+    <Stack.Navigator screenOptions={{ headerTitle: 'שידוכים MVP' }} initialRouteName={initialRoute}>
       <Stack.Screen name="Me" component={MeScreen} options={{ title: 'האזור שלי' }} />
       <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'הפרופיל שלי' }} />
       <Stack.Screen name="BasicProfile" component={BasicProfileScreen} options={{ title: 'פרופיל בסיסי' }} />

@@ -165,7 +165,7 @@ export const BasicProfileScreen = ({ navigation, route }: any) => {
                 </View>
                 <AppButton
                   title="המשך למילוי פרופיל מלא"
-                  onPress={() => navigation.navigate('FullProfile')}
+                  onPress={() => navigation.navigate('FullProfile', { continueToPhotosAfterFull: true })}
                   style={styles.successButton}
                 />
                 <AppButton
@@ -228,7 +228,7 @@ export const BasicProfileScreen = ({ navigation, route }: any) => {
                 </Text>
               </View>
               <Text style={styles.lockedFieldNotice}>
-                לא ניתן לשנות מגדר לאחר יצירת הפרופיל. אם יש בעיה, פנה/י לאדמין.
+                המגדר נקבע בהרשמה ואינו ניתן לעריכה כרגע. אם יש בעיה, פנה/י לאדמין.
               </Text>
             </View>
 

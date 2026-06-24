@@ -698,3 +698,29 @@ The final manual Runtime QA cycle has passed successfully for the recent Shiduch
 - **Participants Management**: Role-based access verified (Admin global; Event Manager owner-only; regular user blocked). Displayed in dedicated screen.
 - **Inactive Weddings**: Inactive status (CLOSED/CANCELLED) blocks joins, participant management, and background updates. Public join cards and invitations warn users.
 - **Admin Reports & Feedback**: Reporter and reported-user details display name and email. ProductFeedback displays sender name/email. Report resolution, feedback status updates, and AdminUsersScreen navigation targeting works as expected. Event Manager cannot access these screens.
+
+---
+
+## 22. Development Cycle 1: Onboarding, Unified Profile and My Weddings CTA
+
+### 22.1 Post-Registration Onboarding
+- **AuthContext and Redirect**:
+  - Implemented `justRegistered` state in `AuthContext.tsx` when a user registers successfully.
+  - The login/onboarding flow checks `justRegistered` to perform an immediate navigation redirect to the `Profile` screen.
+- **Israel/Hebrew Guidance**:
+  - Added structured Hebrew guidance to `ProfileScreen.tsx` specifically tailored for new users (`NONE` profile status) to clarify eligibility conditions for Basic and Full tiers, emphasizing that a primary photo is mandatory for the global pool.
+
+### 22.2 Guided Onboarding Flow
+- **Basic -> Full -> Photos Flow**:
+  - Wired `BasicProfileScreen.tsx` to check route params for `continueToFullAfterBasic` and render a clear progression call-to-action button to navigate directly to the Full Profile questionnaire.
+  - Wired `FullProfileScreen.tsx` to check route params for `continueToPhotosAfterFull` and render a clear call-to-action to navigate directly to the unified `ProfileScreen` photo upload area.
+
+### 22.3 Unified Profile & Photo Management
+- **Integrated View**:
+  - Integrated `ProfilePhotosManager.tsx` directly into the bottom of `ProfileScreen.tsx` so users can edit their questionnaire fields and view/manage their photos on a single unified screen.
+- **Two-Photo Cap**:
+  - Updated the mobile photo manager UI to limit users to exactly two photos. When two photos exist, the photo upload controls are hidden/disabled, showing a Hebrew tip text explaining the limit.
+
+### 22.4 My Weddings CTA
+- **Clear Join Action**:
+  - Added a prominent Hebrew "הצטרפות לחתונה" CTA button in both empty and populated states inside `MyWeddingsScreen.tsx` directing the user to the existing `JoinWedding` route.
