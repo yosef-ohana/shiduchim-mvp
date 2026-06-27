@@ -1138,3 +1138,61 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
   - Update `DECISIONS.md`, `TECH_SPEC.md`, and `BATCH_PLAN.md`.
   - Check repository for unwanted files and verify git clean state.
 - **DoD**: Verification completed successfully; documentation up to date.
+
+---
+
+## Development Cycle 9 (Development Cycle 2: Opening Message Support from Liked Me List)
+
+### Batch 1 — Backend & Mobile DTO Enrichment
+- **Goal**: Expose active opening conversation metadata to regular users checking their Liked Me list.
+- **Scope**:
+  - Enrich `LikedMeItemResponse` backend DTO with fields (hasOpenOpeningConversation, openingConversationId, openingConversationDirection, openingConversationStatus).
+  - Update `ListsService` to query `OpeningConversationRepository` and populate metadata.
+- **DoD**: Compilation successful; metadata returns correctly in list response.
+
+### Batch 2 — Mobile Liked Me Action Button
+- **Goal**: Render an "Opening Message" button in the Liked Me tab.
+- **Scope**:
+  - Update React Native type interfaces in `api.ts`.
+  - Update `ListsScreen.tsx` to render an actionable button navigating to the pre-match chat detail screen.
+- **DoD**: TypeScript checks pass; users can open pre-match conversations from the Liked Me list.
+
+### Batch 3 — Final QA & Checkpoint
+- **Goal**: Document the changes and perform static checks.
+- **Scope**: Update `DECISIONS.md`, `TECH_SPEC.md`, verify backend compilation, and mobile type-checking.
+- **DoD**: Safe compile and docs updated.
+
+---
+
+## Development Cycle 10 (Development Cycle 3: Staff Participant Details & Restore)
+
+### Batch 1 — Backend Participant Endpoints & DTOs
+- **Goal**: Expose backend endpoints for viewing detailed participant info and restoring removed participants.
+- **Scope**:
+  - Implement controllers: `ParticipantController.java` (Event Manager) and `AdminParticipantController.java` (Admin).
+  - Add `StaffParticipantDetailsResponse` and `StaffParticipantWeddingResponse` DTOs.
+  - Implement methods in `ParticipantService.java` to fetch details and restore status. Enforce active-wedding guards blocking updates on closed or cancelled weddings.
+- **DoD**: Maven compile passes successfully.
+
+### Batch 2 — Mobile Admin Invite UI
+- **Goal**: Add invite form to WeddingParticipantsScreen for admins.
+- **Scope**:
+  - Implement form visible only for role `ADMIN` and active weddings.
+  - Integrate with `adminApi.createInvite`.
+- **DoD**: TypeScript check passes.
+
+### Batch 3 — Mobile Participant Details & Restore UI
+- **Goal**: Create StaffParticipantDetailsScreen and hook up routing and management actions.
+- **Scope**:
+  - Create `StaffParticipantDetailsScreen.tsx` to display info and weddings list.
+  - Add Admin-only block/unblock actions, and role-and-status-dependent remove/restore actions.
+  - Add routing in `MainStack.tsx` and API clients.
+- **DoD**: TypeScript check passes.
+
+### Batch 4 — Final QA, Docs, Cleanup & Push
+- **Goal**: End-to-end documentation review, code cleanup, technical validation, and pushing changes.
+- **Scope**:
+  - Run backend clean compile, mobile TypeScript, git diff checks, and git status.
+  - Update `API_CONTRACT.md`, `TECH_SPEC.md`, `DECISIONS.md`, and `BATCH_PLAN.md`.
+  - Push changes to remote repository.
+- **DoD**: Clean compile, zero junk files, docs up-to-date, commit created and pushed.

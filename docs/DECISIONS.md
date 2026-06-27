@@ -584,3 +584,22 @@ These are collected future improvements and are NOT implemented at this stage. T
 - **Technical Checks**: Backend compile, mobile TypeScript, and git diff checks have successfully passed.
 - **Runtime QA Deferred**: Due to local environment limitations (Docker/Database and mobile emulator runtime unavailable), manual runtime verification was not performed.
 - **Project Status**: This release is committed as a technical development checkpoint. Manual QA is explicitly deferred to the final QA phase following the completion of the broader set of 17 features.
+
+---
+
+## 26. Development Cycle 3 Decisions: Staff Participant Details & Restore
+
+### 26.1 API & Detail Exposure Strategy
+- **Role-Based Details Response**: The details of a participant are returned via `StaffParticipantDetailsResponse`, which exposes both Basic and Full profiles and photos of the participant.
+- **Manageable Weddings List**: The response contains a list of weddings the participant belongs to, but only those weddings that the currently authenticated staff user (Event Manager or Admin) has permission to manage. This prevents unauthorized staff from discovering weddings they do not own or manage.
+- **Separate Endpoints for EM and Admin**: Consistent with the API routing strategy in the codebase, separate controller endpoints under `/api/event-manager` and `/api/admin` handle routing for Event Managers and Admins respectively.
+
+### 26.2 Active Wedding Guards Enforced
+- **Operations Blocked for Closed/Cancelled Weddings**: Inviting, removing, and restoring participants is strictly prohibited on `CLOSED` or `CANCELLED` weddings.
+- **Consistent Response Codes**: If a request to add/remove/restore is made on a closed/cancelled wedding, the API returns a clean HTTP 400 Bad Request or HTTP 403 Forbidden with appropriate error messages.
+
+### 26.3 Mobile UI Access Control
+- **Admin Invite Section**: The invitation form inside `WeddingParticipantsScreen.tsx` is visible only for the `ADMIN` role. Event Managers do not see this form.
+- **Admin Block/Unblock Actions**: The Block/Unblock buttons on `StaffParticipantDetailsScreen.tsx` are visible and active only for the `ADMIN` role.
+- **Action Guardrails**: Event Managers and Admins can only remove or restore participants if the backend returns `canRemove: true` or `canRestore: true` in the list of manageable weddings, preventing invalid action attempts.
+- **No DB, Entity, or Email Changes**: No database schemas, entities, migrations, or email sending logic were introduced.

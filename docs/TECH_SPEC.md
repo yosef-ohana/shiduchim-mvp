@@ -741,3 +741,31 @@ The final manual Runtime QA cycle has passed successfully for the recent Shiduch
   - Updated the "Liked Me" tab in [ListsScreen.tsx](file:///c:/Projects/shiduchim-mvp/mobile/src/screens/lists/ListsScreen.tsx) to render the existing "Opening Message" button using the existing `renderOpeningMessageButton(item)` helper.
   - Clicking the button opens the standard pre-match conversation view (`OpeningConversationDetails`), allowing the user to initiate or respond to an opening conversation.
   - Opening Message is still NOT a Like, and does NOT automatically create a Match or standard Chat until mutual Likes or explicit Match creation/confirmation occurs.
+
+---
+
+## 24. Development Cycle 3: Staff Participant Details & Restore
+
+### 24.1 Backend Endpoints & Service Logic
+- **New Endpoints**:
+  - `GET /api/event-manager/weddings/{id}/participants/{userId}/details` (Event Managers, if owner)
+  - `GET /api/admin/weddings/{weddingId}/participants/{userId}/details` (Admins, global)
+  - `PATCH /api/event-manager/weddings/{id}/participants/{userId}/restore` (Event Managers, if owner)
+  - `PATCH /api/admin/weddings/{weddingId}/participants/{userId}/restore` (Admins, global)
+- **Active-Wedding Guards**:
+  - Hardened checks inside `ParticipantService.java` to prevent invites, removals, or restorations on `CLOSED` or `CANCELLED` weddings.
+- **Backend DTOs**:
+  - `StaffParticipantDetailsResponse.java`: Exposes basic profile details, full profile questionnaire details, photo responses, role/status, block state, permissions (`canAdminBlock`/`canAdminUnblock`), and a list of manageable weddings.
+  - `StaffParticipantWeddingResponse.java`: Represents a wedding the user participates in, with fields `weddingId`, `weddingName`, `weddingStatus`, `participantStatus`, `joinedAt`, `removedAt`, `canRemove`, and `canRestore`.
+
+### 24.2 Mobile Staff Management Views
+- **WeddingParticipantsScreen.tsx**:
+  - Added an invite form at the top, visible only for users with role `ADMIN` and active weddings (`ACTIVE`).
+  - Hooked up navigation to the participant details screen when clicking on a participant.
+- **StaffParticipantDetailsScreen.tsx**:
+  - Displays detailed participant information (Basic profile, Full profile, Photos list, and joined weddings list).
+  - Admin-only block/unblock actions.
+  - Remove/restore actions based on backend permissions (`canRemove`/`canRestore`).
+- **MainStack.tsx & types/api.ts**:
+  - Registered `StaffParticipantDetails` route in mobile navigation.
+  - Added API client Fetch and Restore methods for Admin/Event Managers.

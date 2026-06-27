@@ -3,16 +3,16 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TextInput, 
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
 import { adminApi } from '../../api/adminApi';
-import { 
-  getParticipants as emGetParticipants, 
-  addParticipant as emAddParticipant, 
-  removeParticipant as emRemoveParticipant 
+import {
+  getParticipants as emGetParticipants,
+  addParticipant as emAddParticipant,
+  removeParticipant as emRemoveParticipant
 } from '../../api/eventManagerApi';
 import { ParticipantResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 import { getParticipantStatusLabel, getGenderLabel } from '../../utils/displayLabels';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 
 const getProfileStatusLabel = (status: string) => {
   switch (status) {
@@ -32,13 +32,15 @@ const getProfileStatusLabel = (status: string) => {
 export const WeddingParticipantsScreen = () => {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
-  
+
   const { weddingId, mode, weddingName, weddingStatus } = route.params;
 
   const [participants, setParticipants] = useState<ParticipantResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [newEmail, setNewEmail] = useState('');
+  const [inviteName, setInviteName] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
 
   const loadData = async () => {
     setLoading(true);
@@ -58,12 +60,14 @@ export const WeddingParticipantsScreen = () => {
     }
   };
 
-  useEffect(() => {
-    loadData();
-    if (weddingName) {
-      navigation.setOptions({ title: `משתתפי החתונה: ${weddingName}` });
-    }
-  }, [weddingId, weddingName, mode]);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadData();
+      if (weddingName) {
+        navigation.setOptions({ title: `משתתפי החתונה: ${weddingName}` });
+      }
+    }, [weddingId, weddingName, mode])
+  );
 
   const handleAddParticipant = async () => {
     if (!newEmail.trim()) {
@@ -88,14 +92,44 @@ export const WeddingParticipantsScreen = () => {
     }
   };
 
+  const handleCreateInvite = async () => {
+    const trimmedName = inviteName.trim();
+    const trimmedEmail = inviteEmail.trim();
+
+    if (!trimmedName) {
+      Alert.alert('שגיאת אימות', 'אנא הזן שם מלא.');
+      return;
+    }
+    if (!trimmedEmail) {
+      Alert.alert('שגיאת אימות', 'אנא הזן כתובת אימייל.');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      await adminApi.createInvite(weddingId, { fullName: trimmedName, email: trimmedEmail });
+      Alert.alert(
+        'הצלחה',
+        `נוצרה הזמנה עבור ${trimmedName}. שים לב: המוזמן לא יתווסף אוטומטית לרשימת המשתתפים.`
+      );
+      setInviteName('');
+      setInviteEmail('');
+    } catch (error: any) {
+      console.error(error);
+      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'יצירת ההזמנה נכשלה.'));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleRemoveParticipant = async (userId: number, email: string) => {
     Alert.alert(
       'הסרת משתתף',
       `האם אתה בטוח שברצונך להסיר את המשתתף ${email} מחתונה זו?`,
       [
         { text: 'ביטול', style: 'cancel' },
-        { 
-          text: 'הסרה', 
+        {
+          text: 'הסרה',
           style: 'destructive',
           onPress: async () => {
             setActionLoading(true);
@@ -124,11 +158,26 @@ export const WeddingParticipantsScreen = () => {
     const isWeddingActive = weddingStatus === 'ACTIVE';
 
     return (
-      <View style={styles.participantCard}>
+      <TouchableOpacity
+        style={styles.participantCard}
+        onPress={() => {
+          navigation.navigate('StaffParticipantDetails', {
+            weddingId,
+            userId: item.userId,
+            mode,
+            weddingName,
+            weddingStatus,
+          });
+        }}
+        activeOpacity={0.7}
+      >
         {isParticipantActive && isWeddingActive && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.removeButton}
-            onPress={() => handleRemoveParticipant(item.userId, item.email)}
+            onPress={(e) => {
+              // Prevent the parent card press if possible, though React Native handles inner touchables nicely.
+              handleRemoveParticipant(item.userId, item.email);
+            }}
             disabled={actionLoading}
           >
             <Text style={styles.removeButtonText}>הסרה</Text>
@@ -155,7 +204,7 @@ export const WeddingParticipantsScreen = () => {
             </Text>
           </View>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -198,11 +247,45 @@ export const WeddingParticipantsScreen = () => {
                     keyboardType="email-address"
                     editable={!actionLoading}
                   />
-                  <AppButton 
-                    title="הוספה" 
-                    onPress={handleAddParticipant} 
+                  <AppButton
+                    title="הוספה"
+                    onPress={handleAddParticipant}
                     loading={actionLoading}
                     style={styles.addButton}
+                  />
+                </View>
+              </View>
+            )}
+
+            {isWeddingActive && mode === 'ADMIN' && (
+              <View style={styles.addParticipantContainer}>
+                <Text style={styles.sectionTitle}>הזמנת משתמש חדש לחתונה</Text>
+                <Text style={styles.addParticipantSubtitle}>
+                  הזמנת משתמש חדש באמצעות שם מלא ואימייל. שים לב: המוזמן לא יתווסף אוטומטית לרשימת המשתתפים.
+                </Text>
+                <View style={styles.addFormCol}>
+                  <TextInput
+                    style={[styles.input, styles.stackedInput]}
+                    value={inviteName}
+                    onChangeText={setInviteName}
+                    placeholder="שם מלא"
+                    autoCapitalize="words"
+                    editable={!actionLoading}
+                  />
+                  <TextInput
+                    style={[styles.input, styles.stackedInput]}
+                    value={inviteEmail}
+                    onChangeText={setInviteEmail}
+                    placeholder="כתובת אימייל"
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    editable={!actionLoading}
+                  />
+                  <AppButton
+                    title="יצירת הזמנה"
+                    onPress={handleCreateInvite}
+                    loading={actionLoading}
+                    style={styles.submitInviteButton}
                   />
                 </View>
               </View>
@@ -383,5 +466,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: theme.colors.textSecondary,
     textAlign: 'center',
+  },
+  addFormCol: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+  },
+  stackedInput: {
+    width: '100%',
+    marginLeft: 0,
+    marginBottom: theme.spacing.s,
+  },
+  submitInviteButton: {
+    marginTop: theme.spacing.s,
+    width: '100%',
   },
 });

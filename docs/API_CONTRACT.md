@@ -475,8 +475,10 @@ No Cloudinary. No soft delete. No `deleted` flag.
 | Method | Path | Role | Request | Response | Rules | Errors |
 |---|---|---|---|---|---|---|
 | GET | `/api/event-manager/weddings/{id}/participants` | EVENT_MANAGER / ADMIN | — | `List<ParticipantResponse>` | Owner or ADMIN only | 401, 403, 404 |
-| POST | `/api/event-manager/weddings/{id}/participants` | EVENT_MANAGER / ADMIN | `AddParticipantRequest` | `ParticipantResponse` | Add existing user by email; no invitations | 400, 401, 403, 404, 409 |
-| DELETE | `/api/event-manager/weddings/{id}/participants/{userId}` | EVENT_MANAGER / ADMIN | — | `ParticipantResponse` | Sets status REMOVED; no physical delete | 401, 403, 404 |
+| POST | `/api/event-manager/weddings/{id}/participants` | EVENT_MANAGER / ADMIN | `AddParticipantRequest` | `ParticipantResponse` | Add existing user by email; active wedding required; owner or ADMIN only | 400, 401, 403, 404, 409 |
+| DELETE | `/api/event-manager/weddings/{id}/participants/{userId}` | EVENT_MANAGER / ADMIN | — | `ParticipantResponse` | Sets status REMOVED; active wedding required; owner or ADMIN only | 401, 403, 404 |
+| GET | `/api/event-manager/weddings/{id}/participants/{userId}/details` | EVENT_MANAGER / ADMIN | — | `StaffParticipantDetailsResponse` | View full details of a participant user (profile details, photos, manageable weddings list, permissions); owner or ADMIN only | 401, 403, 404 |
+| PATCH | `/api/event-manager/weddings/{id}/participants/{userId}/restore` | EVENT_MANAGER / ADMIN | — | `ParticipantResponse` | Sets participant status to ACTIVE; active wedding required; owner or ADMIN only | 400, 401, 403, 404, 409 |
 
 ---
 
@@ -577,7 +579,11 @@ No WebSocket. No realtime. No attachments. (Note: internal unread count per conv
 | PATCH | `/api/admin/reports/{reportId}/resolve` | ADMIN | — | Void | Resolve a report | 401, 403, 404 |
 | POST | `/api/admin/weddings/{weddingId}/background` | ADMIN | multipart image | `AdminWeddingResponse` | Admin uploads/replaces wedding background | 400, 401, 403, 404 |
 | DELETE | `/api/admin/weddings/{weddingId}/background` | ADMIN | — | `AdminWeddingResponse` | Admin deletes wedding background | 401, 403, 404 |
-
+| GET | `/api/admin/weddings/{weddingId}/participants` | ADMIN | — | `List<ParticipantResponse>` | Admin lists all participants of a wedding | 401, 403, 404 |
+| POST | `/api/admin/weddings/{weddingId}/participants` | ADMIN | `AddParticipantRequest` | `ParticipantResponse` | Admin adds existing user by email; active wedding required | 400, 401, 403, 404, 409 |
+| DELETE | `/api/admin/weddings/{weddingId}/participants/{userId}` | ADMIN | — | `ParticipantResponse` | Admin sets participant status to REMOVED; active wedding required | 400, 401, 403, 404 |
+| GET | `/api/admin/weddings/{weddingId}/participants/{userId}/details` | ADMIN | — | `StaffParticipantDetailsResponse` | Admin views participant details | 401, 403, 404 |
+| PATCH | `/api/admin/weddings/{weddingId}/participants/{userId}/restore` | ADMIN | — | `ParticipantResponse` | Admin sets participant status to ACTIVE; active wedding required | 400, 401, 403, 404, 409 |
 
 ---
 

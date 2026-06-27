@@ -4,6 +4,7 @@ import com.shiduchim.backend.dto.wedding.AddParticipantRequest;
 import com.shiduchim.backend.dto.wedding.ParticipantResponse;
 import com.shiduchim.backend.entity.User;
 import com.shiduchim.backend.enums.UserRole;
+import com.shiduchim.backend.dto.wedding.StaffParticipantDetailsResponse;
 import com.shiduchim.backend.service.ParticipantService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -52,5 +53,21 @@ public class AdminParticipantController {
                                                  @AuthenticationPrincipal User currentUser) {
         checkAdmin(currentUser);
         return participantService.removeParticipant(weddingId, userId, currentUser);
+    }
+
+    @GetMapping("/{userId}/details")
+    public StaffParticipantDetailsResponse getParticipantDetails(@PathVariable Long weddingId,
+                                                                 @PathVariable Long userId,
+                                                                 @AuthenticationPrincipal User currentUser) {
+        checkAdmin(currentUser);
+        return participantService.getParticipantDetails(weddingId, userId, currentUser);
+    }
+
+    @PatchMapping("/{userId}/restore")
+    public ParticipantResponse restoreParticipant(@PathVariable Long weddingId,
+                                                  @PathVariable Long userId,
+                                                  @AuthenticationPrincipal User currentUser) {
+        checkAdmin(currentUser);
+        return participantService.restoreParticipant(weddingId, userId, currentUser);
     }
 }

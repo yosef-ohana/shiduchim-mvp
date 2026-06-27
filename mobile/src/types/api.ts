@@ -537,3 +537,44 @@ export interface OpeningReplyResponse {
   requiresMatchConfirmation: boolean;
   message: string;
 }
+
+export interface StaffParticipantWeddingResponse {
+  weddingId: number;
+  weddingName: string;
+  weddingStatus: WeddingStatus;
+  participantStatus: ParticipantStatus;
+  joinedAt: string;
+  removedAt: string | null;
+  canRemove: boolean;
+  canRestore: boolean;
+}
+
+export interface StaffParticipantDetailsResponse {
+  userId: number;
+  fullName: string;
+  email: string;
+  gender: 'MALE' | 'FEMALE' | null;
+  role?: 'USER' | 'EVENT_MANAGER' | 'ADMIN';
+  profileStatus: ProfileStatus;
+  adminBlocked: boolean;
+  createdAt: string;
+  manageableWeddings: StaffParticipantWeddingResponse[];
+  photos: PhotoResponse[];
+  basicProfile?: {
+    age: number | null;
+    heightCm: number | null;
+    areaOfResidence: string | null;
+    religiousLevel: string | null;
+    phone: string | null;
+  } | null;
+  fullProfile?: {
+    education: string | null;
+    occupation: string | null;
+    selfDescription: string | null;
+    hobbies: string | null;
+    lookingFor: string | null;
+    familyDescription: string | null;
+    headCovering: string | null;
+    hasDrivingLicense: boolean | null;
+  } | null;
+}

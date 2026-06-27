@@ -11,7 +11,8 @@ import {
   UserReportSummaryResponse,
   UserReportDetailsResponse,
   ParticipantResponse,
-  AddParticipantRequest
+  AddParticipantRequest,
+  StaffParticipantDetailsResponse
 } from '../types/api';
 
 export const adminApi = {
@@ -157,6 +158,16 @@ export const adminApi = {
 
   removeParticipant: async (weddingId: number, userId: number): Promise<ParticipantResponse> => {
     const response = await apiClient.delete<ParticipantResponse>(`/admin/weddings/${weddingId}/participants/${userId}`);
+    return response.data;
+  },
+
+  getParticipantDetails: async (weddingId: number, userId: number): Promise<StaffParticipantDetailsResponse> => {
+    const response = await apiClient.get<StaffParticipantDetailsResponse>(`/admin/weddings/${weddingId}/participants/${userId}/details`);
+    return response.data;
+  },
+
+  restoreParticipant: async (weddingId: number, userId: number): Promise<ParticipantResponse> => {
+    const response = await apiClient.patch<ParticipantResponse>(`/admin/weddings/${weddingId}/participants/${userId}/restore`);
     return response.data;
   },
 };

@@ -6,6 +6,7 @@ import {
   AddParticipantRequest,
   CreateWeddingInviteRequest,
   WeddingInviteResponse,
+  StaffParticipantDetailsResponse
 } from '../types/api';
 
 export const getEventManagerWeddings = async (): Promise<WeddingResponse[]> => {
@@ -89,3 +90,12 @@ export const deleteWeddingBackground = async (weddingId: number): Promise<Weddin
   return response.data;
 };
 
+export const getParticipantDetails = async (weddingId: number, userId: number): Promise<StaffParticipantDetailsResponse> => {
+  const response = await apiClient.get<StaffParticipantDetailsResponse>(`/event-manager/weddings/${weddingId}/participants/${userId}/details`);
+  return response.data;
+};
+
+export const restoreParticipant = async (weddingId: number, userId: number): Promise<ParticipantResponse> => {
+  const response = await apiClient.patch<ParticipantResponse>(`/event-manager/weddings/${weddingId}/participants/${userId}/restore`);
+  return response.data;
+};

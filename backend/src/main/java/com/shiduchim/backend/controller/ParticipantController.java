@@ -4,6 +4,7 @@ import com.shiduchim.backend.dto.wedding.AddParticipantRequest;
 import com.shiduchim.backend.dto.wedding.ParticipantResponse;
 import com.shiduchim.backend.entity.User;
 import com.shiduchim.backend.service.ParticipantService;
+import com.shiduchim.backend.dto.wedding.StaffParticipantDetailsResponse;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,5 +38,19 @@ public class ParticipantController {
                                                  @PathVariable Long userId,
                                                  @AuthenticationPrincipal User currentUser) {
         return participantService.removeParticipant(id, userId, currentUser);
+    }
+
+    @GetMapping("/{userId}/details")
+    public StaffParticipantDetailsResponse getParticipantDetails(@PathVariable Long id,
+                                                                 @PathVariable Long userId,
+                                                                 @AuthenticationPrincipal User currentUser) {
+        return participantService.getParticipantDetails(id, userId, currentUser);
+    }
+
+    @PatchMapping("/{userId}/restore")
+    public ParticipantResponse restoreParticipant(@PathVariable Long id,
+                                                  @PathVariable Long userId,
+                                                  @AuthenticationPrincipal User currentUser) {
+        return participantService.restoreParticipant(id, userId, currentUser);
     }
 }

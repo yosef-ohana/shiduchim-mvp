@@ -44,6 +44,17 @@ public class WeddingInviteService {
     public WeddingInviteResponse createInvite(Long weddingId, CreateWeddingInviteRequest request, User currentUser) {
         Wedding wedding = weddingService.getWeddingEntityAndCheckOwner(weddingId, currentUser);
         
+        if (wedding.getStatus() == WeddingStatus.CLOSED || wedding.getStatus() == WeddingStatus.CANCELLED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot create invite for a closed or cancelled wedding");
+        }
+
+        if (request.getFullName() == null || request.getFullName().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Full name cannot be blank");
+        }
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email cannot be blank");
+        }
+
         String normalizedEmail = request.getEmail().trim().toLowerCase();
 
         Optional<WeddingInvite> existingPending = weddingInviteRepository.findByWeddingIdAndEmailAndStatus(weddingId, normalizedEmail, WeddingInviteStatus.PENDING);
@@ -58,7 +69,7 @@ public class WeddingInviteService {
 
         WeddingInvite invite = new WeddingInvite();
         invite.setWeddingId(weddingId);
-        invite.setFullName(request.getFullName());
+        invite.setFullName(request.getFullName().trim());
         invite.setEmail(normalizedEmail);
         invite.setStatus(WeddingInviteStatus.PENDING);
         invite.setInvitedByUserId(currentUser.getId());
