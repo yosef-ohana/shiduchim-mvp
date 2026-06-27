@@ -230,6 +230,10 @@ export interface LikedMeItemResponse {
   poolType: PoolType;
   weddingId?: number;
   likedAt: string;
+  hasOpenOpeningConversation?: boolean;
+  openingConversationId?: number;
+  openingConversationDirection?: 'SENT' | 'RECEIVED' | string;
+  openingConversationStatus?: string;
 }
 
 export type MatchStatus = 'ACTIVE' | 'BLOCKED';

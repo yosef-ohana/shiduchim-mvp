@@ -285,10 +285,19 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 - `primaryPhotoUrl`
 - `fullName`
 - `age`
+- `heightCm`
 - `areaOfResidence`
 - `religiousLevel`
 - `education`
+- `lookingForShort`
+- `poolType`
+- `weddingId`
 - `likedAt`
+- `hasOpenOpeningConversation`
+- `openingConversationId`
+- `openingConversationDirection`
+- `openingConversationStatus`
+
 
 `MatchResponse`
 - `matchId`

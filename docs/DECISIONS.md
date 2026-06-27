@@ -563,3 +563,24 @@ These are collected future improvements and are NOT implemented at this stage. T
 
 ### 24.4 My Weddings CTA
 - **Clear Join Action**: Added a clear "הצטרפות לחתונה" CTA button in both empty and populated states of the My Weddings screen that navigates to the existing `JoinWedding` route.
+
+---
+
+## 25. Development Cycle 2 Decisions: Opening Message Support from Liked Me List
+
+### 25.1 Allow Opening Messages from "Liked Me" List
+- **Product Flow Decisions**:
+  - Regular users can view candidates who liked them (under the "Liked Me" list).
+  - Instead of performing an immediate Like/Dislike, a user can initiate or view an existing Opening Message conversation with the candidate directly from the "Liked Me" list.
+  - This allows pre-match communication to occur while still preserving the Liked Me relationship, prior to deciding whether to return the Like (which would form a Match) or Dislike/Freeze/etc.
+  - Exposing this existing Opening Message capability on the Liked Me tab improves the core match-making lifecycle.
+
+### 25.2 Core Invariants Retained
+- **Like vs. Opening Message**: Sending an Opening Message from "Liked Me" does NOT create an action (Like/Dislike/Freeze).
+- **Opening Message vs. Chat**: The Opening Message interface exists as a distinct pre-match sandboxed list/conversation. A standard Chat conversation remains locked and is only created after a formal mutual Match.
+- **No DB/Entity Modifications**: This feature is implemented purely by exposing the existing pre-match `OpeningConversation` relationships on the mobile Liked Me UI tab and enriching the `GET /api/lists/liked-me` DTO. No database table, schema, or entity definitions were changed.
+
+### 25.3 QA and Checkpoint Status
+- **Technical Checks**: Backend compile, mobile TypeScript, and git diff checks have successfully passed.
+- **Runtime QA Deferred**: Due to local environment limitations (Docker/Database and mobile emulator runtime unavailable), manual runtime verification was not performed.
+- **Project Status**: This release is committed as a technical development checkpoint. Manual QA is explicitly deferred to the final QA phase following the completion of the broader set of 17 features.

@@ -178,7 +178,7 @@ public class ListsService {
             String primaryPhotoUrl = userPhotoRepository.findByUserIdAndIsPrimaryTrue(liker.getId())
                     .map(UserPhoto::getImageUrl).orElse(null);
 
-            responseList.add(new LikedMeItemResponse(
+            LikedMeItemResponse itemResponse = new LikedMeItemResponse(
                     liker.getId(),
                     primaryPhotoUrl,
                     liker.getFullName(),
@@ -191,7 +191,27 @@ public class ListsService {
                     action.getPoolType(),
                     action.getWeddingId(),
                     action.getUpdatedAt() // likedAt is the action's updatedAt time
-            ));
+            );
+
+            java.util.Optional<OpeningConversation> convOpt = openingConversationRepository.findExistingConversationBetweenUsersInContext(
+                    currentUser.getId(), liker.getId(), action.getPoolType(), action.getWeddingId(), OpeningConversationStatus.OPEN);
+
+            if (convOpt.isPresent()) {
+                OpeningConversation conv = convOpt.get();
+                itemResponse.setHasOpenOpeningConversation(true);
+                itemResponse.setOpeningConversationId(conv.getId());
+                itemResponse.setOpeningConversationDirection(
+                        conv.getOpenerUserId().equals(currentUser.getId()) ? "SENT" : "RECEIVED"
+                );
+                itemResponse.setOpeningConversationStatus(conv.getStatus().name());
+            } else {
+                itemResponse.setHasOpenOpeningConversation(false);
+                itemResponse.setOpeningConversationId(null);
+                itemResponse.setOpeningConversationDirection(null);
+                itemResponse.setOpeningConversationStatus(null);
+            }
+
+            responseList.add(itemResponse);
         }
 
         return responseList;

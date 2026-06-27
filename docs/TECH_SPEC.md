@@ -724,3 +724,20 @@ The final manual Runtime QA cycle has passed successfully for the recent Shiduch
 ### 22.4 My Weddings CTA
 - **Clear Join Action**:
   - Added a prominent Hebrew "הצטרפות לחתונה" CTA button in both empty and populated states inside `MyWeddingsScreen.tsx` directing the user to the existing `JoinWedding` route.
+
+---
+
+## 23. Development Cycle 2: Opening Message Support from Liked Me List
+
+### 23.1 Liked Me Metadata Enrichment
+- **Backend Changes**:
+  - Extended [LikedMeItemResponse](file:///c:/Projects/shiduchim-mvp/backend/src/main/java/com/shiduchim/backend/dto/list/LikedMeItemResponse.java) with opening conversation metadata: `hasOpenOpeningConversation` (Boolean), `openingConversationId` (Long), `openingConversationDirection` (String), and `openingConversationStatus` (String).
+  - Updated [ListsService](file:///c:/Projects/shiduchim-mvp/backend/src/main/java/com/shiduchim/backend/service/ListsService.java) to populate this metadata for each "Liked Me" item, checking if there is an active `OpeningConversation` between the user and the liker in either direction (`SENT` or `RECEIVED`).
+  - Implemented lookup logic that queries the `OpeningConversationRepository` to find the correct active pre-match conversation.
+
+### 23.2 Mobile Liked Me Tab Opening Button
+- **Mobile Changes**:
+  - Updated `LikedMeItemResponse` type in [api.ts](file:///c:/Projects/shiduchim-mvp/mobile/src/types/api.ts) to include the opening conversation metadata fields.
+  - Updated the "Liked Me" tab in [ListsScreen.tsx](file:///c:/Projects/shiduchim-mvp/mobile/src/screens/lists/ListsScreen.tsx) to render the existing "Opening Message" button using the existing `renderOpeningMessageButton(item)` helper.
+  - Clicking the button opens the standard pre-match conversation view (`OpeningConversationDetails`), allowing the user to initiate or respond to an opening conversation.
+  - Opening Message is still NOT a Like, and does NOT automatically create a Match or standard Chat until mutual Likes or explicit Match creation/confirmation occurs.

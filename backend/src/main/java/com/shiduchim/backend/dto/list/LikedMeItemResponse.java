@@ -18,6 +18,11 @@ public class LikedMeItemResponse {
     private Long weddingId;
     private LocalDateTime likedAt;
 
+    private Boolean hasOpenOpeningConversation;
+    private Long openingConversationId;
+    private String openingConversationDirection;
+    private String openingConversationStatus;
+
     public LikedMeItemResponse() {}
 
     public LikedMeItemResponse(Long userId, String primaryPhotoUrl, String fullName, Integer age, Integer heightCm,
@@ -72,4 +77,16 @@ public class LikedMeItemResponse {
 
     public LocalDateTime getLikedAt() { return likedAt; }
     public void setLikedAt(LocalDateTime likedAt) { this.likedAt = likedAt; }
+
+    public Boolean getHasOpenOpeningConversation() { return hasOpenOpeningConversation; }
+    public void setHasOpenOpeningConversation(Boolean hasOpenOpeningConversation) { this.hasOpenOpeningConversation = hasOpenOpeningConversation; }
+
+    public Long getOpeningConversationId() { return openingConversationId; }
+    public void setOpeningConversationId(Long openingConversationId) { this.openingConversationId = openingConversationId; }
+
+    public String getOpeningConversationDirection() { return openingConversationDirection; }
+    public void setOpeningConversationDirection(String openingConversationDirection) { this.openingConversationDirection = openingConversationDirection; }
+
+    public String getOpeningConversationStatus() { return openingConversationStatus; }
+    public void setOpeningConversationStatus(String openingConversationStatus) { this.openingConversationStatus = openingConversationStatus; }
 }

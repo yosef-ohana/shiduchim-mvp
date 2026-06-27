@@ -261,6 +261,7 @@ export const ListsScreen = ({ navigation }: any) => {
                   )}
                   {activeTab === 'liked-me' && (
                     <>
+                      {renderOpeningMessageButton(item)}
                       <AppButton title="לייק" onPress={() => handleLike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
                       <AppButton title="לא מתאים" onPress={() => handleDislike(item.userId, item.poolType, item.weddingId)} loading={processingId === item.userId} style={styles.actionButton} />
                     </>
