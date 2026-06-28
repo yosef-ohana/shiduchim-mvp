@@ -12,4 +12,5 @@ import java.util.Optional;
 public interface WeddingInviteRepository extends JpaRepository<WeddingInvite, Long> {
     List<WeddingInvite> findByWeddingId(Long weddingId);
     Optional<WeddingInvite> findByWeddingIdAndEmailAndStatus(Long weddingId, String email, WeddingInviteStatus status);
+    void deleteByWeddingId(Long weddingId);
 }

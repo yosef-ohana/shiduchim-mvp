@@ -86,6 +86,15 @@ export const adminApi = {
     return response.data;
   },
 
+  restoreWedding: async (weddingId: number): Promise<AdminWeddingResponse> => {
+    const response = await apiClient.patch<AdminWeddingResponse>(`/admin/weddings/${weddingId}/restore`);
+    return response.data;
+  },
+
+  hardDeleteWedding: async (weddingId: number): Promise<void> => {
+    await apiClient.delete(`/admin/weddings/${weddingId}`);
+  },
+
   getInvites: async (weddingId: number): Promise<WeddingInviteResponse[]> => {
     const response = await apiClient.get<WeddingInviteResponse[]>(`/event-manager/weddings/${weddingId}/invites`);
     return response.data;

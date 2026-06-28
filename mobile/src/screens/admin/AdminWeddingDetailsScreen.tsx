@@ -130,6 +130,53 @@ export const AdminWeddingDetailsScreen = () => {
     );
   };
 
+  const handleRestore = async () => {
+    Alert.alert(
+      'שחזור חתונה לפעילות',
+      'האם אתה בטוח שברצונך להחזיר חתונה זו לפעילות? החתונה תחזור להיות פעילה וניתן יהיה לנהל אותה.',
+      [
+        { text: 'ביטול', style: 'cancel' },
+        {
+          text: 'החזר לפעילות',
+          onPress: async () => {
+            try {
+              const updated = await adminApi.restoreWedding(weddingId);
+              setWedding(updated);
+              Alert.alert('הצלחה', 'החתונה הוחזרה לפעילות בהצלחה');
+            } catch (error: any) {
+              Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'החזרת החתונה לפעילות נכשלה.'));
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleHardDelete = async () => {
+    Alert.alert(
+      'מחיקה סופית',
+      'פעולה זו הינה בלתי הפיכה.\nהחתונה תימחק לצמיתות.\nהמשתמשים לא יימחקו.\nבמידה וקיימות אינטראקציות לחתונה, השרת יחסום את המחיקה.',
+      [
+        { text: 'ביטול', style: 'cancel' },
+        {
+          text: 'מחק סופית',
+          style: 'destructive',
+          onPress: async () => {
+            setLoading(true);
+            try {
+              await adminApi.hardDeleteWedding(weddingId);
+              Alert.alert('הצלחה', 'החתונה נמחקה סופית בהצלחה');
+              navigation.goBack();
+            } catch (error: any) {
+              setLoading(false);
+              Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'לא ניתן למחוק את החתונה מכיוון שקיימות בה אינטראקציות קיימות.'));
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const handleRestoreInvite = async (inviteId: number) => {
     Alert.alert(
       'שחזור הזמנה',
@@ -203,6 +250,23 @@ export const AdminWeddingDetailsScreen = () => {
               המסך מוצג לקריאה בלבד. לא ניתן לבצע פעולות ניהול פעילות עד החזרה לפעילות במחזור נפרד.
             </Text>
           </View>
+        )}
+
+        {isInactiveWedding && (
+          <>
+            <TouchableOpacity
+              style={[styles.fullBtn, { backgroundColor: theme.colors.primary }]}
+              onPress={handleRestore}
+            >
+              <Text style={styles.btnText}>החזר חתונה לפעילות</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.fullBtn, { backgroundColor: '#d9534f' }]}
+              onPress={handleHardDelete}
+            >
+              <Text style={styles.btnText}>מחיקה סופית</Text>
+            </TouchableOpacity>
+          </>
         )}
 
         <View style={styles.card}>

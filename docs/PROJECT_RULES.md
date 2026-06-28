@@ -61,6 +61,9 @@ Do not add:
 - complex permission system
 - heavy dashboards
 - extra libraries without approval
+- cascading hard delete (wedding deletion must be strictly guarded; no cascading deletion of users, photos, user actions, matches, chats, reports, or feedback; allowed only for closed/cancelled weddings without user interactions)
+- unauthorized wedding restore (restore wedding is reserved strictly for admins and applies only to closed/cancelled weddings)
+
 
 ---
 

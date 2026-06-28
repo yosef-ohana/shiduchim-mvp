@@ -624,3 +624,20 @@ These are collected future improvements and are NOT implemented at this stage. T
 - **No Structural Changes**: No database schemas, entities, DTOs, or new API endpoints were created or modified.
 - **Out of Scope Features**: "Restore Wedding" and "Hard Delete" operations were not implemented or supported.
 - **QA Exclusions**: Runtime manual QA is deferred / pending. Only compile and static type verification checks were executed.
+
+---
+
+## 28. Cycle 5 Decisions: Restore Wedding & Guarded Hard Delete
+
+### 28.1 Admin-Only Lifecycle Control
+- **Authorization Enforcement**: Restoring and deleting weddings are high-privilege operations reserved strictly for the `ADMIN` role. Event Managers and regular Users cannot perform or access these features. Enforced on the backend via role validation and hidden on the frontend for non-admin users.
+
+### 28.2 Guarded Deletion Safety Invariant
+- **Guarded Delete instead of Cascade**: To prevent databases from ending up with orphan messages, user actions, or broken chats, deleting a wedding is strictly blocked if user interactions exist. A wedding is only deletable if no UserActions, Matches, or OpeningConversations have been recorded in the wedding pool.
+- **Non-Destructive for Core Entities**: Even when a wedding delete is allowed, it never deletes Users, UserPhotos, UserActions, Matches, Chats, OpeningConversations, UserReports, or ProductFeedback. Only the Wedding row, WeddingParticipants, WeddingInvites, and the local background image file are removed.
+
+### 28.3 Active Status Gates
+- **Status Validation**: Both restore and delete require the wedding to be in an inactive status (`CLOSED` or `CANCELLED`). Active weddings cannot be restored (rejected as bad request) and cannot be deleted (rejected as bad request).
+
+### 28.4 Best-Effort Disk Cleanup
+- **Background Image Deletion**: When a wedding is successfully hard deleted, the local background image file stored on the server disk is deleted on a best-effort basis, preventing disk space leaks.

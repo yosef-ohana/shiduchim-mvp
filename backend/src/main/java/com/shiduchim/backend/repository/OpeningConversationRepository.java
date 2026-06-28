@@ -30,4 +30,6 @@ public interface OpeningConversationRepository extends JpaRepository<OpeningConv
             @Param("poolType") PoolType poolType,
             @Param("weddingId") Long weddingId,
             @Param("status") OpeningConversationStatus status);
+
+    boolean existsByPoolTypeAndWeddingId(PoolType poolType, Long weddingId);
 }

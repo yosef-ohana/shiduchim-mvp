@@ -26,4 +26,6 @@ public interface WeddingParticipantRepository extends JpaRepository<WeddingParti
             "AND w.status = 'ACTIVE'")
     boolean existsSharedActiveWedding(@org.springframework.data.repository.query.Param("userId1") Long userId1,
                                       @org.springframework.data.repository.query.Param("userId2") Long userId2);
+
+    void deleteByWeddingId(Long weddingId);
 }

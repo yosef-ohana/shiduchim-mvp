@@ -34,17 +34,26 @@ public class AdminService {
     private final WeddingRepository weddingRepository;
     private final WeddingParticipantRepository weddingParticipantRepository;
     private final MatchRepository matchRepository;
+    private final com.shiduchim.backend.repository.UserActionRepository userActionRepository;
+    private final com.shiduchim.backend.repository.OpeningConversationRepository openingConversationRepository;
+    private final com.shiduchim.backend.repository.WeddingInviteRepository weddingInviteRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
     public AdminService(UserRepository userRepository,
                         WeddingRepository weddingRepository,
                         WeddingParticipantRepository weddingParticipantRepository,
                         MatchRepository matchRepository,
+                        com.shiduchim.backend.repository.UserActionRepository userActionRepository,
+                        com.shiduchim.backend.repository.OpeningConversationRepository openingConversationRepository,
+                        com.shiduchim.backend.repository.WeddingInviteRepository weddingInviteRepository,
                         BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.weddingRepository = weddingRepository;
         this.weddingParticipantRepository = weddingParticipantRepository;
         this.matchRepository = matchRepository;
+        this.userActionRepository = userActionRepository;
+        this.openingConversationRepository = openingConversationRepository;
+        this.weddingInviteRepository = weddingInviteRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -249,6 +258,53 @@ public class AdminService {
         wedding = weddingRepository.save(wedding);
         return toAdminWeddingResponse(wedding);
     }
+
+    @Transactional
+    public AdminWeddingResponse restoreWedding(Long weddingId, User currentUser) {
+        validateAdmin(currentUser);
+        Wedding wedding = weddingRepository.findById(weddingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wedding not found"));
+        if (wedding.getStatus() == WeddingStatus.ACTIVE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wedding is already active");
+        }
+        wedding.setStatus(WeddingStatus.ACTIVE);
+        wedding = weddingRepository.save(wedding);
+        return toAdminWeddingResponse(wedding);
+    }
+
+    @Transactional
+    public void hardDeleteWedding(Long weddingId, User currentUser) {
+        validateAdmin(currentUser);
+        Wedding wedding = weddingRepository.findById(weddingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wedding not found"));
+
+        if (wedding.getStatus() == WeddingStatus.ACTIVE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot hard delete an active wedding");
+        }
+
+        boolean hasUserActions = userActionRepository.existsByPoolTypeAndWeddingId(com.shiduchim.backend.enums.PoolType.WEDDING, weddingId);
+        boolean hasMatches = matchRepository.existsByPoolTypeAndWeddingId(com.shiduchim.backend.enums.PoolType.WEDDING, weddingId);
+        boolean hasConversations = openingConversationRepository.existsByPoolTypeAndWeddingId(com.shiduchim.backend.enums.PoolType.WEDDING, weddingId);
+
+        if (hasUserActions || hasMatches || hasConversations) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Wedding cannot be hard deleted because it has existing wedding-scoped interactions");
+        }
+
+        weddingInviteRepository.deleteByWeddingId(weddingId);
+        weddingParticipantRepository.deleteByWeddingId(weddingId);
+
+        String storagePath = wedding.getBackgroundStoragePath();
+        weddingRepository.delete(wedding);
+
+        if (storagePath != null) {
+            try {
+                java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(storagePath));
+            } catch (java.io.IOException e) {
+                System.err.println("[AdminService] Warning: could not delete file at " + storagePath + " - " + e.getMessage());
+            }
+        }
+    }
+
 
     @Transactional
     public AdminWeddingResponse assignSelfToWedding(Long weddingId, User currentUser) {

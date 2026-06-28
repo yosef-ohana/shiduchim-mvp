@@ -1224,3 +1224,51 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
   - Verify no junk/artifact files exist in the repository.
   - Commit and push changes to remote repository.
 - **DoD**: Clean checks, documentation updated, git status clean, changes committed and pushed.
+
+---
+
+## Development Cycle 12 (Cycle 5: Wedding Lifecycle — Restore + Guarded Hard Delete)
+
+### Batch 5.1 — Backend Restore Wedding Support
+- **Goal**: Add REST API and service methods to restore a closed or cancelled wedding to active status.
+- **Scope**:
+  - Implement `PATCH /api/admin/weddings/{weddingId}/restore` for Admin role.
+  - Reject active wedding restore with HTTP 400 Bad Request.
+  - Return the updated `WeddingResponse`.
+  - Ensure all other wedding relationships and data are fully preserved.
+- **DoD**: Maven compile passes; restore endpoint functional.
+
+### Batch 5.2 — Mobile Admin Restore Wedding UI
+- **Goal**: Add Restore Wedding UI to the Admin mobile app.
+- **Scope**:
+  - Add API client wrapper for restore wedding in `adminApi.ts`.
+  - Add "Restore" action button in `AdminWeddingDetailsScreen.tsx` visible only for closed or cancelled weddings.
+  - Prompt with a Hebrew confirmation dialog before triggering restore.
+- **DoD**: TypeScript checks pass; Admin can trigger wedding restoration with full Hebrew prompts and success updates.
+
+### Batch 5.3 — Backend Guarded Hard Delete Wedding
+- **Goal**: Implement guarded hard delete for weddings.
+- **Scope**:
+  - Implement `DELETE /api/admin/weddings/{weddingId}` for Admin role.
+  - Reject active wedding deletion with HTTP 400 Bad Request.
+  - Check user interactions (UserActions, Matches, OpeningConversations) and block deletion if any exist.
+  - Delete only wedding invites, wedding participants, local background image files (best-effort), and the wedding row.
+  - Exclude users, photos, global actions/matches/conversations, reports, and feedback from deletion.
+- **DoD**: Maven compile passes; guarded deletion logic verified.
+
+### Batch 5.4 — Mobile Admin Hard Delete UI
+- **Goal**: Add Hard Delete Wedding UI to the Admin mobile app.
+- **Scope**:
+  - Add API client wrapper for delete wedding in `adminApi.ts`.
+  - Add "Hard Delete" button in `AdminWeddingDetailsScreen.tsx` visible only for closed or cancelled weddings.
+  - Display a detailed warning prompt in Hebrew notifying that deletion is irreversible, users are not deleted, and the action will fail if user interactions exist.
+- **DoD**: TypeScript checks pass; Admin can trigger guarded delete with warnings.
+
+### Batch 5.5A — Docs, Efficient Technical Closure, and Cleanup Review
+- **Goal**: Complete documentation updates, verify clean workspace status, and perform final static/compile validation.
+- **Scope**:
+  - Update `API_CONTRACT.md`, `TECH_SPEC.md`, `DECISIONS.md`, `PROJECT_RULES.md`, and `BATCH_PLAN.md`.
+  - Compile backend using `mvn clean compile` and check mobile TypeScript using `npx tsc --noEmit`.
+  - Verify clean git repository status and lack of any temporary junk files.
+  - Document a focused Cycle 5 QA checklist.
+- **DoD**: Compilation and type checking pass; repository is clean of any junk artifacts; documentation is complete and accurate.

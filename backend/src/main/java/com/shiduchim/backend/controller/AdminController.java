@@ -107,6 +107,19 @@ public class AdminController {
         return adminService.cancelWedding(weddingId, currentUser);
     }
 
+    @PatchMapping("/weddings/{weddingId}/restore")
+    public AdminWeddingResponse restoreWedding(@PathVariable Long weddingId,
+                                               @AuthenticationPrincipal User currentUser) {
+        return adminService.restoreWedding(weddingId, currentUser);
+    }
+
+    @DeleteMapping("/weddings/{weddingId}")
+    public org.springframework.http.ResponseEntity<Void> hardDeleteWedding(@PathVariable Long weddingId,
+                                                                           @AuthenticationPrincipal User currentUser) {
+        adminService.hardDeleteWedding(weddingId, currentUser);
+        return org.springframework.http.ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/weddings/{weddingId}/assign-self")
     public AdminWeddingResponse assignSelfToWedding(@PathVariable Long weddingId,
                                                     @AuthenticationPrincipal User currentUser) {

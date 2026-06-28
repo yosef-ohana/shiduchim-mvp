@@ -795,3 +795,55 @@ The final manual Runtime QA cycle has passed successfully for the recent Shiduch
   - Embedded a high-visibility warning banner at the top of the detail screen indicating when a wedding is `CLOSED` or `CANCELLED` and explaining that modification actions are disabled.
   - **File**: [WeddingParticipantsScreen.tsx](file:///c:/Projects/shiduchim-mvp/mobile/src/screens/weddings/WeddingParticipantsScreen.tsx)
   - Added a Hebrew read-only warning message at the top of the list for inactive weddings.
+
+---
+
+## 28. Cycle 5 Additions: Restore Wedding & Guarded Hard Delete
+
+### 28.1 Restore Wedding (Admin Only)
+- **Backend Service Logic**:
+  - Endpoint: `PATCH /api/admin/weddings/{weddingId}/restore`
+  - Restores a CLOSED or CANCELLED wedding back to ACTIVE status.
+  - Active weddings cannot be restored; requests return HTTP 400 Bad Request.
+  - All existing wedding relationships (participants, invites, matches, actions, chats, reports, feedback) are fully preserved.
+- **Mobile Integration**:
+  - The Admin wedding details screen shows a "Restore" button only for CLOSED or CANCELLED weddings.
+  - Restoring triggers a confirmation dialog in Hebrew and makes the API call, refreshing the screen to active state.
+
+### 28.2 Guarded Hard Delete Wedding (Admin Only)
+- **Backend Service Logic**:
+  - Endpoint: `DELETE /api/admin/weddings/{weddingId}`
+  - Only closed or cancelled weddings can be deleted; active deletion is rejected with HTTP 400 Bad Request.
+  - **Interaction Guard**: Deletion is blocked (returning HTTP 400 Bad Request) if there are any associated wedding-scoped user actions (`UserAction` with `poolType=WEDDING`), matches (`Match` with `poolType=WEDDING`), or opening conversations (`OpeningConversation` with `opener` or `recipient` having pool relations in that wedding context).
+  - If allowed, only structural wedding-scoped data is hard deleted: wedding invitations, wedding participants, wedding background image file (best-effort local storage deletion), and the wedding row itself.
+  - **Data Preservation (Guarded delete)**: Users, UserPhotos, UserActions, Matches, ChatMessages, OpeningConversations, OpeningMessages, ProductFeedback, UserReports, and UserBlocks are NOT deleted. This ensures user history and global data remain completely untouched.
+- **Mobile Integration**:
+  - The Admin wedding details screen shows a "Delete" button only for CLOSED or CANCELLED weddings.
+  - Deleting warns the admin in Hebrew that the action is irreversible, users/photos will not be deleted, and deletion will fail if user interactions exist in the wedding pool.
+
+---
+
+## 29. Cycle 5 Manual QA Checklist (Manual QA Pending)
+
+This section contains the focused Cycle 5 QA checklist. Note: Manual QA has not been performed yet (status: **Manual QA Checklist Prepared / Pending**).
+
+### 29.1 Admin Restore Wedding Checks
+- [ ] **Admin restores CLOSED wedding to ACTIVE**: Verify that an Admin can restore a closed wedding to active.
+- [ ] **Admin restores CANCELLED wedding to ACTIVE**: Verify that an Admin can restore a cancelled wedding to active.
+- [ ] **Restore to ACTIVE wedding is blocked**: Verify that attempting to restore an already active wedding returns HTTP 400.
+- [ ] **Event Manager cannot restore**: Verify that Event Managers receive HTTP 403 when trying to restore.
+- [ ] **USER cannot restore**: Verify that regular users receive HTTP 403 when trying to restore.
+
+### 29.2 Admin Guarded Hard Delete Wedding Checks
+- [ ] **Admin delete to ACTIVE wedding is blocked**: Verify that attempting to delete an active wedding returns HTTP 400.
+- [ ] **Admin deletes CLOSED/CANCELLED wedding without interactions**: Verify that an Admin can delete an inactive wedding with zero interactions (no UserActions, Matches, OpeningConversations).
+- [ ] **Admin delete is blocked for wedding with interactions**: Verify that deletion is blocked (returns HTTP 400) if any UserActions, Matches, or OpeningConversations exist in that wedding context.
+- [ ] **Users are preserved**: Verify that after a wedding is deleted, the participants' User accounts remain in the database.
+- [ ] **Global data is preserved**: Verify that global user actions, matches, chats, reports, and feedback are untouched.
+- [ ] **Deleted wedding no longer appears**: Verify the deleted wedding disappears from Admin / Event Manager / USER lists.
+- [ ] **Deleted wedding accessCode no longer works**: Verify that trying to join or validate the accessCode of the deleted wedding fails.
+
+### 29.3 Staff & User UI Checks
+- [ ] **Event Manager does not see Restore/Delete buttons**: Verify EM detail screens do not display restore/delete buttons.
+- [ ] **USER does not see staff actions**: Verify regular users cannot see restore/delete buttons or options.
+- [ ] **No crashes in Admin details screen**: Navigate to AdminWeddingDetailsScreen after restore/delete and verify no crashes.

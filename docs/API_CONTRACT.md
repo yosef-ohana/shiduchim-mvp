@@ -584,6 +584,8 @@ No WebSocket. No realtime. No attachments. (Note: internal unread count per conv
 | DELETE | `/api/admin/weddings/{weddingId}/participants/{userId}` | ADMIN | — | `ParticipantResponse` | Admin sets participant status to REMOVED; active wedding required | 400, 401, 403, 404 |
 | GET | `/api/admin/weddings/{weddingId}/participants/{userId}/details` | ADMIN | — | `StaffParticipantDetailsResponse` | Admin views participant details | 401, 403, 404 |
 | PATCH | `/api/admin/weddings/{weddingId}/participants/{userId}/restore` | ADMIN | — | `ParticipantResponse` | Admin sets participant status to ACTIVE; active wedding required | 400, 401, 403, 404, 409 |
+| PATCH | `/api/admin/weddings/{weddingId}/restore` | ADMIN | — | `WeddingResponse` | Restores a CLOSED/CANCELLED wedding to ACTIVE; active restore is rejected. All other wedding data is preserved. | 400, 401, 403, 404 |
+| DELETE | `/api/admin/weddings/{weddingId}` | ADMIN | — | Void | Guarded hard delete of CLOSED/CANCELLED wedding; active delete is rejected. Blocked if wedding-scoped UserActions, Matches, or OpeningConversations exist. If allowed, deletes invites, participants, background file, and wedding row; users and their photos/actions/chats/reports/feedback/global data are preserved. | 400, 401, 403, 404 |
 
 ---
 

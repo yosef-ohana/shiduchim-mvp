@@ -54,4 +54,6 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
             @Param("weddingId") Long weddingId,
             @Param("status") MatchStatus status
     );
+
+    boolean existsByPoolTypeAndWeddingId(PoolType poolType, Long weddingId);
 }
