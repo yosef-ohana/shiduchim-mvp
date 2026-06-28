@@ -3,7 +3,8 @@ import {
   CreateProductFeedbackRequest, 
   ProductFeedbackListItemResponse, 
   ProductFeedbackDetailsResponse, 
-  UpdateFeedbackStatusRequest 
+  UpdateFeedbackStatusRequest,
+  MyProductFeedbackResponse
 } from '../types/apiProductFeedback';
 
 export const productFeedbackApi = {
@@ -24,6 +25,11 @@ export const productFeedbackApi = {
 
   updateAdminFeedbackStatus: async (feedbackId: number, data: UpdateFeedbackStatusRequest) => {
     const response = await apiClient.patch<void>(`/admin/feedback/${feedbackId}/status`, data);
+    return response.data;
+  },
+
+  getMyFeedback: async () => {
+    const response = await apiClient.get<MyProductFeedbackResponse[]>('/feedback/my');
     return response.data;
   }
 };

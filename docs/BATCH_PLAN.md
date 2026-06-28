@@ -1272,3 +1272,22 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
   - Verify clean git repository status and lack of any temporary junk files.
   - Document a focused Cycle 5 QA checklist.
 - **DoD**: Compilation and type checking pass; repository is clean of any junk artifacts; documentation is complete and accurate.
+
+---
+
+## Development Cycle 13 (Development Cycle 6: ProductFeedback / user requests)
+
+### Batch 6.1 — Backend USER Endpoint
+- **Goal**: Add a secure backend endpoint for regular users to retrieve their own feedback history.
+- **Scope**: Implement `GET /api/feedback/my` returning a list of `MyProductFeedbackResponse`.
+- **DoD**: Maven compile passes, endpoint verified.
+
+### Batch 6.2 — Mobile USER Screen
+- **Goal**: Add the "My Feedback" history screen in the mobile application.
+- **Scope**: Create `MyProductFeedbackScreen.tsx` displaying user's feedback items, and register it in the navigation flow.
+- **DoD**: TypeScript checks pass, screen navigateable and displays history correctly.
+
+### Batch 6.3 — Admin ProductFeedback Display Verification & Docs Closure
+- **Goal**: Verify Admin feedback screens clearly display sender name and email, and update API/Tech documents.
+- **Scope**: Inspect `AdminProductFeedbackScreen.tsx` and `AdminProductFeedbackDetailsScreen.tsx`. Update `API_CONTRACT.md` and `TECH_SPEC.md` to reflect ProductFeedback endpoint definitions and actual schema/enum values.
+- **DoD**: Admin display verified, documentation aligned, clean compilation and typechecks pass.

@@ -391,7 +391,7 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 - `text` (String)
 
 `UpdateProductFeedbackStatusRequest`
-- `status` (Enum: `FeedbackStatus` - `NEW`, `IN_REVIEW`, `RESOLVED`)
+- `status` (Enum: `FeedbackStatus` - `NEW`, `IN_PROGRESS`, `RESOLVED`)
 
 `ProductFeedbackSummaryResponse`
 - `id` (Long)
@@ -399,6 +399,8 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 - `type` (Enum: `FeedbackType`)
 - `status` (Enum: `FeedbackStatus`)
 - `createdAt` (DateTime)
+- `senderName` (String)
+- `senderEmail` (String)
 
 `ProductFeedbackDetailsResponse`
 - `id` (Long)
@@ -408,6 +410,16 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 - `text` (String)
 - `createdAt` (DateTime)
 - `updatedAt` (DateTime)
+- `resolvedAt` (DateTime, optional)
+- `senderName` (String)
+- `senderEmail` (String)
+
+`MyProductFeedbackResponse`
+- `id` (Long)
+- `type` (Enum: `FeedbackType`)
+- `text` (String)
+- `status` (Enum: `FeedbackStatus`)
+- `createdAt` (DateTime)
 - `resolvedAt` (DateTime, optional)
 
 ---
@@ -624,6 +636,7 @@ No WebSocket. No realtime. No attachments. (Note: internal unread count per conv
 | Method | Path | Role | Request | Response | Rules | Errors |
 |---|---|---|---|---|---|---|
 | POST | `/api/feedback` | USER | `CreateProductFeedbackRequest` | Void | Users submit product feedback | 400, 401, 403 |
+| GET | `/api/feedback/my` | USER | — | `List<MyProductFeedbackResponse>` | Users view their own feedback history | 401, 403 |
 | GET | `/api/admin/feedback` | ADMIN | — | `List<ProductFeedbackSummaryResponse>` | Admin lists all product feedback | 401, 403 |
 | GET | `/api/admin/feedback/{feedbackId}` | ADMIN | — | `ProductFeedbackDetailsResponse` | Admin views feedback details | 401, 403, 404 |
 | PATCH | `/api/admin/feedback/{feedbackId}/status` | ADMIN | `UpdateProductFeedbackStatusRequest` | `ProductFeedbackDetailsResponse` | Admin updates feedback status | 400, 401, 403, 404 |

@@ -220,6 +220,12 @@ export const MeScreen = ({ navigation }: any) => {
               style={styles.button}
             />
 
+            <AppButton
+              title="הפניות שלי"
+              onPress={() => navigation.navigate('MyProductFeedback')}
+              style={styles.button}
+            />
+
             <AppButton 
               title="רענון פרופיל" 
               onPress={handleRefresh} 

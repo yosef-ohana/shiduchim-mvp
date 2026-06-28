@@ -32,3 +32,12 @@ export interface ProductFeedbackDetailsResponse {
 export interface UpdateFeedbackStatusRequest {
   status: FeedbackStatus;
 }
+
+export interface MyProductFeedbackResponse {
+  id: number;
+  type: FeedbackType;
+  text: string;
+  status: FeedbackStatus;
+  createdAt: string;
+  resolvedAt: string | null;
+}

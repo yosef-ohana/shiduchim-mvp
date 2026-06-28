@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface ProductFeedbackRepository extends JpaRepository<ProductFeedback, Long> {
     List<ProductFeedback> findAllByOrderByCreatedAtDesc();
+    List<ProductFeedback> findBySenderUserIdOrderByCreatedAtDesc(Long senderUserId);
 }

@@ -641,3 +641,15 @@ These are collected future improvements and are NOT implemented at this stage. T
 
 ### 28.4 Best-Effort Disk Cleanup
 - **Background Image Deletion**: When a wedding is successfully hard deleted, the local background image file stored on the server disk is deleted on a best-effort basis, preventing disk space leaks.
+
+---
+
+## 29. Development Cycle 6 Decisions: ProductFeedback User History & Admin Display Verification
+
+### 29.1 User History Endpoint & UI
+- **GET /api/feedback/my**: Added a secure endpoint returning only the logged-in user's submitted feedback history (using `MyProductFeedbackResponse`), preserving isolation from other users.
+- **Mobile screen (“הפניות שלי”)**: Created a dedicated user feedback history list screen showing the type, text, status, and creation date, with a link to navigate there from the settings.
+
+### 29.2 Admin Display Verification
+- **Human-Readable Sender**: Verified that Admin feedback screens display `senderName` and `senderEmail` as the primary human-readable sender details.
+- **Secondary Technical Info**: Retained `senderUserId` as secondary/technical metadata. No UI modifications were required since these fields were already displayed.

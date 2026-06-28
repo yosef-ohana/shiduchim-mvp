@@ -635,9 +635,10 @@ Phase 18 is officially defined as: **"Hebrew UI Localization & RTL Polish"**
 - **Resource Management**: The polling interval is automatically cleared when the screen loses focus (e.g. user navigates back or opens another tab) and when the component unmounts.
 
 ### 19.3 Product Feedback Reporting
-- **Backend Schema**: Added `ProductFeedback` entity with columns: `id` (Long, PK), `user_id` (FK to `User`), `type` (Enum: `FeedbackType` - `BUG`, `IMPROVEMENT`, `OTHER`), `content` (Text), `status` (Enum: `FeedbackStatus` - `NEW`, `IN_REVIEW`, `RESOLVED`), `created_at` (Timestamp), `updated_at` (Timestamp).
+- **Backend Schema**: Added `ProductFeedback` entity with columns: `id` (Long, PK), `sender_user_id` (FK to `User`), `type` (Enum: `FeedbackType` - `BUG`, `IMPROVEMENT`, `OTHER`), `text` (Text), `status` (Enum: `FeedbackStatus` - `NEW`, `IN_PROGRESS`, `RESOLVED`), `created_at` (Timestamp), `updated_at` (Timestamp).
 - **Controller Rules**:
   - Users submit feedback using `POST /api/feedback`.
+  - Users view their own feedback history using `GET /api/feedback/my`.
   - Admins list feedback via `GET /api/admin/feedback`, view single feedback via `GET /api/admin/feedback/{feedbackId}`, and update status using `PATCH /api/admin/feedback/{feedbackId}/status`.
 - **Mobile UI**:
   - Added feedback form accessible from `MeScreen.tsx` (`ProductFeedbackScreen.tsx`).

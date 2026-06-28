@@ -1,6 +1,7 @@
 package com.shiduchim.backend.service;
 
 import com.shiduchim.backend.dto.feedback.CreateProductFeedbackRequest;
+import com.shiduchim.backend.dto.feedback.MyProductFeedbackResponse;
 import com.shiduchim.backend.dto.feedback.ProductFeedbackDetailsResponse;
 import com.shiduchim.backend.dto.feedback.ProductFeedbackSummaryResponse;
 import com.shiduchim.backend.dto.feedback.UpdateProductFeedbackStatusRequest;
@@ -54,6 +55,26 @@ public class ProductFeedbackService {
         feedback.setText(text);
 
         feedbackRepository.save(feedback);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MyProductFeedbackResponse> getMyFeedback(User currentUser) {
+        if (!currentUser.getRole().equals(UserRole.USER)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only users can retrieve their product feedback");
+        }
+
+        List<ProductFeedback> feedbacks = feedbackRepository.findBySenderUserIdOrderByCreatedAtDesc(currentUser.getId());
+
+        return feedbacks.stream().map(feedback -> {
+            MyProductFeedbackResponse response = new MyProductFeedbackResponse();
+            response.setId(feedback.getId());
+            response.setType(feedback.getType());
+            response.setText(feedback.getText());
+            response.setStatus(feedback.getStatus());
+            response.setCreatedAt(feedback.getCreatedAt());
+            response.setResolvedAt(feedback.getResolvedAt());
+            return response;
+        }).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)

@@ -32,6 +32,7 @@ import { BlockedUsersScreen } from '../screens/blocks/BlockedUsersScreen';
 import { OpeningMessagesScreen } from '../screens/opening/OpeningMessagesScreen';
 import { OpeningConversationDetailsScreen } from '../screens/opening/OpeningConversationDetailsScreen';
 import { SendProductFeedbackScreen } from '../screens/feedback/SendProductFeedbackScreen';
+import { MyProductFeedbackScreen } from '../screens/feedback/MyProductFeedbackScreen';
 import { AdminProductFeedbackScreen } from '../screens/admin/AdminProductFeedbackScreen';
 import { AdminProductFeedbackDetailsScreen } from '../screens/admin/AdminProductFeedbackDetailsScreen';
 import { WeddingParticipantsScreen } from '../screens/weddings/WeddingParticipantsScreen';
@@ -102,6 +103,7 @@ export type MainStackParamList = {
   OpeningMessages: undefined;
   OpeningConversationDetails: { conversationId: number };
   SendProductFeedback: undefined;
+  MyProductFeedback: undefined;
   AdminProductFeedback: undefined;
   AdminProductFeedbackDetails: { feedbackId: number };
 };
@@ -154,6 +156,7 @@ export const MainStack = () => {
       <Stack.Screen name="OpeningMessages" component={OpeningMessagesScreen} options={{ title: 'הודעות פתיחה' }} />
       <Stack.Screen name="OpeningConversationDetails" component={OpeningConversationDetailsScreen} options={{ title: 'שיחה' }} />
       <Stack.Screen name="SendProductFeedback" component={SendProductFeedbackScreen} options={{ title: 'שליחת משוב' }} />
+      <Stack.Screen name="MyProductFeedback" component={MyProductFeedbackScreen} options={{ title: 'הפניות שלי' }} />
       <Stack.Screen name="AdminProductFeedback" component={AdminProductFeedbackScreen} options={{ title: 'פניות מערכת' }} />
       <Stack.Screen name="AdminProductFeedbackDetails" component={AdminProductFeedbackDetailsScreen} options={{ title: 'פרטי פניה' }} />
     </Stack.Navigator>
