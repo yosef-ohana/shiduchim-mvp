@@ -769,3 +769,29 @@ The final manual Runtime QA cycle has passed successfully for the recent Shiduch
 - **MainStack.tsx & types/api.ts**:
   - Registered `StaffParticipantDetails` route in mobile navigation.
   - Added API client Fetch and Restore methods for Admin/Event Managers.
+
+---
+
+## 25. Development Cycle 4: Admin Wedding Management Improvements
+
+### 25.1 Backend Service Guards
+- **File**: [AdminService.java](file:///c:/Projects/shiduchim-mvp/backend/src/main/java/com/shiduchim/backend/service/AdminService.java)
+- **Modifications**:
+  - Added private helper `ensureWeddingActiveForOwnerAssignment(Wedding wedding)` to throw `HttpStatus.BAD_REQUEST` if the wedding status is not `ACTIVE`.
+  - Added private helper `ensureDifferentOwner(Wedding wedding, Long newOwnerId)` to throw `HttpStatus.BAD_REQUEST` if `newOwnerId` equals `wedding.getOwnerUserId()`.
+  - Integrated both helper methods at the entry point of `assignManagerToWedding(...)` and `assignSelfToWedding(...)` to guard against unauthorized state changes.
+
+### 25.2 Mobile UI Enhancements
+- **Admin Wedding List**:
+  - **File**: [AdminWeddingsScreen.tsx](file:///c:/Projects/shiduchim-mvp/mobile/src/screens/admin/AdminWeddingsScreen.tsx)
+  - Updated screen layout to display the owner's `ownerName` and `ownerEmail` instead of a raw ID, falling back to ID if not loaded.
+- **Admin Details Owner Assignment**:
+  - **File**: [AdminWeddingDetailsScreen.tsx](file:///c:/Projects/shiduchim-mvp/mobile/src/screens/admin/AdminWeddingDetailsScreen.tsx)
+  - Added a visual `מנהל נוכחי` (Current Owner) badge inside the event manager selection list.
+  - Disabled the selection card of the current owner to prevent duplicate selection.
+  - Disabled the assignment and self-assignment buttons if the selected manager or the logged-in admin is already the owner.
+- **Read-Only UX Warnings**:
+  - **Files**: [AdminWeddingDetailsScreen.tsx](file:///c:/Projects/shiduchim-mvp/mobile/src/screens/admin/AdminWeddingDetailsScreen.tsx) and [EventManagerWeddingDetailsScreen.tsx](file:///c:/Projects/shiduchim-mvp/mobile/src/screens/eventManager/EventManagerWeddingDetailsScreen.tsx)
+  - Embedded a high-visibility warning banner at the top of the detail screen indicating when a wedding is `CLOSED` or `CANCELLED` and explaining that modification actions are disabled.
+  - **File**: [WeddingParticipantsScreen.tsx](file:///c:/Projects/shiduchim-mvp/mobile/src/screens/weddings/WeddingParticipantsScreen.tsx)
+  - Added a Hebrew read-only warning message at the top of the list for inactive weddings.

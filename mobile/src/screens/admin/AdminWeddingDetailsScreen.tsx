@@ -11,6 +11,7 @@ import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 import { getWeddingStatusLabel, getInviteStatusLabel, formatDisplayDate } from '../../utils/displayLabels';
 import { WeddingJoinQrCard } from '../../components/WeddingJoinQrCard';
 import { WeddingBackgroundManager } from '../../components/WeddingBackgroundManager';
+import { useAuth } from '../../context/AuthContext';
 
 type DetailsRouteProp = RouteProp<MainStackParamList, 'AdminWeddingDetails'>;
 type NavigationProp = NativeStackNavigationProp<MainStackParamList, 'AdminWeddingDetails'>;
@@ -19,6 +20,7 @@ export const AdminWeddingDetailsScreen = () => {
   const route = useRoute<DetailsRouteProp>();
   const navigation = useNavigation<NavigationProp>();
   const { weddingId } = route.params;
+  const { user } = useAuth();
 
   const [wedding, setWedding] = useState<AdminWeddingResponse | null>(null);
   const [invites, setInvites] = useState<WeddingInviteResponse[]>([]);
@@ -185,9 +187,24 @@ export const AdminWeddingDetailsScreen = () => {
 
   if (!wedding) return null;
 
+  const isInactiveWedding = wedding.status === 'CLOSED' || wedding.status === 'CANCELLED';
+  const isWeddingActive = wedding.status === 'ACTIVE';
+  const isCurrentUserOwner = user?.id === wedding.ownerUserId;
+
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.container}>
+        {isInactiveWedding && (
+          <View style={styles.bannerContainer}>
+            <Text style={styles.bannerTitle}>
+              {wedding.status === 'CLOSED' ? 'החתונה סגורה' : 'החתונה בוטלה'}
+            </Text>
+            <Text style={styles.bannerBody}>
+              המסך מוצג לקריאה בלבד. לא ניתן לבצע פעולות ניהול פעילות עד החזרה לפעילות במחזור נפרד.
+            </Text>
+          </View>
+        )}
+
         <View style={styles.card}>
           <Text style={styles.title}>{wedding.name}</Text>
           <Text style={styles.info}>מזהה חתונה: {wedding.id}</Text>
@@ -211,7 +228,9 @@ export const AdminWeddingDetailsScreen = () => {
             weddingStatus: wedding.status
           })}
         >
-          <Text style={styles.btnText}>צפייה וניהול משתתפי החתונה</Text>
+          <Text style={styles.btnText}>
+            {isWeddingActive ? 'צפייה וניהול משתתפי החתונה' : 'צפייה במשתתפי החתונה — קריאה בלבד'}
+          </Text>
         </TouchableOpacity>
 
         {wedding && (
@@ -233,71 +252,93 @@ export const AdminWeddingDetailsScreen = () => {
           />
         )}
 
-        <View style={styles.actionsContainer}>
-          <Text style={styles.sectionTitle}>שיוך מנהל אירוע</Text>
-          
-          <ScrollView style={styles.managerList} nestedScrollEnabled={true}>
-            {eventManagers.map(manager => (
-              <TouchableOpacity
-                key={manager.id}
-                style={[
-                  styles.managerCard,
-                  managerIdInput === manager.id.toString() && styles.managerCardSelected
-                ]}
-                onPress={() => setManagerIdInput(manager.id.toString())}
-              >
-                <Text style={styles.managerName}>{manager.fullName}</Text>
-                <Text style={styles.managerEmail}>{manager.email}</Text>
+        {isWeddingActive && (
+          <View style={styles.actionsContainer}>
+            <Text style={styles.sectionTitle}>שיוך מנהל אירוע</Text>
+
+            <ScrollView style={styles.managerList} nestedScrollEnabled={true}>
+              {eventManagers.map(manager => {
+                const isCurrentOwner = manager.id === wedding.ownerUserId;
+                return (
+                  <TouchableOpacity
+                    key={manager.id}
+                    style={[
+                      styles.managerCard,
+                      managerIdInput === manager.id.toString() && styles.managerCardSelected,
+                      isCurrentOwner && styles.managerCardCurrent
+                    ]}
+                    onPress={() => setManagerIdInput(manager.id.toString())}
+                    disabled={isCurrentOwner}
+                  >
+                    <View style={styles.managerHeaderRow}>
+                      {isCurrentOwner && (
+                        <View style={styles.currentBadge}>
+                          <Text style={styles.currentBadgeText}>מנהל נוכחי</Text>
+                        </View>
+                      )}
+                      <Text style={styles.managerName}>{manager.fullName}</Text>
+                    </View>
+                    <Text style={styles.managerEmail}>{manager.email}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            <TouchableOpacity
+              style={[
+                styles.fullBtn,
+                {
+                  backgroundColor: theme.colors.primary,
+                  opacity: (managerIdInput && parseInt(managerIdInput, 10) !== wedding.ownerUserId) ? 1 : 0.5
+                }
+              ]}
+              onPress={handleAssignManager}
+              disabled={!managerIdInput || parseInt(managerIdInput, 10) === wedding.ownerUserId}
+            >
+              <Text style={styles.btnText}>שיוך מנהל אירוע שנבחר</Text>
+            </TouchableOpacity>
+
+            {isCurrentUserOwner ? (
+              <View style={[styles.fullBtn, styles.disabledBtn]}>
+                <Text style={styles.disabledBtnText}>החתונה כבר משויכת אליך</Text>
+              </View>
+            ) : (
+              <TouchableOpacity style={[styles.fullBtn, { backgroundColor: theme.colors.primary }]} onPress={handleAssignSelf}>
+                <Text style={styles.btnText}>שיוך עצמי</Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+            )}
 
-          <TouchableOpacity 
-            style={[styles.fullBtn, { backgroundColor: theme.colors.primary, opacity: managerIdInput ? 1 : 0.5 }]} 
-            onPress={handleAssignManager}
-            disabled={!managerIdInput}
-          >
-            <Text style={styles.btnText}>שיוך מנהל אירוע שנבחר</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={[styles.fullBtn, { backgroundColor: '#f0ad4e' }]} onPress={handleClose}>
+              <Text style={styles.btnText}>סגירת חתונה</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.fullBtn, { backgroundColor: '#d9534f' }]} onPress={handleCancel}>
+              <Text style={styles.btnText}>ביטול חתונה</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
-          <TouchableOpacity style={[styles.fullBtn, { backgroundColor: theme.colors.primary }]} onPress={handleAssignSelf}>
-            <Text style={styles.btnText}>שיוך עצמי</Text>
-          </TouchableOpacity>
-
-          {wedding.status === 'ACTIVE' && (
-            <>
-              <TouchableOpacity style={[styles.fullBtn, { backgroundColor: '#f0ad4e' }]} onPress={handleClose}>
-                <Text style={styles.btnText}>סגירת חתונה</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.fullBtn, { backgroundColor: '#d9534f' }]} onPress={handleCancel}>
-                <Text style={styles.btnText}>ביטול חתונה</Text>
-              </TouchableOpacity>
-            </>
-          )}
-
-          {invites.length > 0 && (
-            <View style={styles.invitesContainer}>
-              <Text style={styles.sectionTitle}>הזמנות ({invites.length})</Text>
-              {invites.map((invite) => (
-                <View key={`invite-${invite.id}`} style={styles.inviteCard}>
-                  <View style={{ flex: 1, marginRight: theme.spacing.s }}>
-                    <Text style={styles.inviteName}>{invite.fullName}</Text>
-                    <Text style={styles.inviteEmail}>{invite.email}</Text>
-                    <Text style={styles.inviteStatus}>סטטוס: {getInviteStatusLabel(invite.status)}</Text>
-                  </View>
-                  {invite.status === 'CANCELLED' && wedding.status === 'ACTIVE' && (
-                    <TouchableOpacity
-                      style={styles.restoreBtn}
-                      onPress={() => handleRestoreInvite(invite.id)}
-                    >
-                      <Text style={styles.restoreBtnText}>החזרת הזמנה</Text>
-                    </TouchableOpacity>
-                  )}
+        {invites.length > 0 && (
+          <View style={styles.invitesContainer}>
+            <Text style={styles.sectionTitle}>הזמנות ({invites.length})</Text>
+            {invites.map((invite) => (
+              <View key={`invite-${invite.id}`} style={styles.inviteCard}>
+                <View style={{ flex: 1, marginRight: theme.spacing.s }}>
+                  <Text style={styles.inviteName}>{invite.fullName}</Text>
+                  <Text style={styles.inviteEmail}>{invite.email}</Text>
+                  <Text style={styles.inviteStatus}>סטטוס: {getInviteStatusLabel(invite.status)}</Text>
                 </View>
-              ))}
-            </View>
-          )}
-        </View>
+                {invite.status === 'CANCELLED' && wedding.status === 'ACTIVE' && (
+                  <TouchableOpacity
+                    style={styles.restoreBtn}
+                    onPress={() => handleRestoreInvite(invite.id)}
+                  >
+                    <Text style={styles.restoreBtnText}>החזרת הזמנה</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </Screen>
   );
@@ -437,6 +478,60 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.textSecondary,
     marginTop: 2,
+    textAlign: 'right',
+  },
+  managerHeaderRow: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  currentBadge: {
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  currentBadgeText: {
+    color: '#2E7D32',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  managerCardCurrent: {
+    opacity: 0.7,
+    backgroundColor: '#f9f9f9',
+  },
+  disabledBtn: {
+    backgroundColor: '#e0e0e0',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.m,
+    alignItems: 'center',
+    marginBottom: theme.spacing.m,
+  },
+  disabledBtnText: {
+    color: '#888',
+    fontWeight: 'bold',
+  },
+  bannerContainer: {
+    backgroundColor: '#FFEBEE',
+    borderColor: '#FFCDD2',
+    borderWidth: 1,
+    borderRadius: theme.borderRadius.m,
+    padding: theme.spacing.m,
+    marginBottom: theme.spacing.m,
+  },
+  bannerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#C62828',
+    textAlign: 'right',
+    marginBottom: 4,
+  },
+  bannerBody: {
+    fontSize: 14,
+    color: '#D32F2F',
     textAlign: 'right',
   },
 });

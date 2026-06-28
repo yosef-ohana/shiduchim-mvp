@@ -207,8 +207,16 @@ public class AdminService {
     @Transactional
     public AdminWeddingResponse assignManagerToWedding(Long weddingId, AssignManagerRequest request, User currentUser) {
         validateAdmin(currentUser);
+
+        if (request == null || request.getManagerId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Manager ID must not be null");
+        }
+
         Wedding wedding = weddingRepository.findById(weddingId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wedding not found"));
+
+        ensureWeddingActiveForOwnerAssignment(wedding);
+        ensureDifferentOwner(wedding, request.getManagerId());
 
         User ownerUser = userRepository.findById(request.getManagerId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Manager user not found"));
@@ -248,10 +256,25 @@ public class AdminService {
         Wedding wedding = weddingRepository.findById(weddingId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wedding not found"));
 
+        ensureWeddingActiveForOwnerAssignment(wedding);
+        ensureDifferentOwner(wedding, currentUser.getId());
+
         wedding.setOwnerUserId(currentUser.getId());
         wedding = weddingRepository.save(wedding);
 
         return toAdminWeddingResponse(wedding);
+    }
+
+    private void ensureWeddingActiveForOwnerAssignment(Wedding wedding) {
+        if (wedding.getStatus() != WeddingStatus.ACTIVE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot change the owner of a closed or cancelled wedding");
+        }
+    }
+
+    private void ensureDifferentOwner(Wedding wedding, Long newOwnerId) {
+        if (newOwnerId != null && newOwnerId.equals(wedding.getOwnerUserId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The selected manager/admin is already the current owner of this wedding");
+        }
     }
 
     private String generateUniqueAccessCode() {

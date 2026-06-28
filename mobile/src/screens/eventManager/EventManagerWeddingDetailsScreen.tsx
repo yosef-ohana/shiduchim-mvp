@@ -234,6 +234,17 @@ export const EventManagerWeddingDetailsScreen = ({ route, navigation }: any) => 
         }
       >
         <View style={styles.headerContainer}>
+          {wedding && (wedding.status === 'CLOSED' || wedding.status === 'CANCELLED') && (
+            <View style={styles.bannerContainer}>
+              <Text style={styles.bannerTitle}>
+                {wedding.status === 'CLOSED' ? 'החתונה סגורה' : 'החתונה בוטלה'}
+              </Text>
+              <Text style={styles.bannerBody}>
+                המסך מוצג לקריאה בלבד. לא ניתן לבצע פעולות ניהול פעילות עד החזרה לפעילות במחזור נפרד.
+              </Text>
+            </View>
+          )}
+
           {wedding && (
             <View style={styles.detailsCard}>
               <View style={styles.titleRow}>
@@ -271,7 +282,7 @@ export const EventManagerWeddingDetailsScreen = ({ route, navigation }: any) => 
               </View>
 
               <AppButton
-                title="צפייה וניהול משתתפי החתונה"
+                title={wedding.status === 'ACTIVE' ? 'צפייה וניהול משתתפי החתונה' : 'צפייה במשתתפי החתונה — קריאה בלבד'}
                 onPress={() => navigation.navigate('WeddingParticipants', {
                   weddingId: wedding.id,
                   mode: 'EVENT_MANAGER',
@@ -675,5 +686,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: theme.colors.textSecondary,
     fontSize: 15,
+  },
+  bannerContainer: {
+    backgroundColor: '#FFEBEE',
+    borderColor: '#FFCDD2',
+    borderWidth: 1,
+    borderRadius: theme.borderRadius.m,
+    padding: theme.spacing.m,
+    marginBottom: theme.spacing.m,
+  },
+  bannerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#C62828',
+    textAlign: 'right',
+    marginBottom: 4,
+  },
+  bannerBody: {
+    fontSize: 14,
+    color: '#D32F2F',
+    textAlign: 'right',
   },
 });

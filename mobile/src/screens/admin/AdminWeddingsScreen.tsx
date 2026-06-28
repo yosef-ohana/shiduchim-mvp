@@ -47,7 +47,15 @@ export const AdminWeddingsScreen = () => {
       <Text style={styles.info}>תאריך החתונה: {formatDisplayDate(item.weddingDate)}</Text>
       <Text style={styles.info}>סטטוס: {getWeddingStatusLabel(item.status)}</Text>
       <Text style={styles.info}>קוד גישה: {item.accessCode || 'לא צוין'}</Text>
-      <Text style={styles.info}>מזהה משתמש בעלים: {item.ownerUserId || 'לא צוין'}</Text>
+      {item.ownerName ? (
+        <>
+          <Text style={styles.info}>מנהל אירוע: {item.ownerName}</Text>
+          {item.ownerEmail ? <Text style={styles.info}>אימייל: {item.ownerEmail}</Text> : null}
+          {item.ownerUserId ? <Text style={styles.info}>מזהה מנהל: {item.ownerUserId}</Text> : null}
+        </>
+      ) : (
+        <Text style={styles.info}>מזהה מנהל: {item.ownerUserId || 'לא צוין'}</Text>
+      )}
       <Text style={styles.info}>משתתפים: {item.participantsCount}</Text>
       <Text style={styles.info}>שידוכים: {item.matchesCount}</Text>
     </TouchableOpacity>

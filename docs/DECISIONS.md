@@ -603,3 +603,24 @@ These are collected future improvements and are NOT implemented at this stage. T
 - **Admin Block/Unblock Actions**: The Block/Unblock buttons on `StaffParticipantDetailsScreen.tsx` are visible and active only for the `ADMIN` role.
 - **Action Guardrails**: Event Managers and Admins can only remove or restore participants if the backend returns `canRemove: true` or `canRestore: true` in the list of manageable weddings, preventing invalid action attempts.
 - **No DB, Entity, or Email Changes**: No database schemas, entities, migrations, or email sending logic were introduced.
+
+---
+
+## 27. Development Cycle 4 Decisions: Admin Wedding Management Improvements
+
+### 27.1 Backend Assignment Validation Guards
+- **Active Wedding Check**: Assigning a new owner (via self-assignment or event manager assignment) is strictly restricted to `ACTIVE` weddings. Closed or cancelled weddings cannot have their owner changed, returning HTTP 400 Bad Request.
+- **Duplicate Owner Prevention**: Assigning the same owner who is already the current owner of the wedding is rejected with HTTP 400 Bad Request.
+
+### 27.2 Mobile UI Owner Management & Prevention
+- **Display Friendly Identifier**: The Admin Weddings list and detail screens show the owner's human-readable name or email, falling back to the user ID if not loaded.
+- **Visual & UI Selection Block**: The current owner card displays a marked "Current Owner" badge and is disabled in the picker list to prevent selecting them. The self-assign button displays "Wedding already assigned to you" and is disabled if the logged-in admin is the current owner.
+
+### 27.3 Inactive Wedding Read-only UX
+- **Details Banners**: Detail screens for Event Managers and Admins show a persistent top banner indicating that the wedding is `CLOSED` or `CANCELLED` and is read-only.
+- **Participants List Banner**: The participant management screen shows a read-only notification banner when the wedding is inactive.
+
+### 27.4 Exclusions & MVP Boundaries
+- **No Structural Changes**: No database schemas, entities, DTOs, or new API endpoints were created or modified.
+- **Out of Scope Features**: "Restore Wedding" and "Hard Delete" operations were not implemented or supported.
+- **QA Exclusions**: Runtime manual QA is deferred / pending. Only compile and static type verification checks were executed.

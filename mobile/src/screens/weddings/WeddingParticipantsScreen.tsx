@@ -231,6 +231,14 @@ export const WeddingParticipantsScreen = () => {
         onRefresh={loadData}
         ListHeaderComponent={
           <View style={styles.headerContainer}>
+            {!isWeddingActive && (
+              <View style={styles.bannerContainer}>
+                <Text style={styles.bannerText}>
+                  החתונה סגורה/מבוטלת — רשימת המשתתפים מוצגת לקריאה בלבד.
+                </Text>
+              </View>
+            )}
+
             {isWeddingActive && (
               <View style={styles.addParticipantContainer}>
                 <Text style={styles.sectionTitle}>הוספת משתמש קיים לפי אימייל</Text>
@@ -479,5 +487,19 @@ const styles = StyleSheet.create({
   submitInviteButton: {
     marginTop: theme.spacing.s,
     width: '100%',
+  },
+  bannerContainer: {
+    backgroundColor: '#FFEBEE',
+    borderColor: '#FFCDD2',
+    borderWidth: 1,
+    borderRadius: theme.borderRadius.m,
+    padding: theme.spacing.m,
+    marginBottom: theme.spacing.m,
+  },
+  bannerText: {
+    fontSize: 14,
+    color: '#D32F2F',
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });

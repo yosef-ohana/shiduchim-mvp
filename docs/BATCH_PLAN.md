@@ -1196,3 +1196,31 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
   - Update `API_CONTRACT.md`, `TECH_SPEC.md`, `DECISIONS.md`, and `BATCH_PLAN.md`.
   - Push changes to remote repository.
 - **DoD**: Clean compile, zero junk files, docs up-to-date, commit created and pushed.
+
+---
+
+## Development Cycle 11 (Development Cycle 4: Admin Wedding Management Improvements)
+
+### Batch 1 — Backend Admin Wedding Guards
+- **Goal**: Implement validation guards in AdminService for owner assignment.
+- **Scope**:
+  - Prevent owner assignment (both self-assignment and event manager assignment) when the wedding status is not ACTIVE.
+  - Prevent assigning the same current owner to the wedding again.
+- **DoD**: Maven compile passes successfully.
+
+### Batch 2 — Mobile UI Improvements
+- **Goal**: Implement owner display, duplicate selection prevention, and inactive wedding read-only UX.
+- **Scope**:
+  - Display the owner name/email in AdminWeddingsScreen instead of raw ID.
+  - Prevent duplicate assignment in AdminWeddingDetailsScreen by disabling picker selection for the current owner, and disabling self-assign buttons.
+  - Render read-only warnings in EventManagerWeddingDetailsScreen and AdminWeddingDetailsScreen for CLOSED/CANCELLED weddings.
+  - Render read-only indication in WeddingParticipantsScreen.
+- **DoD**: Mobile TypeScript checks pass successfully.
+
+### Batch 3 — Cycle 4 Docs, Technical Checks, Cleanup, Commit and Push
+- **Goal**: Technical verification, documentation updates, cleanup, commit, and push.
+- **Scope**:
+  - Inspect and update BATCH_PLAN.md, TECH_SPEC.md, API_CONTRACT.md, and DECISIONS.md.
+  - Verify no junk/artifact files exist in the repository.
+  - Commit and push changes to remote repository.
+- **DoD**: Clean checks, documentation updated, git status clean, changes committed and pushed.

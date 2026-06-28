@@ -571,8 +571,8 @@ No WebSocket. No realtime. No attachments. (Note: internal unread count per conv
 | PATCH | `/api/admin/users/{userId}/block` | ADMIN | — | `AdminUserResponse` | Sets `adminBlocked=true` | 401, 403, 404 |
 | PATCH | `/api/admin/users/{userId}/unblock` | ADMIN | — | `AdminUserResponse` | Sets `adminBlocked=false` | 401, 403, 404 |
 | GET | `/api/admin/weddings` | ADMIN | — | `List<AdminWeddingResponse>` | Basic wedding list | 401, 403 |
-| PATCH | `/api/admin/weddings/{weddingId}/assign-self` | ADMIN | — | `WeddingResponse` | Admin assigns self to manage wedding | 401, 403, 404 |
-| PUT | `/api/admin/weddings/{weddingId}/owner` | ADMIN | `{ "ownerUserId": Long }` | `WeddingResponse` | Admin assigns Event Manager to wedding | 400, 401, 403, 404 |
+| PATCH | `/api/admin/weddings/{weddingId}/assign-self` | ADMIN | — | `WeddingResponse` | Admin assigns self to manage wedding; active wedding & new owner required | 400, 401, 403, 404 |
+| PUT | `/api/admin/weddings/{weddingId}/owner` | ADMIN | `{ "ownerUserId": Long }` | `WeddingResponse` | Admin assigns Event Manager to wedding; active wedding & new owner required | 400, 401, 403, 404 |
 | GET | `/api/admin/dashboard` | ADMIN | — | `AdminDashboardResponse` | Returns basic admin dashboard counters | 401, 403 |
 | GET | `/api/admin/reports` | ADMIN | — | `List<UserReportSummaryResponse>` | List all user reports | 401, 403 |
 | GET | `/api/admin/reports/{reportId}` | ADMIN | — | `UserReportDetailsResponse` | Get details of a specific report | 401, 403, 404 |
