@@ -1349,3 +1349,23 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
   - Update BATCH_PLAN.md, TECH_SPEC.md, and DECISIONS.md.
   - Run type checks and verify repository status.
 - **DoD**: Mobile typescript passes, git diff --check passes, and repository is clean of temporary artifacts.
+
+---
+
+## Cycle 3 MVP+ — Opening / Match / Chat Continuity and Stale Opening Handling
+
+### Batch 1 — Backend Opening-to-Chat bridge after mutual Like Match
+- **Goal**: Implement backend logic to bridge existing opening messages into active chat messages when a Match is created.
+- **DoD**: Compilation successful; opening messages automatically migrated to chat history on mutual like.
+
+### Batch 2 — Mobile OpeningConversationDetails matched-state banner
+- **Goal**: Render a notice and chat redirection button in OpeningConversationDetailsScreen if the opening conversation is already matched.
+- **DoD**: Notice and Chat button rendered on matched opening screen; navigation operational.
+
+### Batch 3 — Mobile Discover / Lists Match CTA and stale Opening handling
+- **Goal**: Add Chat navigation CTA on Like match creation and handle stale opening attempts gracefully.
+- **DoD**: Discover and Lists prompt a direct Chat CTA on new matches, and stale opening attempts show a Hebrew explanation with Chat navigation.
+
+### Batch 4 — Final Validation, Cleanup, Minimal Docs, Commit and Push
+- **Goal**: Perform Cycle 3 validation, clean up files, update tracking docs, commit and push.
+- **DoD**: Compile and typechecks pass; repository clean; docs updated; changes committed and pushed.

@@ -477,4 +477,51 @@ public class OpeningMessageService {
         
         return response;
     }
+
+    @Transactional
+    public void attachOpenConversationsToMatchAfterMutualLike(Long user1Id, Long user2Id, Long matchId, PoolType poolType, Long weddingId) {
+        if (matchId == null) {
+            return;
+        }
+
+        List<OpeningConversation> conversations = openingConversationRepository
+                .findOpenConversationsBetweenUsers(user1Id, user2Id, OpeningConversationStatus.OPEN);
+
+        if (conversations.isEmpty()) {
+            return;
+        }
+
+        // Prefer same-context conversations first if possible by sorting, though all OPEN ones are processed
+        conversations.sort((c1, c2) -> {
+            boolean c1SameContext = c1.getPoolType() == poolType && ((c1.getWeddingId() == null && weddingId == null) || (c1.getWeddingId() != null && c1.getWeddingId().equals(weddingId)));
+            boolean c2SameContext = c2.getPoolType() == poolType && ((c2.getWeddingId() == null && weddingId == null) || (c2.getWeddingId() != null && c2.getWeddingId().equals(weddingId)));
+            if (c1SameContext && !c2SameContext) return -1;
+            if (!c1SameContext && c2SameContext) return 1;
+            return 0;
+        });
+
+        for (OpeningConversation conv : conversations) {
+            if (conv.getStatus() != OpeningConversationStatus.OPEN) {
+                continue;
+            }
+            if (conv.getMatchId() != null) {
+                continue;
+            }
+
+            List<OpeningMessage> messages = openingMessageRepository.findByConversationIdOrderByCreatedAtAsc(conv.getId());
+            for (OpeningMessage om : messages) {
+                ChatMessage cm = new ChatMessage();
+                cm.setMatchId(matchId);
+                cm.setSenderId(om.getSenderUserId());
+                cm.setContent(om.getContent());
+                cm.setSentAt(om.getCreatedAt());
+                cm.setReadByRecipient(false);
+                chatMessageRepository.save(cm);
+            }
+
+            conv.setStatus(OpeningConversationStatus.MATCH_CREATED);
+            conv.setMatchId(matchId);
+            openingConversationRepository.save(conv);
+        }
+    }
 }

@@ -32,4 +32,14 @@ public interface OpeningConversationRepository extends JpaRepository<OpeningConv
             @Param("status") OpeningConversationStatus status);
 
     boolean existsByPoolTypeAndWeddingId(PoolType poolType, Long weddingId);
+
+    @Query("SELECT oc FROM OpeningConversation oc WHERE " +
+           "((oc.openerUserId = :user1Id AND oc.recipientUserId = :user2Id) OR " +
+           "(oc.openerUserId = :user2Id AND oc.recipientUserId = :user1Id)) " +
+           "AND oc.status = :status " +
+           "AND oc.matchId IS NULL")
+    List<OpeningConversation> findOpenConversationsBetweenUsers(
+            @Param("user1Id") Long user1Id,
+            @Param("user2Id") Long user2Id,
+            @Param("status") OpeningConversationStatus status);
 }

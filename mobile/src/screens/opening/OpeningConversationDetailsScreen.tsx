@@ -147,7 +147,7 @@ export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => 
   }
 
   const isOpener = user?.id === details?.openerUserId;
-  const isMatchCreated = details?.status === 'MATCH_CREATED';
+  const isMatchCreated = details?.status === 'MATCH_CREATED' || details?.matchCreated === true;
 
   return (
     <Screen>
@@ -213,11 +213,26 @@ export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => 
           </View>
         )}
         
-        {isOpener && details?.status === 'OPEN' && (
+        {isOpener && !isMatchCreated && details?.status === 'OPEN' && (
           <View style={styles.infoBanner}>
             <Text style={styles.infoText}>
               ההודעה נשלחה בהצלחה. יש להמתין לתשובה מהצד השני.
             </Text>
+          </View>
+        )}
+
+        {isMatchCreated && (
+          <View style={styles.matchedBanner}>
+            <Text style={styles.matchedText}>
+              כבר נוצרה התאמה עם משתמש זה. אפשר להמשיך בצ׳אט.
+            </Text>
+            {details?.matchId ? (
+              <AppButton
+                title="מעבר לצ׳אט"
+                onPress={() => navigation.navigate('Chat', { matchId: details.matchId })}
+                style={styles.chatButton}
+              />
+            ) : null}
           </View>
         )}
       </KeyboardAvoidingView>
@@ -376,5 +391,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textSecondary,
     marginTop: 2,
+  },
+  matchedBanner: {
+    padding: theme.spacing.m,
+    backgroundColor: '#FAF7F0',
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    alignItems: 'center',
+  },
+  matchedText: {
+    color: theme.colors.text,
+    fontSize: 15,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: theme.spacing.m,
+  },
+  chatButton: {
+    width: '100%',
   },
 });

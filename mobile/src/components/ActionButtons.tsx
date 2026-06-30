@@ -10,7 +10,7 @@ interface ActionButtonsProps {
   targetUserId: number;
   poolType: PoolType;
   weddingId?: number;
-  onActionCompleted: (matchCreated: boolean) => void;
+  onActionCompleted: (matchCreated: boolean, matchId?: number) => void;
   onOpeningMessagePress?: () => void;
   hasOpenOpeningConversation?: boolean;
   openingConversationDirection?: 'SENT' | 'RECEIVED';
@@ -45,7 +45,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
           response = await freezeUser(targetUserId, params);
         }
 
-        onActionCompleted(response.matchCreated);
+        onActionCompleted(response.matchCreated, response.matchId || undefined);
       } catch (err: any) {
         setError(getFriendlyErrorMessage(err, 'ביצוע הפעולה נכשל. נסה שוב.'));
       } finally {

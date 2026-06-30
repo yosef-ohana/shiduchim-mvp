@@ -684,3 +684,24 @@ These are collected future improvements and are NOT implemented at this stage. T
 - **RTL Context Banner**: Decided to pass a context label in route params to CandidateProfile to inform the user how they navigated to the profile. This is rendered in a subtle banner.
 - **Split Touch zones (No Nesting)**: Decided to split the conversation summary card into sibling Touchables to prevent nested touch bugs.
 - **Dynamic Header Loading with Fallbacks**: Decided to fetch the public profile inside the conversation details screen only. If the API fails, the screen falls back gracefully to passed parameters or generic Hebrew text without showing errors.
+
+---
+
+## 32. Cycle 3 MVP+ Decisions: Opening / Match / Chat Continuity and Stale Opening Handling
+
+### 32.1 Backend Match Continuity
+- **Message Migration**: When a Match is created via mutual Like, any existing pre-match OpeningConversation between the two users is automatically processed. Its messages are attached/migrated directly to the newly created Chat history.
+- **State Deactivation**: The OpeningConversation's active status is set to inactive to prevent duplicate processing.
+
+### 32.2 Mobile Chat CTA for Matched Openings
+- **Matched Opening Detail screen**: In `OpeningConversationDetailsScreen.tsx`, when an opening conversation's matched state is active (i.e. already converted to a Match), the user is presented with a clear banner/status indicating the match exists, along with a "Chat" CTA to navigate directly to the corresponding active Chat screen.
+
+### 32.3 Discover / Lists Match CTA
+- **Mutual Like CTA**: Tapping "Like" on the Discover screen or Lists screen which results in a mutual Like Match now prompts a clear feedback/CTA allowing the user to navigate directly to the new Chat.
+
+### 32.4 Stale Opening Handling
+- **Hebrew Guard Explanation**: If a user attempts to send an opening message to a user they are already matched with, the system handles the conflict gracefully with a clear Hebrew explanation and provides immediate navigation to Chat when the matchId is available.
+
+### 32.5 Boundary Isolation
+- **No Schema/API Contract Changes**: No database schemas, entities, DTOs, migrations, or public API endpoints were created or modified in this cycle.
+- **QA Exclusions**: Runtime manual QA is deferred per project process.

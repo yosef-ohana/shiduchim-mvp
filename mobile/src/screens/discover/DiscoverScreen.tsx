@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
 import { CandidateCard } from '../../components/CandidateCard';
@@ -9,6 +9,7 @@ import { PublicUserCardResponse } from '../../types/api';
 import { ActionButtons } from '../../components/ActionButtons';
 import { OpeningMessageComposer } from '../../components/OpeningMessageComposer';
 import { sendOpeningMessage } from '../../api/openingMessagesApi';
+import { getMatches } from '../../api/matchesApi';
 
 export const DiscoverScreen = ({ route, navigation }: any) => {
   const { pool, weddingId } = route.params || {};
@@ -96,9 +97,23 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
                 targetUserId={item.userId}
                 poolType={pool}
                 weddingId={weddingId}
-                onActionCompleted={(matchCreated) => {
+                onActionCompleted={(matchCreated, matchId) => {
                   if (matchCreated) {
-                    setMatchMessage(`יש התאמה עם ${item.fullName}!`);
+                    if (matchId) {
+                      Alert.alert(
+                        'נוצרה התאמה!',
+                        'נוצרה התאמה! אפשר להמשיך לצ׳אט.',
+                        [
+                          { text: 'סגור', style: 'cancel' },
+                          {
+                            text: 'מעבר לצ׳אט',
+                            onPress: () => navigation.navigate('Chat', { matchId }),
+                          },
+                        ]
+                      );
+                    } else {
+                      setMatchMessage(`יש התאמה עם ${item.fullName}!`);
+                    }
                   }
                   setCandidates((prev) => prev.filter((c) => c.userId !== item.userId));
                 }}
@@ -127,19 +142,64 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
         onClose={() => setComposerTargetId(null)}
         onSend={async (content) => {
           if (composerTargetId !== null) {
-            await sendOpeningMessage(composerTargetId, {
-              content,
-              poolType: pool,
-              weddingId: weddingId,
-            });
-            setMatchMessage('ההודעה נשלחה בהצלחה');
-            setCandidates((prev) =>
-              prev.map((c) =>
-                c.userId === composerTargetId
-                  ? { ...c, hasOpenOpeningConversation: true, openingConversationDirection: 'SENT' }
-                  : c
-              )
-            );
+            try {
+              await sendOpeningMessage(composerTargetId, {
+                content,
+                poolType: pool,
+                weddingId: weddingId,
+              });
+              setMatchMessage('ההודעה נשלחה בהצלחה');
+              setCandidates((prev) =>
+                prev.map((c) =>
+                  c.userId === composerTargetId
+                    ? { ...c, hasOpenOpeningConversation: true, openingConversationDirection: 'SENT' }
+                    : c
+                )
+              );
+            } catch (err: any) {
+              const isStaleMatch = err.response?.status === 409 && (
+                err.response?.data?.message?.toLowerCase().includes("active match") ||
+                err.response?.data?.message?.toLowerCase().includes("match already exists")
+              );
+              if (isStaleMatch) {
+                try {
+                  const activeMatches = await getMatches();
+                  const match = activeMatches.find(m => m.otherUserId === composerTargetId);
+                  if (match && match.matchId) {
+                    Alert.alert(
+                      'כבר נוצרה התאמה',
+                      'כבר נוצרה התאמה עם משתמש זה. אפשר להמשיך בצ׳אט.',
+                      [
+                        { text: 'סגור', style: 'cancel' },
+                        {
+                          text: 'מעבר לצ׳אט',
+                          onPress: () => navigation.navigate('Chat', { matchId: match.matchId }),
+                        },
+                      ]
+                    );
+                  } else {
+                    Alert.alert(
+                      'כבר נוצרה התאמה',
+                      'כבר נוצרה התאמה עם משתמש זה. אפשר להמשיך בצ׳אט.',
+                      [
+                        { text: 'סגור', style: 'cancel' },
+                        {
+                          text: 'מעבר לרשימת ההתאמות',
+                          onPress: () => navigation.navigate('Matches'),
+                        },
+                      ]
+                    );
+                  }
+                } catch (fetchErr) {
+                  Alert.alert(
+                    'כבר נוצרה התאמה',
+                    'כבר נוצרה התאמה עם משתמש זה. אפשר להמשיך בצ׳אט.'
+                  );
+                }
+              } else {
+                throw err;
+              }
+            }
           }
         }}
       />

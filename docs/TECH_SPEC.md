@@ -871,3 +871,33 @@ This section contains the focused Cycle 5 QA checklist. Note: Manual QA has not 
   - **Body zone**: Navigates to conversation details, passing `otherUserName` as a fallback.
 - **Dynamic Header Profile Loader**: Inside `OpeningConversationDetailsScreen.tsx`, the component calls `getPublicProfile(details.otherUserId)` upon load to dynamically retrieve and display the sender's name and primary photo in the header. If the fetch fails, it falls back to `route.params.otherUserName` or a generic `"פרופיל המשתמש"`.
 - **No Lifecycle Side-Effects**: Navigation remains purely view-only. It does not create matches, trigger likes/dislikes, or open chat screens.
+
+---
+
+## 31. Development Cycle 3 MVP+ Additions: Opening / Match / Chat Continuity and Stale Opening Handling
+
+### 31.1 Backend Match Continuity & Message Migration
+- **File**: [ActionService.java](file:///c:/Projects/shiduchim-mvp/backend/src/main/java/com/shiduchim/backend/service/ActionService.java)
+- **Modifications**: Added a call to `openingMessageService.bridgeOpeningToMatch(user, targetUser, match)` within `recordLikeAction(...)` when a mutual Like results in an active Match.
+- **File**: [OpeningMessageService.java](file:///c:/Projects/shiduchim-mvp/backend/src/main/java/com/shiduchim/backend/service/OpeningMessageService.java)
+- **Modifications**: Added `bridgeOpeningToMatch(User opener, User recipient, Match match)` to find active `OpeningConversation` between the two users, migrate all its `OpeningMessage`s to `ChatMessage`s associated with the new `Match`, and mark the conversation as inactive.
+- **File**: [OpeningConversationRepository.java](file:///c:/Projects/shiduchim-mvp/backend/src/main/java/com/shiduchim/backend/repository/OpeningConversationRepository.java)
+- **Modifications**: Added query method `findByOpenerUserIdAndRecipientUserIdAndIsActiveTrue(...)` to locate active pre-match conversations.
+
+### 31.2 Mobile UI Chat CTA for Matched Openings
+- **File**: [OpeningConversationDetailsScreen.tsx](file:///c:/Projects/shiduchim-mvp/mobile/src/screens/opening/OpeningConversationDetailsScreen.tsx)
+- **Modifications**: Updated to check if the conversation status is `MATCHED` or if `matchId` is populated. When true, renders a Hebrew notice banner at the top of the screen (`שיחה זו כבר הפכה להתאמה!`) along with a "Chat" button (`מעבר לצ'אט`) navigating directly to the active `Chat` screen.
+
+### 31.3 Mobile Discover / Lists Match CTA
+- **File**: [ActionButtons.tsx](file:///c:/Projects/shiduchim-mvp/mobile/src/components/ActionButtons.tsx)
+- **Modifications**: Updated the `onLike` handler to pass `matchId` back to the parent components if a mutual Like results in a Match.
+- **Files**: [DiscoverScreen.tsx](file:///c:/Projects/shiduchim-mvp/mobile/src/screens/discover/DiscoverScreen.tsx) and [ListsScreen.tsx](file:///c:/Projects/shiduchim-mvp/mobile/src/screens/lists/ListsScreen.tsx)
+- **Modifications**: Hooked up the updated `onLike` callbacks to capture the `matchId`. Render a modal/toast feedback offering a clear Hebrew redirect CTA to go straight to `Chat`.
+
+### 31.4 Graceful Stale Opening Attempt Handling
+- **File**: [OpeningConversationDetailsScreen.tsx](file:///c:/Projects/shiduchim-mvp/mobile/src/screens/opening/OpeningConversationDetailsScreen.tsx)
+- **Modifications**: When the send message request fails due to an already active Match (the backend returns conflict details), the screen handles the error gracefully. It displays a clear Hebrew alert informing the user that they are already matched (`כבר נוצרה התאמה ביניכם!`), and if a `matchId` is returned in the payload, displays a direct navigation link to the active `Chat`.
+
+### 31.5 Exclusions & MVP Boundaries
+- **No Schema/Contract/API Changes**: Database schemas, entities, DTOs, migrations, and API endpoint signatures remain unchanged.
+- **QA Exclusions**: Runtime manual QA is deferred pending project QA cycles.

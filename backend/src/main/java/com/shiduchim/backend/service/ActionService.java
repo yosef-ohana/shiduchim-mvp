@@ -40,6 +40,7 @@ public class ActionService {
     private final UserActionRepository userActionRepository;
     private final MatchRepository matchRepository;
     private final UserBlockService userBlockService;
+    private final OpeningMessageService openingMessageService;
 
     public ActionService(
             UserRepository userRepository,
@@ -48,7 +49,8 @@ public class ActionService {
             WeddingParticipantRepository weddingParticipantRepository,
             UserActionRepository userActionRepository,
             MatchRepository matchRepository,
-            UserBlockService userBlockService) {
+            UserBlockService userBlockService,
+            OpeningMessageService openingMessageService) {
         this.userRepository = userRepository;
         this.userPhotoRepository = userPhotoRepository;
         this.weddingRepository = weddingRepository;
@@ -56,6 +58,7 @@ public class ActionService {
         this.userActionRepository = userActionRepository;
         this.matchRepository = matchRepository;
         this.userBlockService = userBlockService;
+        this.openingMessageService = openingMessageService;
     }
 
     @Transactional
@@ -120,6 +123,9 @@ public class ActionService {
                 
                 matchCreated = true;
                 matchId = match.getId();
+
+                openingMessageService.attachOpenConversationsToMatchAfterMutualLike(
+                        actor.getId(), targetUserId, matchId, poolType, weddingId);
             }
         } else if (actionType == ActionType.DISLIKE || actionType == ActionType.FREEZE) {
             if (existingMatchOpt.isPresent() && existingMatchOpt.get().getStatus() == MatchStatus.ACTIVE) {

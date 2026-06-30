@@ -10,6 +10,7 @@ import { PoolType } from '../../types/api';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 import { OpeningMessageComposer } from '../../components/OpeningMessageComposer';
 import { sendOpeningMessage } from '../../api/openingMessagesApi';
+import { getMatches } from '../../api/matchesApi';
 
 type TabType = 'likes' | 'dislikes' | 'freezes' | 'liked-me';
 
@@ -64,7 +65,21 @@ export const ListsScreen = ({ navigation }: any) => {
         const response = await likeUser(targetUserId, { poolType, weddingId });
         await fetchList(activeTab);
         if (response.matchCreated) {
-          Alert.alert('נוצרה התאמה!', 'עכשיו אתם יכולים להתכתב.');
+          if (response.matchId) {
+            Alert.alert(
+              'נוצרה התאמה!',
+              'נוצרה התאמה! אפשר להמשיך לצ׳אט.',
+              [
+                { text: 'סגור', style: 'cancel' },
+                {
+                  text: 'מעבר לצ׳אט',
+                  onPress: () => navigation.navigate('Chat', { matchId: response.matchId }),
+                },
+              ]
+            );
+          } else {
+            Alert.alert('נוצרה התאמה!', 'עכשיו אתם יכולים להתכתב.');
+          }
         }
       } catch (err: any) {
         setError(getFriendlyErrorMessage(err, 'סימון הלייק נכשל. אנא נסה שוב.'));
@@ -288,13 +303,58 @@ export const ListsScreen = ({ navigation }: any) => {
         onClose={() => setComposerTarget(null)}
         onSend={async (content) => {
           if (composerTarget !== null) {
-            await sendOpeningMessage(composerTarget.userId, {
-              content,
-              poolType: composerTarget.poolType,
-              weddingId: composerTarget.weddingId,
-            });
-            Alert.alert('הצלחה', 'הודעת הפתיחה נשלחה בהצלחה.');
-            fetchList(activeTab);
+            try {
+              await sendOpeningMessage(composerTarget.userId, {
+                content,
+                poolType: composerTarget.poolType,
+                weddingId: composerTarget.weddingId,
+              });
+              Alert.alert('הצלחה', 'הודעת הפתיחה נשלחה בהצלחה.');
+              fetchList(activeTab);
+            } catch (err: any) {
+              const isStaleMatch = err.response?.status === 409 && (
+                err.response?.data?.message?.toLowerCase().includes("active match") ||
+                err.response?.data?.message?.toLowerCase().includes("match already exists")
+              );
+              if (isStaleMatch) {
+                try {
+                  const activeMatches = await getMatches();
+                  const match = activeMatches.find(m => m.otherUserId === composerTarget.userId);
+                  if (match && match.matchId) {
+                    Alert.alert(
+                      'כבר נוצרה התאמה',
+                      'כבר נוצרה התאמה עם משתמש זה. אפשר להמשיך בצ׳אט.',
+                      [
+                        { text: 'סגור', style: 'cancel' },
+                        {
+                          text: 'מעבר לצ׳אט',
+                          onPress: () => navigation.navigate('Chat', { matchId: match.matchId }),
+                        },
+                      ]
+                    );
+                  } else {
+                    Alert.alert(
+                      'כבר נוצרה התאמה',
+                      'כבר נוצרה התאמה עם משתמש זה. אפשר להמשיך בצ׳אט.',
+                      [
+                        { text: 'סגור', style: 'cancel' },
+                        {
+                          text: 'מעבר לרשימת ההתאמות',
+                          onPress: () => navigation.navigate('Matches'),
+                        },
+                      ]
+                    );
+                  }
+                } catch (fetchErr) {
+                  Alert.alert(
+                    'כבר נוצרה התאמה',
+                    'כבר נוצרה התאמה עם משתמש זה. אפשר להמשיך בצ׳אט.'
+                  );
+                }
+              } else {
+                throw err;
+              }
+            }
           }
         }}
       />
