@@ -1,6 +1,7 @@
 package com.shiduchim.backend.service;
 
 import com.shiduchim.backend.dto.report.CreateUserReportRequest;
+import com.shiduchim.backend.dto.report.MyUserReportResponse;
 import com.shiduchim.backend.dto.report.UserReportDetailsResponse;
 import com.shiduchim.backend.dto.report.UserReportSummaryResponse;
 import com.shiduchim.backend.entity.User;
@@ -65,6 +66,41 @@ public class UserReportService {
         report.setText(text);
         
         userReportRepository.save(report);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MyUserReportResponse> getMyReports(User currentUser) {
+        if (!currentUser.getRole().equals(UserRole.USER)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only users can retrieve their reports");
+        }
+
+        List<UserReport> reports = userReportRepository.findByReporterUserIdOrderByCreatedAtDesc(currentUser.getId());
+
+        Set<Long> reportedUserIds = reports.stream()
+                .map(UserReport::getReportedUserId)
+                .collect(Collectors.toSet());
+
+        Map<Long, User> userMap = userRepository.findAllById(reportedUserIds).stream()
+                .collect(Collectors.toMap(User::getId, user -> user));
+
+        return reports.stream().map(report -> {
+            MyUserReportResponse response = new MyUserReportResponse();
+            response.setId(report.getId());
+            response.setReportedUserId(report.getReportedUserId());
+            response.setStatus(report.getStatus());
+            response.setReasonType(report.getReasonType());
+            response.setText(report.getText());
+            response.setCreatedAt(report.getCreatedAt());
+            response.setUpdatedAt(report.getUpdatedAt());
+            response.setResolvedAt(report.getResolvedAt());
+
+            User reported = userMap.get(report.getReportedUserId());
+            if (reported != null) {
+                response.setReportedUserName(reported.getFullName());
+            }
+
+            return response;
+        }).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)

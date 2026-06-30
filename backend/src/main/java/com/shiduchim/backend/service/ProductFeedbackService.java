@@ -72,6 +72,7 @@ public class ProductFeedbackService {
             response.setText(feedback.getText());
             response.setStatus(feedback.getStatus());
             response.setCreatedAt(feedback.getCreatedAt());
+            response.setUpdatedAt(feedback.getUpdatedAt());
             response.setResolvedAt(feedback.getResolvedAt());
             return response;
         }).collect(Collectors.toList());

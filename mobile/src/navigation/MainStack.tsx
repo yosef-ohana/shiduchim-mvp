@@ -37,6 +37,7 @@ import { AdminProductFeedbackScreen } from '../screens/admin/AdminProductFeedbac
 import { AdminProductFeedbackDetailsScreen } from '../screens/admin/AdminProductFeedbackDetailsScreen';
 import { WeddingParticipantsScreen } from '../screens/weddings/WeddingParticipantsScreen';
 import { StaffParticipantDetailsScreen } from '../screens/weddings/StaffParticipantDetailsScreen';
+import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
 import { DiscoverPool, UserWeddingResponse } from '../types/api';
 
 export type MainStackParamList = {
@@ -113,6 +114,7 @@ export type MainStackParamList = {
   MyProductFeedback: undefined;
   AdminProductFeedback: undefined;
   AdminProductFeedbackDetails: { feedbackId: number };
+  Notifications: undefined;
 };
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
@@ -166,6 +168,7 @@ export const MainStack = () => {
       <Stack.Screen name="MyProductFeedback" component={MyProductFeedbackScreen} options={{ title: 'הפניות שלי' }} />
       <Stack.Screen name="AdminProductFeedback" component={AdminProductFeedbackScreen} options={{ title: 'פניות מערכת' }} />
       <Stack.Screen name="AdminProductFeedbackDetails" component={AdminProductFeedbackDetailsScreen} options={{ title: 'פרטי פניה' }} />
+      <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'ההתראות שלי' }} />
     </Stack.Navigator>
   );
 };

@@ -117,7 +117,13 @@ export const MeScreen = ({ navigation }: any) => {
 
         {user.role === 'USER' && (
           <>
-            <AppButton 
+            <AppButton
+              title="ההתראות שלי"
+              onPress={() => navigation.navigate('Notifications')}
+              style={styles.button}
+            />
+
+            <AppButton
               title="פרטי הפרופיל שלי" 
               onPress={() => navigation.navigate('Profile')}
               style={styles.button}

@@ -420,6 +420,18 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 - `text` (String)
 - `status` (Enum: `FeedbackStatus`)
 - `createdAt` (DateTime)
+- `updatedAt` (DateTime, optional)
+- `resolvedAt` (DateTime, optional)
+
+`MyUserReportResponse`
+- `id` (Long)
+- `reportedUserId` (Long)
+- `reportedUserName` (String, optional)
+- `reasonType` (Enum: `ReportReasonType` - `PROFILE`, `BEHAVIOR`, `OTHER`)
+- `text` (String, optional)
+- `status` (Enum: `ReportStatus` - `NEW`, `RESOLVED`)
+- `createdAt` (DateTime)
+- `updatedAt` (DateTime, optional)
 - `resolvedAt` (DateTime, optional)
 
 ---
@@ -616,6 +628,7 @@ No WebSocket. No realtime. No attachments. (Note: internal unread count per conv
 | Method | Path | Role | Request | Response | Rules | Errors |
 |---|---|---|---|---|---|---|
 | POST | `/api/reports/users/{reportedUserId}` | USER | `CreateUserReportRequest` | Void | Report a user with reason and explanation | 400, 401, 403, 404 |
+| GET | `/api/reports/my` | USER | — | `List<MyUserReportResponse>` | Users view their own submitted reports status | 401, 403 |
 
 ---
 

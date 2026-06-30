@@ -705,3 +705,25 @@ These are collected future improvements and are NOT implemented at this stage. T
 ### 32.5 Boundary Isolation
 - **No Schema/API Contract Changes**: No database schemas, entities, DTOs, migrations, or public API endpoints were created or modified in this cycle.
 - **QA Exclusions**: Runtime manual QA is deferred per project process.
+
+---
+
+## 33. Cycle 4 MVP+ Decisions: User Reports History & Recent Updates Aggregation
+
+### 33.1 User Reports History Endpoint
+- **GET /api/reports/my**: Implemented a secure backend endpoint for regular users to retrieve the status and history of user reports they have submitted, returning `MyUserReportResponse`.
+- **MyProductFeedbackResponse Timestamp**: Added `updatedAt` field to `MyProductFeedbackResponse` to support sorting and auditing.
+
+### 33.2 Mobile Unified Requests History
+- **Unified Screen ("הפניות שלי")**: Refactored the screen to load and present both product feedback and user reports in a single chronological view, displaying status, type/reason, date, and detail fields in Hebrew.
+
+### 33.3 Mobile "My Notifications" / Recent Updates Screen
+- **Updates Screen ("ההתראות שלי")**: Added a lightweight, mobile-only recent updates screen that aggregates recent likes received, matches, opening messages, product feedback status changes, and user report status changes.
+- **Strict Exclusions**: There is no Notification database table, entity, backend service, or backend endpoint. No read/unread state tracking, push notifications, websockets, polling, or local persistence was added. Normal chat messages are not displayed.
+- **Navigation Shortcuts**:
+  - Likes → CandidateProfile
+  - Matches → MatchDetails
+  - Opening Messages → OpeningConversationDetails
+  - Feedback / Reports status updates → MyProductFeedback
+- **Role Limits**: The notifications center button on the "Me" screen is only shown to regular users (USER) and hidden for admins and event managers.
+- **QA Exclusions**: Runtime manual QA is deferred per project process. TypeScript and static analysis verify navigation parameter safety.

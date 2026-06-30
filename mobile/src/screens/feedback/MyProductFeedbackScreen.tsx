@@ -5,10 +5,36 @@ import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
 import { theme } from '../../theme/theme';
 import { productFeedbackApi } from '../../api/productFeedbackApi';
-import { MyProductFeedbackResponse } from '../../types/apiProductFeedback';
+import { reportsApi } from '../../api/reportsApi';
+import { MyProductFeedbackResponse, FeedbackType, FeedbackStatus } from '../../types/apiProductFeedback';
+import { MyUserReportResponse, ReportReasonType, ReportStatus } from '../../types/api';
+
+type UnifiedItem =
+  | {
+      id: number;
+      kind: 'FEEDBACK';
+      type: FeedbackType;
+      status: FeedbackStatus;
+      text: string;
+      createdAt: string;
+      updatedAt?: string | null;
+      resolvedAt: string | null;
+    }
+  | {
+      id: number;
+      kind: 'REPORT';
+      reasonType: ReportReasonType;
+      status: ReportStatus;
+      text?: string | null;
+      createdAt: string;
+      updatedAt?: string | null;
+      resolvedAt: string | null;
+      reportedUserId: number;
+      reportedUserName?: string | null;
+    };
 
 export const MyProductFeedbackScreen = () => {
-  const [items, setItems] = useState<MyProductFeedbackResponse[]>([]);
+  const [items, setItems] = useState<UnifiedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,13 +48,38 @@ export const MyProductFeedbackScreen = () => {
     setError(null);
 
     try {
-      const data = await productFeedbackApi.getMyFeedback();
-      // Sort feedback by id descending so newest is on top
-      const sortedData = data.sort((a, b) => b.id - a.id);
+      const [feedbackData, reportsData] = await Promise.all([
+        productFeedbackApi.getMyFeedback(),
+        reportsApi.getMyReports(),
+      ]);
+
+      const normalizedFeedback: UnifiedItem[] = feedbackData.map(item => ({
+        ...item,
+        kind: 'FEEDBACK',
+      }));
+
+      const normalizedReports: UnifiedItem[] = reportsData.map(item => ({
+        ...item,
+        kind: 'REPORT',
+      }));
+
+      const combined = [...normalizedFeedback, ...normalizedReports];
+
+      const getSortDate = (item: UnifiedItem) => {
+        const dateStr = item.updatedAt || item.resolvedAt || item.createdAt;
+        return dateStr ? new Date(dateStr).getTime() : 0;
+      };
+
+      const sortedData = combined.sort((a, b) => {
+        const dateA = getSortDate(a);
+        const dateB = getSortDate(b);
+        return dateB - dateA;
+      });
+
       setItems(sortedData);
     } catch (err) {
-      console.error('Error fetching my product feedback:', err);
-      setError('אירעה שגיאה בטעינת הפניות');
+      console.error('Error fetching my requests:', err);
+      setError('אירעה שגיאה בטעינת הפניות והדיווחים');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -41,12 +92,21 @@ export const MyProductFeedbackScreen = () => {
     }, [])
   );
 
-  const getTypeText = (type: string) => {
-    switch (type) {
-      case 'BUG': return 'באג';
-      case 'IMPROVEMENT': return 'בקשת שיפור';
-      case 'OTHER': return 'אחר';
-      default: return type;
+  const getTypeText = (item: UnifiedItem) => {
+    if (item.kind === 'FEEDBACK') {
+      switch (item.type) {
+        case 'BUG': return 'באג';
+        case 'IMPROVEMENT': return 'בקשת שיפור';
+        case 'OTHER': return 'אחר';
+        default: return item.type;
+      }
+    } else {
+      switch (item.reasonType) {
+        case 'PROFILE': return 'בעיה בפרופיל (תמונה, פרטים)';
+        case 'BEHAVIOR': return 'התנהגות בלתי הולמת';
+        case 'OTHER': return 'אחר';
+        default: return item.reasonType;
+      }
     }
   };
 
@@ -78,19 +138,28 @@ export const MyProductFeedbackScreen = () => {
     }
   };
 
-  const renderItem = ({ item }: { item: MyProductFeedbackResponse }) => (
+  const renderItem = ({ item }: { item: UnifiedItem }) => (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>פניה #{item.id}</Text>
+        <Text style={styles.cardTitle}>
+          {item.kind === 'FEEDBACK' ? `פניית מערכת #${item.id}` : `דיווח משתמש #${item.id}`}
+        </Text>
         <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
           <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
         </View>
       </View>
 
       <View style={styles.cardRow}>
-        <Text style={styles.cardLabel}>סוג:</Text>
-        <Text style={styles.cardValue}>{getTypeText(item.type)}</Text>
+        <Text style={styles.cardLabel}>סוג / סיבה:</Text>
+        <Text style={styles.cardValue}>{getTypeText(item)}</Text>
       </View>
+
+      {item.kind === 'REPORT' && item.reportedUserName ? (
+        <View style={styles.cardRow}>
+          <Text style={styles.cardLabel}>דווח על:</Text>
+          <Text style={styles.cardValue}>{item.reportedUserName}</Text>
+        </View>
+      ) : null}
 
       <View style={styles.cardRow}>
         <Text style={styles.cardLabel}>תאריך יצירה:</Text>
@@ -104,9 +173,11 @@ export const MyProductFeedbackScreen = () => {
         </View>
       ) : null}
 
-      <Text style={styles.textLabel}>תוכן הפניה:</Text>
+      <Text style={styles.textLabel}>
+        {item.kind === 'FEEDBACK' ? 'תוכן הפניה:' : 'פרטי הדיווח:'}
+      </Text>
       <View style={styles.textBox}>
-        <Text style={styles.text}>{item.text}</Text>
+        <Text style={styles.text}>{item.text || '(אין פירוט)'}</Text>
       </View>
     </View>
   );
@@ -136,7 +207,7 @@ export const MyProductFeedbackScreen = () => {
     <Screen>
       <FlatList
         data={items}
-        keyExtractor={item => item.id.toString()}
+        keyExtractor={item => `${item.kind}-${item.id}`}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
         refreshControl={
@@ -148,13 +219,14 @@ export const MyProductFeedbackScreen = () => {
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>עדיין לא שלחת פניות מערכת</Text>
+            <Text style={styles.emptyText}>עדיין לא שלחת פניות או דיווחים</Text>
           </View>
         }
       />
     </Screen>
   );
 };
+
 
 const styles = StyleSheet.create({
   list: {

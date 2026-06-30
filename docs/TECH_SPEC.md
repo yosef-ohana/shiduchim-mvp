@@ -901,3 +901,29 @@ This section contains the focused Cycle 5 QA checklist. Note: Manual QA has not 
 ### 31.5 Exclusions & MVP Boundaries
 - **No Schema/Contract/API Changes**: Database schemas, entities, DTOs, migrations, and API endpoint signatures remain unchanged.
 - **QA Exclusions**: Runtime manual QA is deferred pending project QA cycles.
+
+---
+
+## 32. Development Cycle 4 MVP+ Additions: User Reports History & Recent Updates Aggregation
+
+### 32.1 Backend User Reports API
+- **Endpoint Implementation**: Created `GET /api/reports/my` in `UserReportController.java` to fetch reports submitted by the logged-in user.
+- **Service Layer**: Added logic in `UserReportService.java` to map `UserReport` records into `MyUserReportResponse`, fetching the reported user's name via `UserRepository` when available.
+- **DTOs**: Implemented `MyUserReportResponse.java` and added `updatedAt` field to `MyProductFeedbackResponse.java`.
+
+### 32.2 Unified Mobile Requests UI
+- **Unified Screen**: Updated `MyProductFeedbackScreen.tsx` to call both `reportsApi.getMyReports()` and `productFeedbackApi.getMyFeedback()`.
+- **Sorting and Display**: Merged both lists, sorted them by date descending (using `updatedAt` or `createdAt` fallbacks), and rendered cards showing clear labels, dates, details, and current statuses in Hebrew.
+
+### 32.3 Mobile Recent Updates Center ("ההתראות שלי")
+- **Screen**: Created `NotificationsScreen.tsx` which fetches likes received, matches, inbox opening messages, product feedback status updates, and user report status updates in parallel.
+- **Exclusion of Chat**: Confirmed that normal chat conversations are not fetched or displayed on this screen.
+- **Shortcuts & Navigation**: Mapping is implemented with parameters corresponding to MainStack routing configuration:
+  - Like updates target `CandidateProfile` (`userId`).
+  - Match updates target `MatchDetails` (`matchId`).
+  - Opening message updates target `OpeningConversationDetails` (`conversationId`, `otherUserName`).
+  - Feedback/Report status updates target `MyProductFeedback`.
+- **Role Restrictions**: Registered `Notifications` screen in `MainStack.tsx` and added navigation button to `MeScreen.tsx` gated strictly for the `USER` role.
+- **Limits**: Limits updates shown to 10 per source pre-merge and 30 total post-merge.
+- **MVP Boundaries**: No notification DB structures, push notifications, websockets, polling intervals, or local storage/AsyncStorage read/unread flags were created or utilized.
+- **QA Exclusions**: Runtime manual QA is deferred pending project QA cycles. TypeScript compile success validates navigation parameter type safety.

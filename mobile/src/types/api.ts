@@ -477,6 +477,19 @@ export interface UserReportDetailsResponse {
   reportedUserEmail?: string;
 }
 
+export interface MyUserReportResponse {
+  id: number;
+  reportedUserId: number;
+  reportedUserName?: string | null;
+  reasonType: ReportReasonType;
+  text?: string | null;
+  status: ReportStatus;
+  createdAt: string;
+  updatedAt?: string | null;
+  resolvedAt: string | null;
+}
+
+
 export interface BlockedUserResponse {
   id: number;
   blockedUserId: number;

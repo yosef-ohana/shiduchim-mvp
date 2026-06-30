@@ -1369,3 +1369,23 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
 ### Batch 4 — Final Validation, Cleanup, Minimal Docs, Commit and Push
 - **Goal**: Perform Cycle 3 validation, clean up files, update tracking docs, commit and push.
 - **DoD**: Compile and typechecks pass; repository clean; docs updated; changes committed and pushed.
+
+---
+
+## Cycle 4 MVP+ — User Reports History & Recent Updates Aggregation
+
+### Batch 4.1 — Backend User Reports API & Timestamps
+- **Goal**: Implement `GET /api/reports/my` returning a list of `MyUserReportResponse` and add `updatedAt` to `MyProductFeedbackResponse`.
+- **DoD**: Compile success.
+
+### Batch 4.2 — Mobile Unified Requests History Screen
+- **Goal**: Update mobile "הפניות שלי" screen to display both product feedback and user reports, using reportsApi.getMyReports().
+- **DoD**: TypeScript checks pass.
+
+### Batch 4.3 — Mobile Lightweight Notifications / Recent Updates Screen
+- **Goal**: Add recent updates aggregation screen "ההתראות שלי" displaying likes, matches, opening messages, product feedback status, and user reports status.
+- **DoD**: TypeScript checks pass, navigation targets map correctly.
+
+### Batch 4.4 — Final Validation, Cleanup, Minimal Docs, Commit and Push
+- **Goal**: Perform final validation of Cycle 4, clean up repository, update documentation, commit and push.
+- **DoD**: Compilation and typecheck pass, repo clean, changes committed and pushed.

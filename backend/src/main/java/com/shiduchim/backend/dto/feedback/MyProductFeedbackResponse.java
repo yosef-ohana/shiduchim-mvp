@@ -11,6 +11,7 @@ public class MyProductFeedbackResponse {
     private String text;
     private FeedbackStatus status;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private LocalDateTime resolvedAt;
 
     public Long getId() {
@@ -59,5 +60,13 @@ public class MyProductFeedbackResponse {
 
     public void setResolvedAt(LocalDateTime resolvedAt) {
         this.resolvedAt = resolvedAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

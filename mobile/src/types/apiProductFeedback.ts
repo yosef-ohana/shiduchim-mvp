@@ -39,5 +39,6 @@ export interface MyProductFeedbackResponse {
   text: string;
   status: FeedbackStatus;
   createdAt: string;
+  updatedAt?: string | null;
   resolvedAt: string | null;
 }

@@ -1,11 +1,14 @@
 package com.shiduchim.backend.controller;
 
 import com.shiduchim.backend.dto.report.CreateUserReportRequest;
+import com.shiduchim.backend.dto.report.MyUserReportResponse;
 import com.shiduchim.backend.entity.User;
 import com.shiduchim.backend.service.UserReportService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/reports")
@@ -25,5 +28,10 @@ public class UserReportController {
         
         userReportService.createReport(currentUser, reportedUserId, request);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/my")
+    public List<MyUserReportResponse> getMyReports(@AuthenticationPrincipal User currentUser) {
+        return userReportService.getMyReports(currentUser);
     }
 }
