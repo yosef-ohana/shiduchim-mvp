@@ -1315,3 +1315,37 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
 ### Batch 4B — Docs-if-needed, Cleanup, Commit and Push
 - **Goal**: Update status/decisions documentation, execute cleanup, and commit/push changes.
 - **DoD**: All changes committed and pushed to remote main branch.
+
+---
+
+## Cycle 2 MVP+ — Onboarding UX, Reusable Forms, & Opening Profile Navigation
+
+### Batch 1 — Profile Form Foundation
+- **Goal**: Extract form logic from BasicProfileScreen and FullProfileScreen into reusable components BasicProfileForm and FullProfileForm.
+- **Scope**:
+  - Unify styling and validation logic into modular components.
+  - Maintain all existing input validation and styling behaviors.
+- **DoD**: Forms extracted; basic and full screen profile actions operate identical to previous behaviors.
+
+### Batch 2 — Unified ProfileScreen Hub
+- **Goal**: Turn ProfileScreen into the central unified edit profile and photo manager hub.
+- **Scope**:
+  - Render BasicProfileForm, FullProfileForm, and ProfilePhotosManager within a unified layout.
+  - Guide users on their onboarding stages without changing the backend API or DB structure.
+- **DoD**: Profile Screen acts as a complete profile management dashboard.
+
+### Batch 3 — Opening to CandidateProfile View-Only Navigation
+- **Goal**: Implement view-only navigation from Opening messages/details to CandidateProfile.
+- **Scope**:
+  - Extend MainStack route params for context tracking and banners.
+  - Add context banner on CandidateProfileScreen when opened from Opening views.
+  - Split touch zones in OpeningMessagesScreen (tapping header opens CandidateProfile, tapping body opens details).
+  - Add clickable header in OpeningConversationDetailsScreen fetching the other user's public profile data (name and photo) dynamically, with fallbacks.
+- **DoD**: Navigation checks succeed; no matches/likes are created, and chat access remains restricted to active matches.
+
+### Batch 4 — Cycle 2 Docs, Final Validation & Cleanup
+- **Goal**: Documentation, code validation, and workspace cleanup.
+- **Scope**:
+  - Update BATCH_PLAN.md, TECH_SPEC.md, and DECISIONS.md.
+  - Run type checks and verify repository status.
+- **DoD**: Mobile typescript passes, git diff --check passes, and repository is clean of temporary artifacts.

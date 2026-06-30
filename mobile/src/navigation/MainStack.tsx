@@ -68,7 +68,11 @@ export type MainStackParamList = {
   MyWeddings: undefined;
   PoolSelection: undefined;
   Discover: { pool: DiscoverPool; weddingId?: number };
-  CandidateProfile: { userId: number };
+  CandidateProfile: {
+    userId: number;
+    sourceContext?: 'OPENING_LIST' | 'OPENING_DETAILS';
+    contextLabel?: string;
+  };
   Lists: undefined;
   Matches: undefined;
   MatchDetails: { matchId: number };
@@ -101,7 +105,10 @@ export type MainStackParamList = {
   AdminReportDetails: { reportId: number };
   BlockedUsers: undefined;
   OpeningMessages: undefined;
-  OpeningConversationDetails: { conversationId: number };
+  OpeningConversationDetails: {
+    conversationId: number;
+    otherUserName?: string;
+  };
   SendProductFeedback: undefined;
   MyProductFeedback: undefined;
   AdminProductFeedback: undefined;

@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Screen } from '../../components/Screen';
-import { AppInput } from '../../components/AppInput';
 import { AppButton } from '../../components/AppButton';
 import { getMyProfile, updateBasicProfile } from '../../api/profileApi';
 import { theme } from '../../theme/theme';
 import { useAuth } from '../../context/AuthContext';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
-import { getGenderLabel } from '../../utils/displayLabels';
+import { BasicProfileForm } from '../../components/profile/BasicProfileForm';
 
 const getProfileStatusLabel = (status: string) => {
   switch (status) {
@@ -212,71 +211,23 @@ export const BasicProfileScreen = ({ navigation, route }: any) => {
             )}
           </View>
         ) : (
-          <View style={styles.formCard}>
-            <AppInput
-              label="שם מלא"
-              placeholder="לדוגמה: ישראל ישראלי"
-              value={fullName}
-              onChangeText={setFullName}
-            />
-
-            <View style={styles.lockedFieldContainer}>
-              <Text style={styles.lockedFieldLabel}>מגדר</Text>
-              <View style={styles.lockedValueBox}>
-                <Text style={styles.lockedValueText}>
-                  {getGenderLabel(gender)}
-                </Text>
-              </View>
-              <Text style={styles.lockedFieldNotice}>
-                המגדר נקבע בהרשמה ואינו ניתן לעריכה כרגע. אם יש בעיה, פנה/י לאדמין.
-              </Text>
-            </View>
-
-            <AppInput
-              label="גיל"
-              placeholder="לדוגמה: 25"
-              keyboardType="number-pad"
-              value={age}
-              onChangeText={setAge}
-            />
-
-            <AppInput
-              label="גובה (ס״מ)"
-              placeholder="לדוגמה: 175"
-              keyboardType="number-pad"
-              value={heightCm}
-              onChangeText={setHeightCm}
-            />
-
-            <AppInput
-              label="אזור מגורים"
-              placeholder="לדוגמה: ירושלים"
-              value={areaOfResidence}
-              onChangeText={setAreaOfResidence}
-            />
-
-            <AppInput
-              label="רמה דתית"
-              placeholder="לדוגמה: דתי לאומי"
-              value={religiousLevel}
-              onChangeText={setReligiousLevel}
-            />
-
-            <AppInput
-              label="מספר טלפון"
-              placeholder="לדוגמה: 0501234567"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={setPhone}
-            />
-
-            <AppButton
-              title="שמירת פרופיל בסיסי"
-              onPress={handleSave}
-              loading={isSubmitting}
-              style={styles.saveButton}
-            />
-          </View>
+          <BasicProfileForm
+            fullName={fullName}
+            setFullName={setFullName}
+            gender={gender}
+            age={age}
+            setAge={setAge}
+            heightCm={heightCm}
+            setHeightCm={setHeightCm}
+            areaOfResidence={areaOfResidence}
+            setAreaOfResidence={setAreaOfResidence}
+            religiousLevel={religiousLevel}
+            setReligiousLevel={setReligiousLevel}
+            phone={phone}
+            setPhone={setPhone}
+            onSave={handleSave}
+            isSubmitting={isSubmitting}
+          />
         )}
       </ScrollView>
     </Screen>
@@ -306,51 +257,6 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     marginBottom: theme.spacing.l,
     textAlign: 'center',
-  },
-  formCard: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.m,
-    borderRadius: theme.borderRadius.m,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-    marginBottom: theme.spacing.xl,
-  },
-  saveButton: {
-    marginTop: theme.spacing.m,
-  },
-  lockedFieldContainer: {
-    marginBottom: theme.spacing.m,
-    width: '100%',
-  },
-  lockedFieldLabel: {
-    marginBottom: theme.spacing.s,
-    color: theme.colors.text,
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'right',
-  },
-  lockedValueBox: {
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.m,
-    padding: theme.spacing.m,
-    backgroundColor: '#F5F5F5',
-  },
-  lockedValueText: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
-    textAlign: 'right',
-  },
-  lockedFieldNotice: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginTop: 4,
-    textAlign: 'right',
   },
   errorCard: {
     backgroundColor: '#FFEBEE',

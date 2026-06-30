@@ -1,18 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Image, TouchableOpacity } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { AppInput } from '../../components/AppInput';
 import { AppButton } from '../../components/AppButton';
 import { theme } from '../../theme/theme';
 import { getOpeningConversationDetails, replyToOpeningMessage } from '../../api/openingMessagesApi';
-import { OpeningConversationDetailsResponse, OpeningMessageResponse } from '../../types/api';
+import { getPublicProfile } from '../../api/profileApi';
+import { OpeningConversationDetailsResponse, OpeningMessageResponse, PublicProfileResponse } from '../../types/api';
 import { useAuth } from '../../context/AuthContext';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+import { getImageUrl } from '../../utils/imageUrl';
 
 export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => {
-  const { conversationId } = route.params || {};
+  const { conversationId, otherUserName } = route.params || {};
   const { user } = useAuth();
   const [details, setDetails] = useState<OpeningConversationDetailsResponse | null>(null);
+  const [otherProfile, setOtherProfile] = useState<PublicProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -26,6 +29,14 @@ export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => 
     try {
       const data = await getOpeningConversationDetails(conversationId);
       setDetails(data);
+      if (data && data.otherUserId) {
+        try {
+          const profileData = await getPublicProfile(data.otherUserId);
+          setOtherProfile(profileData);
+        } catch (profileErr) {
+          // Gracefully swallow profile loading error to keep screen functional
+        }
+      }
     } catch (err: any) {
       setError(getFriendlyErrorMessage(err, 'טעינת ההודעות נכשלה. אנא נסו שוב.'));
     } finally {
@@ -140,6 +151,34 @@ export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => 
 
   return (
     <Screen>
+      {details && (
+        <TouchableOpacity
+          style={styles.userHeader}
+          onPress={() => navigation.navigate('CandidateProfile', {
+            userId: details.otherUserId,
+            sourceContext: 'OPENING_DETAILS',
+            contextLabel: 'הגעת מפרטי הודעת פתיחה'
+          })}
+          activeOpacity={0.7}
+        >
+          {getImageUrl(otherProfile?.primaryPhotoUrl) ? (
+            <Image source={{ uri: getImageUrl(otherProfile?.primaryPhotoUrl) }} style={styles.headerAvatar} />
+          ) : (
+            <View style={styles.headerAvatarPlaceholder}>
+              <Text style={styles.headerAvatarPlaceholderText}>
+                {(otherProfile?.fullName || otherUserName || 'פ')[0]}
+              </Text>
+            </View>
+          )}
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerNameText} numberOfLines={1}>
+              {otherProfile?.fullName || otherUserName || 'פרופיל המשתמש'}
+            </Text>
+            <Text style={styles.headerSubtitleText}>לחץ/י לצפייה בפרופיל</Text>
+          </View>
+        </TouchableOpacity>
+      )}
+
       <KeyboardAvoidingView 
         style={styles.container} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -294,5 +333,48 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     fontSize: 14,
     textAlign: 'center',
+  },
+  userHeader: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.m,
+    paddingVertical: theme.spacing.s,
+    backgroundColor: theme.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  headerAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.colors.border,
+  },
+  headerAvatarPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerAvatarPlaceholderText: {
+    color: theme.colors.surface,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  headerTextContainer: {
+    flex: 1,
+    marginRight: theme.spacing.m,
+    alignItems: 'flex-end',
+  },
+  headerNameText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: theme.colors.text,
+  },
+  headerSubtitleText: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginTop: 2,
   },
 });

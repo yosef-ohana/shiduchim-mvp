@@ -10,7 +10,7 @@ import { blockUser } from '../../api/blocksApi';
 import { getPublicProfile } from '../../api/profileApi';
 
 export const CandidateProfileScreen = ({ route, navigation }: any) => {
-  const { userId } = route.params || {};
+  const { userId, contextLabel } = route.params || {};
   const [profile, setProfile] = useState<PublicProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,6 +101,12 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.container}>
+        {contextLabel ? (
+          <View style={styles.contextBanner}>
+            <Text style={styles.contextBannerText}>{contextLabel}</Text>
+          </View>
+        ) : null}
+
         {/* Photo Section */}
         <View style={styles.photoSection}>
           <View style={styles.photoContainer}>
@@ -312,5 +318,22 @@ const styles = StyleSheet.create({
   blockButton: {
     marginTop: theme.spacing.s,
     backgroundColor: '#8B0000',
+  },
+  contextBanner: {
+    backgroundColor: 'rgba(212, 175, 55, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.25)',
+    borderRadius: theme.borderRadius.m,
+    paddingVertical: theme.spacing.s,
+    paddingHorizontal: theme.spacing.m,
+    marginBottom: theme.spacing.m,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  contextBannerText: {
+    color: '#B58900',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });

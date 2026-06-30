@@ -667,3 +667,20 @@ These are collected future improvements and are NOT implemented at this stage. T
 
 ### 30.3 Wedding Participants Modal UX
 - **Modal Add/Invite**: Refactored `WeddingParticipantsScreen.tsx` so the inline input forms for adding existing members or inviting new guests are consolidated into a bottom modal screen. The modal features a tab selector ("הוספת משתמש קיים" / "הזמנת משתמש חדש") and is launched by a single primary button. Closed or cancelled weddings render in a read-only state.
+
+---
+
+## 31. Cycle 2 MVP+ Decisions: Unified Onboarding Hub & Opening Profile Navigation
+
+### 31.1 Code Reusability and Client-Side Separation
+- **Form UI Extraction**: Decided to isolate input form presentation and validations from screen component state. Creating reusable `BasicProfileForm` and `FullProfileForm` simplifies future UI adjustments and avoids duplicating form validation logic.
+- **Contract Safety**: Retained existing screen navigation wrappers and API endpoints to ensure changes are completely isolated to UI components, requiring zero API changes.
+
+### 31.2 Central Profile Dashboard Hub
+- **ProfileScreen.tsx Consolidation**: Combined the basic form, full profile form, and photo manager into a single edit profile hub. This provides users with a cohesive workspace to manage their presence, rather than requiring them to jump across separate standalone screens.
+
+### 31.3 View-Only Navigation from Opening Messaging Contexts
+- **Strictly View-Only Isolation**: Decided to enable viewing another user's candidate profile from opening lists and details without changing the underlying lifecycles. Opening remains opening; no like/dislike actions are recorded, no match is created, and pre-match chats are not bypassed.
+- **RTL Context Banner**: Decided to pass a context label in route params to CandidateProfile to inform the user how they navigated to the profile. This is rendered in a subtle banner.
+- **Split Touch zones (No Nesting)**: Decided to split the conversation summary card into sibling Touchables to prevent nested touch bugs.
+- **Dynamic Header Loading with Fallbacks**: Decided to fetch the public profile inside the conversation details screen only. If the API fails, the screen falls back gracefully to passed parameters or generic Hebrew text without showing errors.

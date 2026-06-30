@@ -3,12 +3,15 @@ import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-nat
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
-import { getMyProfile } from '../../api/profileApi';
+import { getMyProfile, updateBasicProfile, updateFullProfile } from '../../api/profileApi';
 import { ProfileMeResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
 import { getGenderLabel, getUserRoleLabel } from '../../utils/displayLabels';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 import { ProfilePhotosManager } from '../../components/ProfilePhotosManager';
+import { useAuth } from '../../context/AuthContext';
+import { BasicProfileForm } from '../../components/profile/BasicProfileForm';
+import { FullProfileForm } from '../../components/profile/FullProfileForm';
 
 const getProfileStatusLabel = (status: string) => {
   switch (status) {
@@ -22,16 +25,65 @@ const getProfileStatusLabel = (status: string) => {
 
 export const ProfileScreen = ({ navigation, route }: any) => {
   const focusSection = route?.params?.focusSection;
+  const { refreshMe } = useAuth();
+
   const [profile, setProfile] = useState<ProfileMeResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditChoices, setShowEditChoices] = useState(false);
+
+  // Editing state controls
+  const [isEditingBasic, setIsEditingBasic] = useState(false);
+  const [isEditingFull, setIsEditingFull] = useState(false);
+  const [chosenTrack, setChosenTrack] = useState<'BASIC' | 'FULL' | null>(null);
+
+  // Form states and submission status
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrorMsg, setFormErrorMsg] = useState('');
+  const [formSuccessMsg, setFormSuccessMsg] = useState('');
+
+  // Controlled Basic Profile fields
+  const [fullName, setFullName] = useState('');
+  const [age, setAge] = useState('');
+  const [heightCm, setHeightCm] = useState('');
+  const [areaOfResidence, setAreaOfResidence] = useState('');
+  const [religiousLevel, setReligiousLevel] = useState('');
+  const [phone, setPhone] = useState('');
+  const [gender, setGender] = useState<string | null>(null);
+
+  // Controlled Full Profile fields
+  const [education, setEducation] = useState('');
+  const [occupation, setOccupation] = useState('');
+  const [headCovering, setHeadCovering] = useState('');
+  const [hasDrivingLicense, setHasDrivingLicense] = useState(false);
+  const [selfDescription, setSelfDescription] = useState('');
+  const [hobbies, setHobbies] = useState('');
+  const [lookingFor, setLookingFor] = useState('');
+  const [familyDescription, setFamilyDescription] = useState('');
 
   const fetchProfile = async () => {
     try {
       setError(null);
       const data = await getMyProfile();
       setProfile(data);
+
+      // Initialize form fields
+      setFullName(data.fullName || '');
+      setAge(data.age ? String(data.age) : '');
+      setHeightCm(data.heightCm ? String(data.heightCm) : '');
+      setAreaOfResidence(data.areaOfResidence || '');
+      setReligiousLevel(data.religiousLevel || '');
+      setPhone(data.phone || '');
+      setGender(data.gender || null);
+
+      setEducation(data.education || '');
+      setOccupation(data.occupation || '');
+      setHeadCovering(data.headCovering || '');
+      setHasDrivingLicense(data.hasDrivingLicense ?? false);
+      setSelfDescription(data.selfDescription || '');
+      setHobbies(data.hobbies || '');
+      setLookingFor(data.lookingFor || '');
+      setFamilyDescription(data.familyDescription || '');
     } catch (err: any) {
       setError(getFriendlyErrorMessage(err, 'טעינת הפרופיל נכשלה.'));
     } finally {
@@ -43,8 +95,105 @@ export const ProfileScreen = ({ navigation, route }: any) => {
     useCallback(() => {
       fetchProfile();
       setShowEditChoices(false);
+      setIsEditingBasic(false);
+      setIsEditingFull(false);
+      setChosenTrack(null);
+      setFormErrorMsg('');
+      setFormSuccessMsg('');
     }, [])
   );
+
+  const handleSaveBasic = async () => {
+    setFormErrorMsg('');
+    setFormSuccessMsg('');
+
+    // Local validation
+    if (!fullName.trim() || !age.trim() || !heightCm.trim() || !areaOfResidence.trim() || !religiousLevel.trim() || !phone.trim()) {
+      setFormErrorMsg('כל השדות הם שדות חובה');
+      return;
+    }
+
+    const parsedAge = parseInt(age, 10);
+    const parsedHeight = parseInt(heightCm, 10);
+
+    if (isNaN(parsedAge) || parsedAge <= 0) {
+      setFormErrorMsg('אנא הזן מספר חיובי תקין עבור גיל');
+      return;
+    }
+
+    if (isNaN(parsedHeight) || parsedHeight <= 0) {
+      setFormErrorMsg('אנא הזן מספר חיובי תקין עבור גובה');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await updateBasicProfile({
+        fullName: fullName.trim(),
+        age: parsedAge,
+        heightCm: parsedHeight,
+        areaOfResidence: areaOfResidence.trim(),
+        religiousLevel: religiousLevel.trim(),
+        phone: phone.trim(),
+      });
+
+      await refreshMe();
+      await fetchProfile();
+
+      setFormSuccessMsg('הפרופיל הבסיסי נשמר בהצלחה!');
+      setIsEditingBasic(false);
+
+      if (chosenTrack === 'FULL') {
+        setIsEditingFull(true);
+      }
+      setChosenTrack(null);
+    } catch (err: any) {
+      setFormErrorMsg(getFriendlyErrorMessage(err, 'שמירת הפרופיל הבסיסי נכשלה.'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSaveFull = async () => {
+    setFormErrorMsg('');
+    setFormSuccessMsg('');
+
+    // Local validation
+    if (
+      !education.trim() ||
+      !occupation.trim() ||
+      !selfDescription.trim() ||
+      !hobbies.trim() ||
+      !lookingFor.trim()
+    ) {
+      setFormErrorMsg('השדות השכלה, עיסוק, תיאור עצמי, תחביבים ומה אני מחפש/ת הם שדות חובה');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await updateFullProfile({
+        education: education.trim(),
+        occupation: occupation.trim(),
+        selfDescription: selfDescription.trim(),
+        hobbies: hobbies.trim(),
+        lookingFor: lookingFor.trim(),
+        familyDescription: familyDescription.trim() || null,
+        headCovering: headCovering.trim() || null,
+        hasDrivingLicense: hasDrivingLicense,
+      });
+
+      await refreshMe();
+      await fetchProfile();
+
+      setFormSuccessMsg('הפרופיל המלא נשמר בהצלחה!');
+      setIsEditingFull(false);
+    } catch (err: any) {
+      setFormErrorMsg(getFriendlyErrorMessage(err, 'שמירת הפרופיל המלא נכשלה.'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -84,7 +233,7 @@ export const ProfileScreen = ({ navigation, route }: any) => {
         displayValue = stringVal;
       }
     }
-    
+
     if (isLongText) {
       return (
         <View style={styles.longTextContainer} key={label}>
@@ -120,179 +269,301 @@ export const ProfileScreen = ({ navigation, route }: any) => {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>פרטי הפרופיל שלי</Text>
+        <Text style={styles.title}>הפרטים שלי</Text>
 
-        {/* Account Info Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>פרטי החשבון</Text>
-          <View style={styles.card}>
-            {renderRow('שם מלא', profile.fullName)}
-            {renderRow('אימייל', profile.email)}
-            {renderRow('מגדר', profile.gender)}
-            {renderRow('תפקיד', profile.role)}
-            {renderRow('סטטוס פרופיל', profile.profileStatus)}
-            {renderRow('חסום על ידי מנהל', profile.adminBlocked)}
+        {/* Global form alerts/errors */}
+        {formErrorMsg ? (
+          <View style={styles.formErrorCard}>
+            <Text style={styles.formErrorText}>{formErrorMsg}</Text>
           </View>
-        </View>
+        ) : null}
 
-        {/* Case NONE: show guidance card to complete Basic Profile */}
-        {status === 'NONE' && (
-          <View style={styles.guidedCard}>
-            <Text style={styles.guidedTitle}>השלמת הפרופיל שלך</Text>
-            <Text style={styles.guidedText}>
-              כדי להשתמש במאגרים צריך להשלים פרופיל ותמונה ראשית. תמונה ראשית היא חלק מתנאי הזכאות למאגרים.
-            </Text>
-            <Text style={styles.guidedBullet}>
-              • <Text style={styles.boldText}>פרופיל בסיסי + תמונה ראשית</Text> מאפשרים שימוש במאגרי חתונה (מאגר מקומי).
-            </Text>
-            <Text style={styles.guidedBullet}>
-              • <Text style={styles.boldText}>פרופיל מלא</Text> כולל קודם את הפרופיל הבסיסי, ויחד עם תמונה ראשית מאפשר גם את המאגר הגלובלי.
-            </Text>
+        {formSuccessMsg ? (
+          <View style={styles.formSuccessCard}>
+            <Text style={styles.formSuccessText}>{formSuccessMsg}</Text>
+          </View>
+        ) : null}
 
-            <AppButton
-              title="התחלה מהירה: פרופיל בסיסי"
-              onPress={() => navigation.navigate('BasicProfile')}
-              style={styles.guidedButton}
+        {/* Dynamic content rendering based on mode */}
+        {isEditingBasic ? (
+          <View>
+            <Text style={styles.formSectionTitle}>עריכת פרופיל בסיסי</Text>
+            <BasicProfileForm
+              fullName={fullName}
+              setFullName={setFullName}
+              gender={gender}
+              age={age}
+              setAge={setAge}
+              heightCm={heightCm}
+              setHeightCm={setHeightCm}
+              areaOfResidence={areaOfResidence}
+              setAreaOfResidence={setAreaOfResidence}
+              religiousLevel={religiousLevel}
+              setReligiousLevel={setReligiousLevel}
+              phone={phone}
+              setPhone={setPhone}
+              onSave={handleSaveBasic}
+              isSubmitting={isSubmitting}
             />
-
             <AppButton
-              title="מסלול מלא: פרופיל בסיסי ואז מלא"
-              onPress={() => navigation.navigate('BasicProfile', { continueToFullAfterBasic: true })}
-              style={[styles.guidedButton, styles.guidedButtonPrimary]}
+              title="ביטול"
+              variant="secondary"
+              onPress={() => {
+                setIsEditingBasic(false);
+                setChosenTrack(null);
+                setFormErrorMsg('');
+                setFormSuccessMsg('');
+              }}
+              style={styles.cancelButton}
             />
           </View>
-        )}
+        ) : isEditingFull ? (
+          <View>
+            <Text style={styles.formSectionTitle}>עריכת פרופיל מלא</Text>
+            <FullProfileForm
+              education={education}
+              setEducation={setEducation}
+              occupation={occupation}
+              setOccupation={setOccupation}
+              headCovering={headCovering}
+              setHeadCovering={setHeadCovering}
+              hasDrivingLicense={hasDrivingLicense}
+              setHasDrivingLicense={setHasDrivingLicense}
+              selfDescription={selfDescription}
+              setSelfDescription={setSelfDescription}
+              hobbies={hobbies}
+              setHobbies={setHobbies}
+              lookingFor={lookingFor}
+              setLookingFor={setLookingFor}
+              familyDescription={familyDescription}
+              setFamilyDescription={setFamilyDescription}
+              onSave={handleSaveFull}
+              isSubmitting={isSubmitting}
+              profileStatus={status}
+            />
+            <AppButton
+              title="ביטול"
+              variant="secondary"
+              onPress={() => {
+                setIsEditingFull(false);
+                setFormErrorMsg('');
+                setFormSuccessMsg('');
+              }}
+              style={styles.cancelButton}
+            />
+          </View>
+        ) : (
+          /* View Mode */
+          <View>
+            {/* Account Info Section */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>פרטי החשבון</Text>
+              <View style={styles.card}>
+                {renderRow('שם מלא', profile.fullName)}
+                {renderRow('אימייל', profile.email)}
+                {renderRow('מגדר', profile.gender)}
+                {renderRow('תפקיד', profile.role)}
+                {renderRow('סטטוס פרופיל', profile.profileStatus)}
+                {renderRow('חסום על ידי מנהל', profile.adminBlocked)}
+              </View>
+            </View>
 
-        {/* Case FULL_INCOMPLETE_BLOCKED: show warning card listing missing fields */}
-        {status === 'FULL_INCOMPLETE_BLOCKED' && (
-          <View style={styles.warningCard}>
-            <Text style={styles.warningTitle}>פרופיל מלא חסר (חסום)</Text>
-            <Text style={styles.warningText}>
-              הפרופיל המלא שלך אינו שלם. עליך להשלים את כל שדות החובה ולהעלות תמונה ראשית כדי להשתלב במאגרים.
-            </Text>
-            {missingFields.length > 0 && (
-              <View style={styles.missingList}>
-                <Text style={[styles.warningText, { fontWeight: 'bold', marginBottom: theme.spacing.s }]}>
-                  הפרטים החסרים:
+            {/* Case NONE: show guidance card to complete Basic Profile */}
+            {status === 'NONE' && (
+              <View style={styles.guidedCard}>
+                <Text style={styles.guidedTitle}>השלמת הפרופיל שלך</Text>
+                <Text style={styles.guidedText}>
+                  כדו להשתמש במאגרים צריך להשלים פרופיל ותמונה ראשית. תמונה ראשית היא חלק מתנאי הזכאות למאגרים.
                 </Text>
-                {missingFields.map((field, idx) => (
-                  <Text key={idx} style={styles.missingItem}>• {field}</Text>
-                ))}
+                <Text style={styles.guidedBullet}>
+                  • <Text style={styles.boldText}>פרופיל בסיסי + תמונה ראשית</Text> מאפשרים שימוש במאגרי חתונה (מאגר מקומי).
+                </Text>
+                <Text style={styles.guidedBullet}>
+                  • <Text style={styles.boldText}>פרופיל מלא</Text> כולל קודם את הפרופיל הבסיסי, ויחד עם תמונה ראשית מאפשר גם את המאגר הגלובלי.
+                </Text>
+
+                <AppButton
+                  title="מסלול בסיסי (פרופיל בסיסי ותמונה)"
+                  onPress={() => {
+                    setIsEditingBasic(true);
+                    setChosenTrack('BASIC');
+                    setFormErrorMsg('');
+                    setFormSuccessMsg('');
+                  }}
+                  style={styles.guidedButton}
+                />
+
+                <AppButton
+                  title="מסלול מלא (פרופיל בסיסי, מלא ותמונה)"
+                  onPress={() => {
+                    setIsEditingBasic(true);
+                    setChosenTrack('FULL');
+                    setFormErrorMsg('');
+                    setFormSuccessMsg('');
+                  }}
+                  style={[styles.guidedButton, styles.guidedButtonPrimary]}
+                />
               </View>
             )}
-            <AppButton
-              title="לתיקון והשלמת הפרופיל"
-              onPress={() => navigation.navigate('FullProfile')}
-              style={styles.guidedButton}
-            />
-          </View>
-        )}
 
-        {/* Basic Profile Section (shown to BASIC, FULL, FULL_INCOMPLETE_BLOCKED) */}
-        {status !== 'NONE' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>פרטי פרופיל בסיסי</Text>
-            <View style={styles.card}>
-              {renderRow('גיל', profile.age)}
-              {renderRow('גובה (ס״מ)', profile.heightCm)}
-              {renderRow('אזור מגורים', profile.areaOfResidence)}
-              {renderRow('רמה דתית', profile.religiousLevel)}
-              {renderRow('טלפון', profile.phone)}
-            </View>
-          </View>
-        )}
-
-        {/* Full Profile Section (shown to FULL, or FULL_INCOMPLETE_BLOCKED if they have details) */}
-        {(status === 'FULL' || status === 'FULL_INCOMPLETE_BLOCKED') && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>פרטי פרופיל מלא</Text>
-            <View style={styles.card}>
-              {renderRow('השכלה', profile.education)}
-              {renderRow('עיסוק', profile.occupation)}
-              {renderRow('כיסוי ראש', profile.headCovering)}
-              {renderRow('רישיון נהיגה', profile.hasDrivingLicense)}
-              {renderRow('עליי (תיאור עצמי)', profile.selfDescription, true)}
-              {renderRow('תחביבים', profile.hobbies, true)}
-              {renderRow('מה אני מחפש/ת', profile.lookingFor, true)}
-              {renderRow('רקע משפחתי', profile.familyDescription, true)}
-            </View>
-          </View>
-        )}
-
-        {/* Photos Info Section (shown to BASIC, FULL, FULL_INCOMPLETE_BLOCKED) */}
-        {status !== 'NONE' && (
-          <View style={styles.section}>
-            {focusSection === 'photos' && (
-              <View style={styles.photosGuidanceCard}>
-                <Text style={styles.photosGuidanceTitle}>השלב הבא: העלאת תמונה ראשית</Text>
-                <Text style={styles.photosGuidanceText}>
-                  תמונה ראשית נדרשת כדי להופיע במאגרי החתונה ובמאגר הגלובלי לפי זכאות הפרופיל.
+            {/* Case FULL_INCOMPLETE_BLOCKED: show warning card listing missing fields */}
+            {status === 'FULL_INCOMPLETE_BLOCKED' && (
+              <View style={styles.warningCard}>
+                <Text style={styles.warningTitle}>פרופיל מלא חסר (חסום)</Text>
+                <Text style={styles.warningText}>
+                  הפרופיל המלא שלך אינו שלם. עליך להשלים את כל שדות החובה ולהעלות תמונה ראשית כדי להשתלב במאגרים.
                 </Text>
+                {missingFields.length > 0 && (
+                  <View style={styles.missingList}>
+                    <Text style={[styles.warningText, { fontWeight: 'bold', marginBottom: theme.spacing.s }]}>
+                      הפרטים החסרים:
+                    </Text>
+                    {missingFields.map((field, idx) => (
+                      <Text key={idx} style={styles.missingItem}>• {field}</Text>
+                    ))}
+                  </View>
+                )}
+                <AppButton
+                  title="לתיקון והשלמת הפרופיל"
+                  onPress={() => {
+                    setIsEditingFull(true);
+                    setFormErrorMsg('');
+                    setFormSuccessMsg('');
+                  }}
+                  style={styles.guidedButton}
+                />
               </View>
             )}
-            <ProfilePhotosManager onPhotosChanged={fetchProfile} />
-          </View>
-        )}
 
-        {/* Navigation CTAs / Action Buttons */}
-        {status === 'BASIC' && (
-          <>
-            <AppButton
-              title="עריכת פרופיל"
-              onPress={() => navigation.navigate('BasicProfile')}
-              style={styles.button}
-            />
-            <AppButton
-              title="השלמה לפרופיל מלא"
-              onPress={() => navigation.navigate('FullProfile')}
-              style={[styles.button, styles.primaryCtaButton]}
-            />
-          </>
-        )}
+            {/* Basic Profile Section (shown to BASIC, FULL, FULL_INCOMPLETE_BLOCKED) */}
+            {status !== 'NONE' && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>פרטי פרופיל בסיסי</Text>
+                <View style={styles.card}>
+                  {renderRow('גיל', profile.age)}
+                  {renderRow('גובה (ס״מ)', profile.heightCm)}
+                  {renderRow('אזור מגורים', profile.areaOfResidence)}
+                  {renderRow('רמה דתית', profile.religiousLevel)}
+                  {renderRow('טלפון', profile.phone)}
+                </View>
+              </View>
+            )}
 
-        {(status === 'FULL' || status === 'FULL_INCOMPLETE_BLOCKED') && (
-          <>
-            {!showEditChoices ? (
+            {/* Full Profile Section (shown to FULL, or FULL_INCOMPLETE_BLOCKED if they have details) */}
+            {(status === 'FULL' || status === 'FULL_INCOMPLETE_BLOCKED') && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>פרטי פרופיל מלא</Text>
+                <View style={styles.card}>
+                  {renderRow('השכלה', profile.education)}
+                  {renderRow('עיסוק', profile.occupation)}
+                  {renderRow('כיסוי ראש', profile.headCovering)}
+                  {renderRow('רישיון נהיגה', profile.hasDrivingLicense)}
+                  {renderRow('עליי (תיאור עצמי)', profile.selfDescription, true)}
+                  {renderRow('תחביבים', profile.hobbies, true)}
+                  {renderRow('מה אני מחפש/ת', profile.lookingFor, true)}
+                  {renderRow('רקע משפחתי', profile.familyDescription, true)}
+                </View>
+              </View>
+            )}
+
+            {/* Upgrade Card for BASIC users */}
+            {status === 'BASIC' && (
+              <View style={styles.upgradeCard}>
+                <Text style={styles.upgradeTitle}>השלמה לפרופיל מלא</Text>
+                <Text style={styles.upgradeText}>
+                  פרופיל מלא פותח עבורך את האפשרות להיכנס למאגר השידוכים הגלובלי (בכפוף להעלאת תמונה ראשית תקינה).
+                </Text>
+                <AppButton
+                  title="המשך למילוי פרופיל מלא"
+                  onPress={() => {
+                    setIsEditingFull(true);
+                    setFormErrorMsg('');
+                    setFormSuccessMsg('');
+                  }}
+                  style={styles.upgradeButton}
+                />
+              </View>
+            )}
+
+            {/* Photos Info Section (shown to BASIC, FULL, FULL_INCOMPLETE_BLOCKED) */}
+            {status !== 'NONE' && (
+              <View style={styles.section}>
+                {focusSection === 'photos' && (
+                  <View style={styles.photosGuidanceCard}>
+                    <Text style={styles.photosGuidanceTitle}>השלב הבא: העלאת תמונה ראשית</Text>
+                    <Text style={styles.photosGuidanceText}>
+                      תמונה ראשית נדרשת כדי להופיע במאגרי החתונה ובמאגר הגלובלי לפי זכאות הפרופיל.
+                    </Text>
+                  </View>
+                )}
+                <ProfilePhotosManager onPhotosChanged={fetchProfile} />
+              </View>
+            )}
+
+            {/* Navigation CTAs / Action Buttons */}
+            {status === 'BASIC' && (
+              <>
+                <AppButton
+                  title="עריכת פרופיל בסיסי"
+                  onPress={() => {
+                    setIsEditingBasic(true);
+                    setFormErrorMsg('');
+                    setFormSuccessMsg('');
+                  }}
+                  style={styles.button}
+                />
+              </>
+            )}
+
+            {(status === 'FULL' || status === 'FULL_INCOMPLETE_BLOCKED') && (
+              <>
+                {!showEditChoices ? (
+                  <AppButton
+                    title="עריכת פרופיל"
+                    onPress={() => setShowEditChoices(true)}
+                    style={styles.button}
+                  />
+                ) : (
+                  <View style={styles.editChoicesContainer}>
+                    <AppButton
+                      title="עריכת פרטים בסיסיים"
+                      onPress={() => {
+                        setShowEditChoices(false);
+                        setIsEditingBasic(true);
+                        setFormErrorMsg('');
+                        setFormSuccessMsg('');
+                      }}
+                      style={styles.button}
+                    />
+                    <AppButton
+                      title="עריכת פרטים מלאים"
+                      onPress={() => {
+                        setShowEditChoices(false);
+                        setIsEditingFull(true);
+                        setFormErrorMsg('');
+                        setFormSuccessMsg('');
+                      }}
+                      style={[styles.button, styles.secondaryButton]}
+                    />
+                    <AppButton
+                      title="ביטול"
+                      onPress={() => setShowEditChoices(false)}
+                      variant="secondary"
+                      style={styles.button}
+                    />
+                  </View>
+                )}
+              </>
+            )}
+
+            {(status === 'BASIC' || status === 'FULL') && (
               <AppButton
-                title="עריכת פרופיל"
-                onPress={() => setShowEditChoices(true)}
+                title="חיפוש מועמדים"
+                onPress={() => navigation.navigate('PoolSelection')}
                 style={styles.button}
               />
-            ) : (
-              <View style={styles.editChoicesContainer}>
-                <AppButton
-                  title="עריכת פרטים בסיסיים"
-                  onPress={() => {
-                    setShowEditChoices(false);
-                    navigation.navigate('BasicProfile');
-                  }}
-                  style={styles.button}
-                />
-                <AppButton
-                  title="עריכת פרטים מלאים"
-                  onPress={() => {
-                    setShowEditChoices(false);
-                    navigation.navigate('FullProfile');
-                  }}
-                  style={[styles.button, styles.secondaryButton]}
-                />
-                <AppButton
-                  title="ביטול"
-                  onPress={() => setShowEditChoices(false)}
-                  variant="secondary"
-                  style={styles.button}
-                />
-              </View>
             )}
-          </>
-        )}
-
-        {(status === 'BASIC' || status === 'FULL') && (
-          <AppButton
-            title="חיפוש מועמדים"
-            onPress={() => navigation.navigate('PoolSelection')}
-            style={styles.button}
-          />
+          </View>
         )}
       </ScrollView>
     </Screen>
@@ -342,6 +613,13 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.s,
     paddingRight: theme.spacing.s,
     textAlign: 'right',
+  },
+  formSectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: theme.colors.text,
+    marginBottom: theme.spacing.m,
+    textAlign: 'center',
   },
   card: {
     backgroundColor: theme.colors.surface,
@@ -399,6 +677,10 @@ const styles = StyleSheet.create({
   primaryCtaButton: {
     backgroundColor: theme.colors.primary,
     marginTop: theme.spacing.m,
+  },
+  cancelButton: {
+    marginTop: theme.spacing.s,
+    marginBottom: theme.spacing.xl,
   },
   guidedCard: {
     backgroundColor: theme.colors.surface,
@@ -481,6 +763,36 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.s,
     lineHeight: 20,
   },
+  upgradeCard: {
+    backgroundColor: '#F1F8FE',
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.m,
+    borderWidth: 1,
+    borderColor: '#90CAF9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+    marginBottom: theme.spacing.l,
+  },
+  upgradeTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1565C0',
+    marginBottom: theme.spacing.s,
+    textAlign: 'right',
+  },
+  upgradeText: {
+    fontSize: 14,
+    color: theme.colors.text,
+    lineHeight: 20,
+    textAlign: 'right',
+  },
+  upgradeButton: {
+    marginTop: theme.spacing.m,
+    backgroundColor: '#1976D2',
+  },
   photosGuidanceCard: {
     backgroundColor: '#E8F5E9',
     padding: theme.spacing.m,
@@ -504,5 +816,33 @@ const styles = StyleSheet.create({
   },
   editChoicesContainer: {
     width: '100%',
+  },
+  formErrorCard: {
+    backgroundColor: '#FFEBEE',
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.m,
+    borderWidth: 1,
+    borderColor: '#FFCDD2',
+    marginBottom: theme.spacing.m,
+  },
+  formErrorText: {
+    color: theme.colors.error,
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  formSuccessCard: {
+    backgroundColor: '#E8F5E9',
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.m,
+    borderWidth: 1,
+    borderColor: '#C8E6C9',
+    marginBottom: theme.spacing.m,
+  },
+  formSuccessText: {
+    color: '#2E7D32',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });

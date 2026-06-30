@@ -848,3 +848,26 @@ This section contains the focused Cycle 5 QA checklist. Note: Manual QA has not 
 - [ ] **Event Manager does not see Restore/Delete buttons**: Verify EM detail screens do not display restore/delete buttons.
 - [ ] **USER does not see staff actions**: Verify regular users cannot see restore/delete buttons or options.
 - [ ] **No crashes in Admin details screen**: Navigate to AdminWeddingDetailsScreen after restore/delete and verify no crashes.
+
+---
+
+## 30. Cycle 2 MVP+ Additions: Unified Onboarding Hub & Opening Profile Navigation
+
+### 30.1 Reusable Profile Forms
+- **BasicProfileForm & FullProfileForm**: Extracted input fields, validations, and states from `BasicProfileScreen.tsx` and `FullProfileScreen.tsx` into standalone reusable components located at `@mobile/src/components/profile/`.
+- **Contract Integrity**: Retained identical update API payloads matching backend expectations.
+
+### 30.2 Unified Profile Screen Hub
+- **ProfileScreen.tsx**: Refactored to act as a unified dashboard.
+- **Embedded Manager**: Displays `BasicProfileForm`, `FullProfileForm`, and `ProfilePhotosManager` contextually on a single screen layout.
+
+### 30.3 Opening to CandidateProfile View-Only Navigation
+- **Navigation parameters**:
+  - `CandidateProfile`: Supports `userId`, optional `sourceContext` ('OPENING_LIST' | 'OPENING_DETAILS'), and optional `contextLabel`.
+  - `OpeningConversationDetails`: Supports `conversationId` and optional `otherUserName`.
+- **Subtle Context Banner**: `CandidateProfileScreen.tsx` displays a Hebrew banner (`contextLabel`) at the top of the details view if navigated from the opening messaging contexts.
+- **Split Card Touch Zones**: In `OpeningMessagesScreen.tsx`, conversation cards are split into two distinct touch zones to avoid nested React Native touchable bugs:
+  - **Header zone**: Navigates to the candidate's profile.
+  - **Body zone**: Navigates to conversation details, passing `otherUserName` as a fallback.
+- **Dynamic Header Profile Loader**: Inside `OpeningConversationDetailsScreen.tsx`, the component calls `getPublicProfile(details.otherUserId)` upon load to dynamically retrieve and display the sender's name and primary photo in the header. If the fetch fails, it falls back to `route.params.otherUserName` or a generic `"פרופיל המשתמש"`.
+- **No Lifecycle Side-Effects**: Navigation remains purely view-only. It does not create matches, trigger likes/dislikes, or open chat screens.

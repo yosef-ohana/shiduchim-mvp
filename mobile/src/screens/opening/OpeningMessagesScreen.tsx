@@ -62,30 +62,45 @@ export const OpeningMessagesScreen = ({ navigation }: any) => {
 
   const renderItem = ({ item }: { item: OpeningConversationSummaryResponse }) => {
     return (
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => navigation.navigate('OpeningConversationDetails', { conversationId: item.conversationId })}
-        activeOpacity={0.8}
-      >
+      <View style={styles.card}>
         <View style={styles.cardContent}>
-          <View style={styles.headerRow}>
-            <Text style={styles.name} numberOfLines={1}>
-              {item.otherUserName}
+          <TouchableOpacity
+            style={styles.headerTouchable}
+            onPress={() => navigation.navigate('CandidateProfile', {
+              userId: item.otherUserId,
+              sourceContext: 'OPENING_LIST',
+              contextLabel: 'הגעת מרשימת הודעות פתיחה'
+            })}
+            activeOpacity={0.7}
+          >
+            <View style={styles.headerRow}>
+              <Text style={styles.name} numberOfLines={1}>
+                {item.otherUserName}
+              </Text>
+              <Text style={styles.poolTag}>
+                {getPoolTypeLabel(item.poolType)}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.bodyTouchable}
+            onPress={() => navigation.navigate('OpeningConversationDetails', {
+              conversationId: item.conversationId,
+              otherUserName: item.otherUserName
+            })}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.messagePreview} numberOfLines={2}>
+              {item.lastMessagePreview || 'הודעה חדשה'}
             </Text>
-            <Text style={styles.poolTag}>
-              {getPoolTypeLabel(item.poolType)}
+
+            <Text style={styles.dateText}>
+              {formatDisplayDate(item.lastMessageAt || item.createdAt)}
             </Text>
-          </View>
-          
-          <Text style={styles.messagePreview} numberOfLines={2}>
-            {item.lastMessagePreview || 'הודעה חדשה'}
-          </Text>
-          
-          <Text style={styles.dateText}>
-            {formatDisplayDate(item.lastMessageAt || item.createdAt)}
-          </Text>
+          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+      </View>
     );
   };
 
@@ -254,5 +269,15 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  headerTouchable: {
+    width: '100%',
+    paddingBottom: theme.spacing.s,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.border,
+  },
+  bodyTouchable: {
+    width: '100%',
+    paddingTop: theme.spacing.s,
   },
 });
