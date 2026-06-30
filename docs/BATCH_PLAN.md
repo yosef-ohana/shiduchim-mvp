@@ -1291,3 +1291,27 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
 - **Goal**: Verify Admin feedback screens clearly display sender name and email, and update API/Tech documents.
 - **Scope**: Inspect `AdminProductFeedbackScreen.tsx` and `AdminProductFeedbackDetailsScreen.tsx`. Update `API_CONTRACT.md` and `TECH_SPEC.md` to reflect ProductFeedback endpoint definitions and actual schema/enum values.
 - **DoD**: Admin display verified, documentation aligned, clean compilation and typechecks pass.
+
+---
+
+## Cycle 1 MVP+ — Auth Separation, Focus Refresh, & Wedding Participants Modal UX
+
+### Batch 1 — Auth Route Separation
+- **Goal**: Prevent staff accounts from logging in through the regular user authentication route and map the error message.
+- **DoD**: Backend compile success, error mapped correctly in mobile.
+
+### Batch 2 — Wedding Lists Focus Refresh
+- **Goal**: Implement focus-based refreshing for My Weddings and Event Manager Weddings screens.
+- **DoD**: Stale data is auto-refreshed upon screen focus using `useFocusEffect`.
+
+### Batch 3 — Wedding Participants Modal UI
+- **Goal**: Refactor participant management from inline forms to an interactive modal with tab-based routing.
+- **DoD**: Forms embedded in modal; active/inactive status handled correctly; typecheck passes.
+
+### Batch 4A — Focused Final Validation & Repo Audit
+- **Goal**: Perform compile, typecheck, status, check-diff validations without repo side-effects.
+- **DoD**: All automated compilation and type-check steps pass.
+
+### Batch 4B — Docs-if-needed, Cleanup, Commit and Push
+- **Goal**: Update status/decisions documentation, execute cleanup, and commit/push changes.
+- **DoD**: All changes committed and pushed to remote main branch.

@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity, Modal, TouchableWithoutFeedback, KeyboardAvoidingView, Platform } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
+import { AppInput } from '../../components/AppInput';
 import { adminApi } from '../../api/adminApi';
 import {
   getParticipants as emGetParticipants,
   addParticipant as emAddParticipant,
-  removeParticipant as emRemoveParticipant
+  removeParticipant as emRemoveParticipant,
+  createInvite as emCreateInvite
 } from '../../api/eventManagerApi';
 import { ParticipantResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
@@ -41,6 +43,8 @@ export const WeddingParticipantsScreen = () => {
   const [newEmail, setNewEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState<'ADD' | 'INVITE'>('ADD');
 
   const loadData = async () => {
     setLoading(true);
@@ -69,6 +73,13 @@ export const WeddingParticipantsScreen = () => {
     }, [weddingId, weddingName, mode])
   );
 
+  const handleCloseModal = () => {
+    setNewEmail('');
+    setInviteName('');
+    setInviteEmail('');
+    setIsModalVisible(false);
+  };
+
   const handleAddParticipant = async () => {
     if (!newEmail.trim()) {
       Alert.alert('שגיאת אימות', 'אנא הזן כתובת אימייל תקינה.');
@@ -82,7 +93,7 @@ export const WeddingParticipantsScreen = () => {
         await emAddParticipant(weddingId, { email: newEmail.trim() });
       }
       Alert.alert('הצלחה', `המשתתף ${newEmail.trim()} נוסף לחתונה.`);
-      setNewEmail('');
+      handleCloseModal();
       await loadData();
     } catch (error: any) {
       console.error(error);
@@ -107,13 +118,16 @@ export const WeddingParticipantsScreen = () => {
 
     setActionLoading(true);
     try {
-      await adminApi.createInvite(weddingId, { fullName: trimmedName, email: trimmedEmail });
+      if (mode === 'ADMIN') {
+        await adminApi.createInvite(weddingId, { fullName: trimmedName, email: trimmedEmail });
+      } else {
+        await emCreateInvite(weddingId, { fullName: trimmedName, email: trimmedEmail });
+      }
       Alert.alert(
         'הצלחה',
         `נוצרה הזמנה עבור ${trimmedName}. שים לב: המוזמן לא יתווסף אוטומטית לרשימת המשתתפים.`
       );
-      setInviteName('');
-      setInviteEmail('');
+      handleCloseModal();
     } catch (error: any) {
       console.error(error);
       Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'יצירת ההזמנה נכשלה.'));
@@ -240,63 +254,11 @@ export const WeddingParticipantsScreen = () => {
             )}
 
             {isWeddingActive && (
-              <View style={styles.addParticipantContainer}>
-                <Text style={styles.sectionTitle}>הוספת משתמש קיים לפי אימייל</Text>
-                <Text style={styles.addParticipantSubtitle}>
-                  הוספת משתמש רשום קיים באמצעות כתובת האימייל שלו.
-                </Text>
-                <View style={styles.addFormRow}>
-                  <TextInput
-                    style={styles.input}
-                    value={newEmail}
-                    onChangeText={setNewEmail}
-                    placeholder="כתובת אימייל של המשתמש"
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    editable={!actionLoading}
-                  />
-                  <AppButton
-                    title="הוספה"
-                    onPress={handleAddParticipant}
-                    loading={actionLoading}
-                    style={styles.addButton}
-                  />
-                </View>
-              </View>
-            )}
-
-            {isWeddingActive && mode === 'ADMIN' && (
-              <View style={styles.addParticipantContainer}>
-                <Text style={styles.sectionTitle}>הזמנת משתמש חדש לחתונה</Text>
-                <Text style={styles.addParticipantSubtitle}>
-                  הזמנת משתמש חדש באמצעות שם מלא ואימייל. שים לב: המוזמן לא יתווסף אוטומטית לרשימת המשתתפים.
-                </Text>
-                <View style={styles.addFormCol}>
-                  <TextInput
-                    style={[styles.input, styles.stackedInput]}
-                    value={inviteName}
-                    onChangeText={setInviteName}
-                    placeholder="שם מלא"
-                    autoCapitalize="words"
-                    editable={!actionLoading}
-                  />
-                  <TextInput
-                    style={[styles.input, styles.stackedInput]}
-                    value={inviteEmail}
-                    onChangeText={setInviteEmail}
-                    placeholder="כתובת אימייל"
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    editable={!actionLoading}
-                  />
-                  <AppButton
-                    title="יצירת הזמנה"
-                    onPress={handleCreateInvite}
-                    loading={actionLoading}
-                    style={styles.submitInviteButton}
-                  />
-                </View>
-              </View>
+              <AppButton
+                title="הוסף / הזמן משתתף"
+                onPress={() => setIsModalVisible(true)}
+                style={styles.openModalButton}
+              />
             )}
 
             <View style={styles.sectionHeaderRow}>
@@ -311,6 +273,113 @@ export const WeddingParticipantsScreen = () => {
           </View>
         }
       />
+
+      <Modal visible={isModalVisible} transparent animationType="slide" onRequestClose={handleCloseModal}>
+        <TouchableWithoutFeedback onPress={handleCloseModal}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={styles.modalContainer}
+              >
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalTitle}>הוסף / הזמן משתתף</Text>
+
+                  {/* Tab Selector */}
+                  <View style={styles.tabContainer}>
+                    <TouchableOpacity
+                      style={[styles.tabButton, activeTab === 'ADD' && styles.activeTabButton]}
+                      onPress={() => setActiveTab('ADD')}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.tabButtonText, activeTab === 'ADD' && styles.activeTabButtonText]}>
+                        הוספת משתמש קיים
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.tabButton, activeTab === 'INVITE' && styles.activeTabButton]}
+                      onPress={() => setActiveTab('INVITE')}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.tabButtonText, activeTab === 'INVITE' && styles.activeTabButtonText]}>
+                        הזמנת משתמש חדש
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {activeTab === 'ADD' ? (
+                    <View style={styles.formContainer}>
+                      <Text style={styles.formSubtitle}>הוספת משתמש רשום קיים באמצעות כתובת האימייל שלו.</Text>
+                      <AppInput
+                        label="כתובת אימייל"
+                        value={newEmail}
+                        onChangeText={setNewEmail}
+                        placeholder="email@example.com"
+                        autoCapitalize="none"
+                        keyboardType="email-address"
+                        editable={!actionLoading}
+                      />
+                      <View style={styles.modalActions}>
+                        <AppButton
+                          title="ביטול"
+                          onPress={handleCloseModal}
+                          variant="secondary"
+                          disabled={actionLoading}
+                          style={styles.modalButton}
+                        />
+                        <AppButton
+                          title="הוספה"
+                          onPress={handleAddParticipant}
+                          loading={actionLoading}
+                          style={styles.modalButton}
+                        />
+                      </View>
+                    </View>
+                  ) : (
+                    <View style={styles.formContainer}>
+                      <Text style={styles.formSubtitle}>
+                        הזמנת משתמש חדש באמצעות שם מלא ואימייל. שים לב: המוזמן לא יתווסף אוטומטית לרשימת המשתתפים.
+                      </Text>
+                      <AppInput
+                        label="שם מלא"
+                        value={inviteName}
+                        onChangeText={setInviteName}
+                        placeholder="שם מלא"
+                        autoCapitalize="words"
+                        editable={!actionLoading}
+                      />
+                      <AppInput
+                        label="כתובת אימייל"
+                        value={inviteEmail}
+                        onChangeText={setInviteEmail}
+                        placeholder="email@example.com"
+                        autoCapitalize="none"
+                        keyboardType="email-address"
+                        editable={!actionLoading}
+                      />
+                      <View style={styles.modalActions}>
+                        <AppButton
+                          title="ביטול"
+                          onPress={handleCloseModal}
+                          variant="secondary"
+                          disabled={actionLoading}
+                          style={styles.modalButton}
+                        />
+                        <AppButton
+                          title="יצירת הזמנה"
+                          onPress={handleCreateInvite}
+                          loading={actionLoading}
+                          style={styles.modalButton}
+                        />
+                      </View>
+                    </View>
+                  )}
+                </View>
+              </KeyboardAvoidingView>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </Screen>
   );
 };
@@ -328,44 +397,11 @@ const styles = StyleSheet.create({
   headerContainer: {
     marginBottom: theme.spacing.m,
   },
-  addParticipantContainer: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.m,
-    borderRadius: theme.borderRadius.l,
-    marginBottom: theme.spacing.m,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: theme.colors.text,
     textAlign: 'right',
-  },
-  addParticipantSubtitle: {
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    marginTop: 4,
-    marginBottom: theme.spacing.m,
-    textAlign: 'right',
-  },
-  addFormRow: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-  },
-  input: {
-    flex: 1,
-    backgroundColor: '#FAFAFA',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.m,
-    padding: theme.spacing.s,
-    fontSize: 15,
-    textAlign: 'right',
-    marginLeft: theme.spacing.s,
-  },
-  addButton: {
-    minWidth: 80,
   },
   sectionHeaderRow: {
     flexDirection: 'row-reverse',
@@ -475,19 +511,6 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     textAlign: 'center',
   },
-  addFormCol: {
-    flexDirection: 'column',
-    alignItems: 'stretch',
-  },
-  stackedInput: {
-    width: '100%',
-    marginLeft: 0,
-    marginBottom: theme.spacing.s,
-  },
-  submitInviteButton: {
-    marginTop: theme.spacing.s,
-    width: '100%',
-  },
   bannerContainer: {
     backgroundColor: '#FFEBEE',
     borderColor: '#FFCDD2',
@@ -501,5 +524,80 @@ const styles = StyleSheet.create({
     color: '#D32F2F',
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  openModalButton: {
+    marginVertical: theme.spacing.s,
+    backgroundColor: theme.colors.primary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    width: '100%',
+  },
+  modalContent: {
+    backgroundColor: theme.colors.background,
+    borderTopLeftRadius: theme.borderRadius.l,
+    borderTopRightRadius: theme.borderRadius.l,
+    padding: theme.spacing.l,
+    paddingBottom: Platform.OS === 'ios' ? 40 : theme.spacing.l,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: theme.colors.text,
+    textAlign: 'center',
+    marginBottom: theme.spacing.m,
+  },
+  tabContainer: {
+    flexDirection: 'row-reverse',
+    backgroundColor: '#F5F5F5',
+    borderRadius: theme.borderRadius.m,
+    padding: 4,
+    marginBottom: theme.spacing.m,
+    gap: 4,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: theme.borderRadius.s,
+  },
+  activeTabButton: {
+    backgroundColor: theme.colors.surface,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  tabButtonText: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    fontWeight: '600',
+  },
+  activeTabButtonText: {
+    color: theme.colors.primary,
+  },
+  formContainer: {
+    width: '100%',
+  },
+  formSubtitle: {
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    textAlign: 'right',
+    marginBottom: theme.spacing.m,
+    lineHeight: 18,
+  },
+  modalActions: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    gap: theme.spacing.m,
+    marginTop: theme.spacing.m,
+  },
+  modalButton: {
+    flex: 1,
   },
 });

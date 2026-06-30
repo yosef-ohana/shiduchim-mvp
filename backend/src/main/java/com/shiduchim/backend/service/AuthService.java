@@ -58,6 +58,10 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account is blocked");
         }
 
+        if (user.getRole() != UserRole.USER) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Staff account must use staff portal");
+        }
+
         String token = tokenService.generateToken(user.getId());
         return toAuthResponse(user, token);
     }

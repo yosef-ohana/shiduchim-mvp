@@ -653,3 +653,17 @@ These are collected future improvements and are NOT implemented at this stage. T
 ### 29.2 Admin Display Verification
 - **Human-Readable Sender**: Verified that Admin feedback screens display `senderName` and `senderEmail` as the primary human-readable sender details.
 - **Secondary Technical Info**: Retained `senderUserId` as secondary/technical metadata. No UI modifications were required since these fields were already displayed.
+
+---
+
+## 30. Cycle 1 MVP+ Decisions: Auth Route Separation, Wedding Lists Focus Refresh, and Wedding Participants Modal UI
+
+### 30.1 Auth Route Separation
+- **Endpoint Protection**: Added a role-based validation check to the regular user login endpoint (`AuthService.login`). Regular users log in as before, but staff accounts (`EVENT_MANAGER`, `ADMIN`) attempting to log in via this flow are rejected with an HTTP 403 Forbidden status and the message `"Staff account must use staff portal"`.
+- **Hebrew Error Mapping**: The mobile application translates this backend error in `errorMessage.ts` to `חשבון צוות צריך להיכנס דרך פורטל צוות`.
+
+### 30.2 Wedding Lists Focus Refresh
+- **Active Navigation Listener**: Refactored `EventManagerWeddingsScreen.tsx` and `MyWeddingsScreen.tsx` to use React Navigation's `useFocusEffect` combined with `useCallback`. This triggers an automatic fetch of the latest wedding and participant status whenever the user returns to these screen views, preventing stale lists.
+
+### 30.3 Wedding Participants Modal UX
+- **Modal Add/Invite**: Refactored `WeddingParticipantsScreen.tsx` so the inline input forms for adding existing members or inviting new guests are consolidated into a bottom modal screen. The modal features a tab selector ("הוספת משתמש קיים" / "הזמנת משתמש חדש") and is launched by a single primary button. Closed or cancelled weddings render in a read-only state.

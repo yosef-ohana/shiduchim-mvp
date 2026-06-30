@@ -74,6 +74,13 @@ export const getFriendlyErrorMessage = (error: unknown, fallback?: string): stri
       return 'המשתמש חסום על ידי מנהל המערכת. פנה להנהלת המערכת.';
     }
 
+    // Staff account using regular login portal
+    if (containsAny(backendMessage, [
+      'staff account must use staff portal'
+    ])) {
+      return 'חשבון צוות צריך להיכנס דרך פורטל צוות';
+    }
+
     // Role / Staff Portal mismatch
     if (containsAny(backendMessage, [
       'role mismatch',

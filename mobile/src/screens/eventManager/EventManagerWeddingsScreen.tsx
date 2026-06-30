@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { getEventManagerWeddings } from '../../api/eventManagerApi';
@@ -6,27 +6,40 @@ import { WeddingResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 import { getWeddingStatusLabel, formatDisplayDate } from '../../utils/displayLabels';
+import { useFocusEffect } from '@react-navigation/native';
 
 export const EventManagerWeddingsScreen = ({ navigation }: any) => {
   const [weddings, setWeddings] = useState<WeddingResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchWeddings();
-  }, []);
-
-  const fetchWeddings = async () => {
+  const fetchWeddings = useCallback(async (isMounted = { current: true }) => {
     setLoading(true);
     try {
       const data = await getEventManagerWeddings();
-      setWeddings(data);
+      if (isMounted.current) {
+        setWeddings(data);
+      }
     } catch (error) {
       console.error(error);
-      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'טעינת החתונות נכשלה.'));
+      if (isMounted.current) {
+        Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'טעינת החתונות נכשלה.'));
+      }
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
-  };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const isMounted = { current: true };
+      fetchWeddings(isMounted);
+      return () => {
+        isMounted.current = false;
+      };
+    }, [fetchWeddings])
+  );
 
   const renderItem = ({ item }: { item: WeddingResponse }) => (
     <TouchableOpacity

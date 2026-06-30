@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { getMyWeddings } from '../../api/weddingsApi';
@@ -7,7 +7,7 @@ import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 import { getWeddingStatusLabel, getParticipantStatusLabel, formatDisplayDate } from '../../utils/displayLabels';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { getWeddingReadiness } from '../../utils/weddingReadiness';
 import { AppButton } from '../../components/AppButton';
 
@@ -19,25 +19,37 @@ export const MyWeddingsScreen = () => {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
 
-  useEffect(() => {
-    fetchWeddings();
-  }, []);
-
-  const fetchWeddings = async () => {
+  const fetchWeddings = useCallback(async (isMounted = { current: true }) => {
     setLoading(true);
     setErrorMsg('');
     try {
       const data = await getMyWeddings();
-      setWeddings(data);
+      if (isMounted.current) {
+        setWeddings(data);
+      }
     } catch (error: any) {
       console.error(error);
       const friendlyError = getFriendlyErrorMessage(error, 'טעינת החתונות נכשלה.');
-      setErrorMsg(friendlyError);
-      Alert.alert('שגיאה', friendlyError);
+      if (isMounted.current) {
+        setErrorMsg(friendlyError);
+        Alert.alert('שגיאה', friendlyError);
+      }
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
-  };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const isMounted = { current: true };
+      fetchWeddings(isMounted);
+      return () => {
+        isMounted.current = false;
+      };
+    }, [fetchWeddings])
+  );
 
   const renderItem = ({ item }: { item: UserWeddingResponse }) => {
     const formattedDate = formatDisplayDate(item.weddingDate);
