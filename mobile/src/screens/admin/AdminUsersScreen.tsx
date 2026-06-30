@@ -83,22 +83,52 @@ export const AdminUsersScreen = () => {
     ? users.filter(u => u.id === focusUserId)
     : users;
 
+  const handleCardPress = (user: AdminUserResponse) => {
+    navigation.navigate('StaffParticipantDetails', {
+      userId: user.id,
+      mode: 'ADMIN',
+      source: 'ADMIN_USERS'
+    });
+  };
+
   const renderItem = ({ item }: { item: AdminUserResponse }) => {
     const isFocused = item.id === focusUserId;
     return (
       <View style={[styles.card, isFocused && styles.focusedCard]}>
-        <Text style={styles.name}>{item.fullName || 'לא צוין'} (מזהה: {item.id})</Text>
-        <Text style={styles.info}>אימייל: {item.email || 'לא צוין'}</Text>
-        <Text style={styles.info}>תפקיד: {getUserRoleLabel(item.role)}</Text>
-        <Text style={styles.info}>סטטוס פרופיל: {getProfileStatusLabel(item.profileStatus)}</Text>
-        <Text style={styles.info}>סטטוס: {item.adminBlocked ? 'חסום' : 'פעיל'}</Text>
+        <TouchableOpacity
+          onPress={() => handleCardPress(item)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.name}>{item.fullName || 'לא צוין'} (מזהה: {item.id})</Text>
+          <Text style={styles.info}>אימייל: {item.email || 'לא צוין'}</Text>
+          <Text style={styles.info}>תפקיד: {getUserRoleLabel(item.role)}</Text>
+          <Text style={styles.info}>סטטוס פרופיל: {getProfileStatusLabel(item.profileStatus)}</Text>
+          <Text style={styles.info}>סטטוס: {item.adminBlocked ? 'חסום' : 'פעיל'}</Text>
+        </TouchableOpacity>
 
-        <AppButton
-          title={item.adminBlocked ? 'שחרור חסימה' : 'חסימה'}
-          onPress={() => handleToggleBlock(item)}
-          loading={actionLoading === item.id}
-          style={[styles.button, item.adminBlocked ? styles.unblockButton : styles.blockButton]}
-        />
+        {isFocused ? (
+          <View style={styles.buttonRow}>
+            <AppButton
+              title="פתח פרטי משתמש"
+              variant="secondary"
+              onPress={() => handleCardPress(item)}
+              style={[styles.button, styles.ctaButton]}
+            />
+            <AppButton
+              title={item.adminBlocked ? 'שחרור חסימה' : 'חסימה'}
+              onPress={() => handleToggleBlock(item)}
+              loading={actionLoading === item.id}
+              style={[styles.button, styles.blockButtonHalf, item.adminBlocked ? styles.unblockButton : styles.blockButton]}
+            />
+          </View>
+        ) : (
+          <AppButton
+            title={item.adminBlocked ? 'שחרור חסימה' : 'חסימה'}
+            onPress={() => handleToggleBlock(item)}
+            loading={actionLoading === item.id}
+            style={[styles.button, item.adminBlocked ? styles.unblockButton : styles.blockButton]}
+          />
+        )}
       </View>
     );
   };
@@ -172,6 +202,20 @@ const styles = StyleSheet.create({
   },
   unblockButton: {
     backgroundColor: '#4CAF50',
+  },
+  buttonRow: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    gap: theme.spacing.s,
+    marginTop: theme.spacing.m,
+  },
+  ctaButton: {
+    flex: 1,
+    marginTop: 0,
+  },
+  blockButtonHalf: {
+    flex: 1,
+    marginTop: 0,
   },
   emptyText: {
     textAlign: 'center',

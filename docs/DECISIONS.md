@@ -727,3 +727,32 @@ These are collected future improvements and are NOT implemented at this stage. T
   - Feedback / Reports status updates → MyProductFeedback
 - **Role Limits**: The notifications center button on the "Me" screen is only shown to regular users (USER) and hidden for admins and event managers.
 - **QA Exclusions**: Runtime manual QA is deferred per project process. TypeScript and static analysis verify navigation parameter safety.
+
+---
+
+## 34. Cycle 5 MVP+ Decisions: Admin/Staff Unified User Details Foundation
+
+### 34.1 Backend Unified User Details API
+- **GET /api/admin/users/{userId}/details**: Added a direct, wedding-independent user details endpoint for Admins.
+- **Authorization Guard**: Restricts access strictly to the `ADMIN` role. Regular users or event managers calling it are rejected with HTTP 403 Forbidden.
+- **Response Structure**: Reuses the flat `StaffParticipantDetailsResponse` DTO structure, which contains both basic/full profile questionnaire fields and user photo lists. It does not expose `passwordHash` or `storagePath`.
+
+### 34.2 Mobile StaffParticipantDetails Screen Enhancements
+- **Direct Fetch Support**: Updated `StaffParticipantDetailsScreen` to support fetching user details when `weddingId` is absent in navigation params.
+- **Conditional Dispatch**:
+  - Admin mode + `weddingId` present: Calls the existing wedding-scoped endpoint `/api/admin/weddings/{weddingId}/participants/{userId}/details`.
+  - Admin mode + `weddingId` absent: Calls the new direct endpoint `/api/admin/users/{userId}/details`.
+  - Event Manager mode: Requires `weddingId` and uses Event Manager wedding-scoped API.
+- **Flat Mobile Types**: Aligned `StaffParticipantDetailsResponse` mobile type to be a flat object, mirroring the backend DTO structure.
+- **Basic/Full Grouping**: Groups and displays profile details sections using the flat fields of the response.
+
+### 34.3 Mobile AdminUsers Entry Point
+- **Navigate on Card Press**: Allowed clicking user cards in `AdminUsersScreen` to navigate to `StaffParticipantDetails` in `ADMIN` mode, passing `userId` and `source: 'ADMIN_USERS'` but omitting `weddingId`.
+- **Accidental Navigation Prevention**: Maintained separate click targets for block/unblock actions so that tapping them does not trigger navigation.
+- **State Preservation**: Preserved `focusUserId` filter and highlight behaviors.
+
+### 34.4 Exclusions & MVP Boundaries
+- **No DB Schema Changes**: No database tables, schemas, or migrations were modified or created.
+- **No Cascade Changes**: Reports (`AdminReportDetailsScreen`) and Product Feedback (`AdminProductFeedbackDetailsScreen`) screens were intentionally left unchanged and not connected.
+- **No Event Manager Global Access**: Event managers still require a valid `weddingId` to view participant details.
+- **QA Exclusions**: Runtime manual QA is deferred per project process.

@@ -594,6 +594,7 @@ No WebSocket. No realtime. No attachments. (Note: internal unread count per conv
 | GET | `/api/admin/users` | ADMIN | — | `List<AdminUserResponse>` | Basic users list; no reports/logs | 401, 403 |
 | PATCH | `/api/admin/users/{userId}/block` | ADMIN | — | `AdminUserResponse` | Sets `adminBlocked=true` | 401, 403, 404 |
 | PATCH | `/api/admin/users/{userId}/unblock` | ADMIN | — | `AdminUserResponse` | Sets `adminBlocked=false` | 401, 403, 404 |
+| GET | `/api/admin/users/{userId}/details` | ADMIN | — | `StaffParticipantDetailsResponse` | View full user details directly (profile details, photos, manageable weddings list, block/unblock actions) | 401, 403, 404 |
 | GET | `/api/admin/weddings` | ADMIN | — | `List<AdminWeddingResponse>` | Basic wedding list | 401, 403 |
 | PATCH | `/api/admin/weddings/{weddingId}/assign-self` | ADMIN | — | `WeddingResponse` | Admin assigns self to manage wedding; active wedding & new owner required | 400, 401, 403, 404 |
 | PUT | `/api/admin/weddings/{weddingId}/owner` | ADMIN | `{ "ownerUserId": Long }` | `WeddingResponse` | Admin assigns Event Manager to wedding; active wedding & new owner required | 400, 401, 403, 404 |

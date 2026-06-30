@@ -175,6 +175,11 @@ export const adminApi = {
     return response.data;
   },
 
+  getUserDetails: async (userId: number): Promise<StaffParticipantDetailsResponse> => {
+    const response = await apiClient.get<StaffParticipantDetailsResponse>(`/admin/users/${userId}/details`);
+    return response.data;
+  },
+
   restoreParticipant: async (weddingId: number, userId: number): Promise<ParticipantResponse> => {
     const response = await apiClient.patch<ParticipantResponse>(`/admin/weddings/${weddingId}/participants/${userId}/restore`);
     return response.data;

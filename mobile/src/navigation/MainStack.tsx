@@ -95,11 +95,12 @@ export type MainStackParamList = {
     weddingStatus?: string;
   };
   StaffParticipantDetails: {
-    weddingId: number;
     userId: number;
     mode: 'ADMIN' | 'EVENT_MANAGER';
+    weddingId?: number;
     weddingName?: string;
     weddingStatus?: string;
+    source?: 'ADMIN_USERS' | 'PARTICIPANTS';
   };
   ReportUser: { userId: number };
   AdminReports: undefined;

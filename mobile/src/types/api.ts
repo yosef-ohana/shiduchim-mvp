@@ -570,24 +570,27 @@ export interface StaffParticipantDetailsResponse {
   role?: 'USER' | 'EVENT_MANAGER' | 'ADMIN';
   profileStatus: ProfileStatus;
   adminBlocked: boolean;
-  createdAt: string;
-  manageableWeddings: StaffParticipantWeddingResponse[];
+  hasPrimaryPhoto?: boolean;
   photos: PhotoResponse[];
-  basicProfile?: {
-    age: number | null;
-    heightCm: number | null;
-    areaOfResidence: string | null;
-    religiousLevel: string | null;
-    phone: string | null;
-  } | null;
-  fullProfile?: {
-    education: string | null;
-    occupation: string | null;
-    selfDescription: string | null;
-    hobbies: string | null;
-    lookingFor: string | null;
-    familyDescription: string | null;
-    headCovering: string | null;
-    hasDrivingLicense: boolean | null;
-  } | null;
+
+  // basic profile fields (flat)
+  age: number | null;
+  heightCm: number | null;
+  areaOfResidence: string | null;
+  religiousLevel: string | null;
+
+  // full profile fields (flat)
+  phone: string | null;
+  education: string | null;
+  occupation: string | null;
+  selfDescription: string | null;
+  hobbies: string | null;
+  lookingFor: string | null;
+  familyDescription: string | null;
+  headCovering: string | null;
+  hasDrivingLicense: boolean | null;
+
+  manageableWeddings: StaffParticipantWeddingResponse[];
+  canAdminBlock?: boolean;
+  canAdminUnblock?: boolean;
 }

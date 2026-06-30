@@ -10,12 +10,14 @@ import com.shiduchim.backend.dto.report.UserReportSummaryResponse;
 import com.shiduchim.backend.dto.report.UserReportDetailsResponse;
 import com.shiduchim.backend.entity.User;
 import com.shiduchim.backend.service.AdminService;
+import com.shiduchim.backend.service.ParticipantService;
 import com.shiduchim.backend.service.UserReportService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import com.shiduchim.backend.service.WeddingBackgroundService;
+import com.shiduchim.backend.dto.wedding.StaffParticipantDetailsResponse;
 import com.shiduchim.backend.entity.Wedding;
 
 import java.util.List;
@@ -25,11 +27,13 @@ import java.util.List;
 public class AdminController {
 
     private final AdminService adminService;
+    private final ParticipantService participantService;
     private final UserReportService userReportService;
     private final WeddingBackgroundService weddingBackgroundService;
 
-    public AdminController(AdminService adminService, UserReportService userReportService, WeddingBackgroundService weddingBackgroundService) {
+    public AdminController(AdminService adminService, ParticipantService participantService, UserReportService userReportService, WeddingBackgroundService weddingBackgroundService) {
         this.adminService = adminService;
+        this.participantService = participantService;
         this.userReportService = userReportService;
         this.weddingBackgroundService = weddingBackgroundService;
     }
@@ -63,6 +67,12 @@ public class AdminController {
     @GetMapping("/users")
     public List<AdminUserResponse> getUsers(@AuthenticationPrincipal User currentUser) {
         return adminService.getUsers(currentUser);
+    }
+
+    @GetMapping("/users/{userId}/details")
+    public StaffParticipantDetailsResponse getUserDetails(@PathVariable Long userId,
+                                                          @AuthenticationPrincipal User currentUser) {
+        return participantService.getAdminUserDetails(userId, currentUser);
     }
 
     @PatchMapping("/users/{userId}/block")

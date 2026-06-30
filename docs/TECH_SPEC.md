@@ -927,3 +927,21 @@ This section contains the focused Cycle 5 QA checklist. Note: Manual QA has not 
 - **Limits**: Limits updates shown to 10 per source pre-merge and 30 total post-merge.
 - **MVP Boundaries**: No notification DB structures, push notifications, websockets, polling intervals, or local storage/AsyncStorage read/unread flags were created or utilized.
 - **QA Exclusions**: Runtime manual QA is deferred pending project QA cycles. TypeScript compile success validates navigation parameter type safety.
+
+---
+
+## 33. Development Cycle 5 MVP+ Additions: Admin/Staff Unified User Details Foundation
+
+### 33.1 Backend Direct User Details API
+- **Endpoint**: `GET /api/admin/users/{userId}/details`
+- **Security Check**: Enforced role restriction requiring role to be `ADMIN` and `adminBlocked` to be false/null in `ParticipantService.java`.
+- **Logic**: Retrieves target `User` by `userId` and builds `StaffParticipantDetailsResponse` including their manageable weddings list, profile status, and basic/full profile details.
+
+### 33.2 Mobile Navigation & Route Params
+- **Route configuration**: Extended `StaffParticipantDetails` route parameters in `MainStack.tsx` to support optional `weddingId` and optional `source: 'ADMIN_USERS' | 'PARTICIPANTS'`.
+- **Details Screen**: In `StaffParticipantDetailsScreen.tsx`, introduced validation error if Event Manager mode is used without a `weddingId`. For Admin mode, condition checks presence of `weddingId` to decide between `adminApi.getParticipantDetails(weddingId, userId)` or `adminApi.getUserDetails(userId)`.
+
+### 33.3 Mobile AdminUsers Screen Entry Point
+- **Navigating from Cards**: Wrapped user list card texts inside a `TouchableOpacity` targeting `StaffParticipantDetails` navigation with parameters `{ userId: item.id, mode: 'ADMIN', source: 'ADMIN_USERS' }`.
+- **Safe Block/Unblock interaction**: The `AppButton` triggering blocking state is rendered outside the `TouchableOpacity` details click zone, keeping interactions separate and preventing accidental screen switches.
+- **Exclusion of Cascade Screens**: Verified that other screens like `AdminReportDetailsScreen` or `ProductFeedback` screens are not modified or connected.

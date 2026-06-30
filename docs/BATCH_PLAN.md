@@ -1389,3 +1389,23 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
 ### Batch 4.4 — Final Validation, Cleanup, Minimal Docs, Commit and Push
 - **Goal**: Perform final validation of Cycle 4, clean up repository, update documentation, commit and push.
 - **DoD**: Compilation and typecheck pass, repo clean, changes committed and pushed.
+
+---
+
+## Cycle 5 MVP+ — Admin/Staff Unified User Details Foundation
+
+### Batch 1 — Backend direct endpoint for Admin
+- **Goal**: Expose direct User Details endpoint for Admin bypassing weddingId mapping.
+- **DoD**: Compile success.
+
+### Batch 2 — Mobile API & StaffParticipantDetails Params
+- **Goal**: Add mobile `adminApi.getUserDetails(userId)` and update `StaffParticipantDetailsScreen` parameter support and endpoint dispatch.
+- **DoD**: TypeScript checks pass.
+
+### Batch 3 — Mobile AdminUsers Screen Entry Point
+- **Goal**: Allow navigating to StaffParticipantDetails from AdminUsers card press with safe non-nested Touchables.
+- **DoD**: TypeScript checks pass.
+
+### Batch 4 — Final Validation, Cleanup, Minimal Docs, Commit and Push
+- **Goal**: Perform final validation of Cycle 5, clean up repository, update documentation, commit and push.
+- **DoD**: Compilation and typecheck pass, repo clean, changes committed and pushed.

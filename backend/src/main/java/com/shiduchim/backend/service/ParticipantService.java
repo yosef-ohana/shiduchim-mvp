@@ -136,6 +136,21 @@ public class ParticipantService {
         User targetUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
+        return buildStaffParticipantDetailsResponse(targetUser, currentUser);
+    }
+
+    public StaffParticipantDetailsResponse getAdminUserDetails(Long userId, User currentUser) {
+        if (currentUser.getRole() != UserRole.ADMIN || Boolean.TRUE.equals(currentUser.getAdminBlocked())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied");
+        }
+
+        User targetUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        return buildStaffParticipantDetailsResponse(targetUser, currentUser);
+    }
+
+    private StaffParticipantDetailsResponse buildStaffParticipantDetailsResponse(User targetUser, User currentUser) {
         StaffParticipantDetailsResponse response = new StaffParticipantDetailsResponse();
         response.setUserId(targetUser.getId());
         response.setFullName(targetUser.getFullName());
@@ -144,9 +159,9 @@ public class ParticipantService {
         response.setRole(targetUser.getRole());
         response.setProfileStatus(targetUser.getProfileStatus());
         response.setAdminBlocked(targetUser.getAdminBlocked());
-        response.setHasPrimaryPhoto(userPhotoRepository.existsByUserIdAndIsPrimaryTrue(userId));
+        response.setHasPrimaryPhoto(userPhotoRepository.existsByUserIdAndIsPrimaryTrue(targetUser.getId()));
 
-        List<com.shiduchim.backend.entity.UserPhoto> photos = userPhotoRepository.findByUserIdOrderByOrderIndexAscCreatedAtAsc(userId);
+        List<com.shiduchim.backend.entity.UserPhoto> photos = userPhotoRepository.findByUserIdOrderByOrderIndexAscCreatedAtAsc(targetUser.getId());
         response.setPhotos(photos.stream().map(p -> new com.shiduchim.backend.dto.photo.PhotoResponse(
                 p.getId(), p.getImageUrl(), p.getIsPrimary(), p.getOrderIndex(), p.getCreatedAt()
         )).collect(Collectors.toList()));
@@ -167,7 +182,7 @@ public class ParticipantService {
         response.setHasDrivingLicense(targetUser.getHasDrivingLicense());
 
         // Manageable weddings
-        List<WeddingParticipant> allParticipations = participantRepository.findByUserId(userId);
+        List<WeddingParticipant> allParticipations = participantRepository.findByUserId(targetUser.getId());
         List<com.shiduchim.backend.dto.wedding.StaffParticipantWeddingResponse> manageableWeddings = allParticipations.stream()
                 .map(p -> {
                     try {

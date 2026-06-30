@@ -42,15 +42,26 @@ export const StaffParticipantDetailsScreen = () => {
   const [details, setDetails] = useState<StaffParticipantDetailsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const loadData = async () => {
+    if (mode === 'EVENT_MANAGER' && !weddingId) {
+      setValidationError('שגיאה: חסר מזהה חתונה לצפייה בפרטי המשתתף כסגל אירוע.');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       let data: StaffParticipantDetailsResponse;
       if (mode === 'ADMIN') {
-        data = await adminApi.getParticipantDetails(weddingId, userId);
+        if (weddingId) {
+          data = await adminApi.getParticipantDetails(weddingId, userId);
+        } else {
+          data = await adminApi.getUserDetails(userId);
+        }
       } else {
-        data = await emGetParticipantDetails(weddingId, userId);
+        data = await emGetParticipantDetails(weddingId!, userId);
       }
       setDetails(data);
     } catch (error) {
@@ -63,7 +74,11 @@ export const StaffParticipantDetailsScreen = () => {
 
   useEffect(() => {
     loadData();
-    navigation.setOptions({ title: 'פרטי משתתף' });
+    if (mode === 'ADMIN' && !weddingId) {
+      navigation.setOptions({ title: 'פרטי משתמש' });
+    } else {
+      navigation.setOptions({ title: 'פרטי משתתף' });
+    }
   }, [weddingId, userId, mode]);
 
   const handleBlockToggle = async () => {
@@ -162,6 +177,16 @@ export const StaffParticipantDetailsScreen = () => {
     );
   };
 
+  if (validationError) {
+    return (
+      <Screen>
+        <View style={styles.centered}>
+          <Text style={styles.emptyText}>{validationError}</Text>
+        </View>
+      </Screen>
+    );
+  }
+
   if (loading && !details) {
     return (
       <Screen>
@@ -183,6 +208,21 @@ export const StaffParticipantDetailsScreen = () => {
   }
 
   const primaryPhoto = details.photos?.find((p) => p.isPrimary) || details.photos?.[0];
+
+  const hasBasicDetails = details.age !== null ||
+                          details.heightCm !== null ||
+                          details.areaOfResidence !== null ||
+                          details.religiousLevel !== null ||
+                          details.phone !== null;
+
+  const hasFullDetails = details.education !== null ||
+                         details.occupation !== null ||
+                         details.lookingFor !== null ||
+                         details.selfDescription !== null ||
+                         details.hobbies !== null ||
+                         details.familyDescription !== null ||
+                         details.headCovering !== null ||
+                         details.hasDrivingLicense !== null;
 
   return (
     <Screen>
@@ -209,6 +249,7 @@ export const StaffParticipantDetailsScreen = () => {
                 <Text style={styles.label}>{getGenderLabel(details.gender)}</Text>
                 <Text style={styles.label}>{getProfileStatusLabel(details.profileStatus)}</Text>
                 {details.role && <Text style={styles.label}>{getRoleLabel(details.role)}</Text>}
+                <Text style={styles.label}>{details.hasPrimaryPhoto ? 'יש תמונה ראשית' : 'אין תמונה ראשית'}</Text>
               </View>
               {details.adminBlocked && (
                 <Text style={styles.blockedText}>משתמש חסום מערכתית</Text>
@@ -217,53 +258,108 @@ export const StaffParticipantDetailsScreen = () => {
           </View>
         </View>
 
+        {/* Photos Section */}
+        {details.photos && details.photos.length > 0 && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>תמונות ({details.photos.length})</Text>
+            <View style={styles.photosGrid}>
+              {details.photos.map((photo, index) => (
+                <View key={photo.id || index} style={styles.photoContainer}>
+                  <Image
+                    source={{ uri: getImageUrl(photo.imageUrl) }}
+                    style={styles.gridPhoto}
+                    resizeMode="cover"
+                  />
+                  {photo.isPrimary && (
+                    <View style={styles.primaryBadge}>
+                      <Text style={styles.primaryBadgeText}>ראשית</Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Basic Profile */}
-        {details.basicProfile && (
+        {hasBasicDetails && (
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>פרופיל בסיסי</Text>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>גיל:</Text>
-              <Text style={styles.infoValue}>{details.basicProfile.age || '-'}</Text>
+              <Text style={styles.infoValue}>{details.age || '-'}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>גובה:</Text>
-              <Text style={styles.infoValue}>{details.basicProfile.heightCm ? `${details.basicProfile.heightCm} ס"מ` : '-'}</Text>
+              <Text style={styles.infoValue}>{details.heightCm ? `${details.heightCm} ס"מ` : '-'}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>אזור מגורים:</Text>
-              <Text style={styles.infoValue}>{details.basicProfile.areaOfResidence || '-'}</Text>
+              <Text style={styles.infoValue}>{details.areaOfResidence || '-'}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>רמה דתית:</Text>
-              <Text style={styles.infoValue}>{details.basicProfile.religiousLevel || '-'}</Text>
+              <Text style={styles.infoValue}>{details.religiousLevel || '-'}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>טלפון:</Text>
-              <Text style={styles.infoValue}>{details.basicProfile.phone || '-'}</Text>
+              <Text style={styles.infoValue}>{details.phone || '-'}</Text>
             </View>
           </View>
         )}
 
         {/* Full Profile */}
-        {details.fullProfile && (
+        {hasFullDetails && (
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>פרופיל מלא</Text>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>השכלה:</Text>
-              <Text style={styles.infoValue}>{details.fullProfile.education || '-'}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>עיסוק:</Text>
-              <Text style={styles.infoValue}>{details.fullProfile.occupation || '-'}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>מחפש/ת:</Text>
-              <Text style={styles.infoValue}>{details.fullProfile.lookingFor || '-'}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>תיאור עצמי:</Text>
-              <Text style={styles.infoValue}>{details.fullProfile.selfDescription || '-'}</Text>
-            </View>
+            {details.education !== null && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>השכלה:</Text>
+                <Text style={styles.infoValue}>{details.education || '-'}</Text>
+              </View>
+            )}
+            {details.occupation !== null && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>עיסוק:</Text>
+                <Text style={styles.infoValue}>{details.occupation || '-'}</Text>
+              </View>
+            )}
+            {details.lookingFor !== null && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>מחפש/ת:</Text>
+                <Text style={styles.infoValue}>{details.lookingFor || '-'}</Text>
+              </View>
+            )}
+            {details.selfDescription !== null && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>תיאור עצמי:</Text>
+                <Text style={styles.infoValue}>{details.selfDescription || '-'}</Text>
+              </View>
+            )}
+            {details.hobbies !== null && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>תחביבים:</Text>
+                <Text style={styles.infoValue}>{details.hobbies || '-'}</Text>
+              </View>
+            )}
+            {details.familyDescription !== null && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>רקע משפחתי:</Text>
+                <Text style={styles.infoValue}>{details.familyDescription || '-'}</Text>
+              </View>
+            )}
+            {details.headCovering !== null && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>כיסוי ראש:</Text>
+                <Text style={styles.infoValue}>{details.headCovering || '-'}</Text>
+              </View>
+            )}
+            {details.hasDrivingLicense !== null && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>רישיון נהיגה:</Text>
+                <Text style={styles.infoValue}>{details.hasDrivingLicense ? 'כן' : 'לא'}</Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -499,5 +595,34 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     color: theme.colors.textSecondary,
+  },
+  photosGrid: {
+    flexDirection: 'row-reverse',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: theme.spacing.s,
+  },
+  photoContainer: {
+    position: 'relative',
+  },
+  gridPhoto: {
+    width: 70,
+    height: 70,
+    borderRadius: theme.borderRadius.m,
+    backgroundColor: '#EEE',
+  },
+  primaryBadge: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: theme.borderRadius.s,
+  },
+  primaryBadgeText: {
+    color: '#FFF',
+    fontSize: 8,
+    fontWeight: 'bold',
   },
 });
