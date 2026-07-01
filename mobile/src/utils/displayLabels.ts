@@ -12,6 +12,8 @@ export const getWeddingStatusLabel = (status?: WeddingStatus | string | null): s
       return 'סגור';
     case 'CANCELLED':
       return 'מבוטל';
+    case 'DELETED':
+      return 'נמחקה';
     default:
       return status;
   }

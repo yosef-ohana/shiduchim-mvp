@@ -155,7 +155,7 @@ export const AdminWeddingDetailsScreen = () => {
   const handleHardDelete = async () => {
     Alert.alert(
       'מחיקה סופית',
-      'פעולה זו הינה בלתי הפיכה.\nהחתונה תימחק לצמיתות.\nהמשתמשים לא יימחקו.\nבמידה וקיימות אינטראקציות לחתונה, השרת יחסום את המחיקה.',
+      'פעולה זו הינה בלתי הפיכה.\nהחתונה תוסר מרשימות המשתמשים, מנהלי האירועים ומנהלי המערכת.\nקוד ההצטרפות, האפשרות להצטרף והחיפוש של החתונה יפסיקו לפעול.\nהמשתמשים, התמונות, ההתאמות, הצ\'אטים, הודעות הפתיחה, הדיווחים והמשובים לא יימחקו.\nפעולה זו היא סופית לחלוטין ולא ניתן לשחזר אותה.',
       [
         { text: 'ביטול', style: 'cancel' },
         {
@@ -165,11 +165,11 @@ export const AdminWeddingDetailsScreen = () => {
             setLoading(true);
             try {
               await adminApi.hardDeleteWedding(weddingId);
-              Alert.alert('הצלחה', 'החתונה נמחקה סופית בהצלחה');
+              Alert.alert('הצלחה', 'החתונה נמחקה בהצלחה');
               navigation.goBack();
             } catch (error: any) {
               setLoading(false);
-              Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'לא ניתן למחוק את החתונה מכיוון שקיימות בה אינטראקציות קיימות.'));
+              Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'מחיקת החתונה נכשלה.'));
             }
           }
         }

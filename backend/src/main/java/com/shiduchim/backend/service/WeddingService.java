@@ -90,7 +90,10 @@ public class WeddingService {
         } else {
             weddings = weddingRepository.findByOwnerUserId(currentUser.getId());
         }
-        return weddings.stream().map(this::toResponse).collect(Collectors.toList());
+        return weddings.stream()
+                .filter(w -> w.getStatus() != WeddingStatus.DELETED)
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     public List<UserWeddingResponse> getMyWeddings(User currentUser) {
@@ -112,7 +115,7 @@ public class WeddingService {
         return participations.stream()
                 .map(participant -> {
                     Wedding wedding = weddingMap.get(participant.getWeddingId());
-                    if (wedding == null) return null;
+                    if (wedding == null || wedding.getStatus() == WeddingStatus.DELETED) return null;
 
                     UserWeddingResponse response = new UserWeddingResponse();
                     response.setWeddingId(wedding.getId());
@@ -135,14 +138,7 @@ public class WeddingService {
     }
 
     public WeddingResponse getWedding(Long id, User currentUser) {
-        requireEventManagerOrAdmin(currentUser);
-        Wedding wedding = weddingRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wedding not found"));
-
-        if (currentUser.getRole() != UserRole.ADMIN && !wedding.getOwnerUserId().equals(currentUser.getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not owner of this wedding");
-        }
-
+        Wedding wedding = getWeddingEntityAndCheckOwner(id, currentUser);
         return toResponse(wedding);
     }
 
@@ -153,8 +149,8 @@ public class WeddingService {
         Wedding wedding = weddingRepository.findByAccessCode(request.getAccessCode())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wedding not found"));
 
-        if (wedding.getStatus() == WeddingStatus.CLOSED || wedding.getStatus() == WeddingStatus.CANCELLED) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Wedding is closed or cancelled");
+        if (wedding.getStatus() != WeddingStatus.ACTIVE) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Wedding is not active");
         }
 
         WeddingParticipant participant = participantRepository.findByWeddingIdAndUserId(wedding.getId(), currentUser.getId())
@@ -215,6 +211,10 @@ public class WeddingService {
         Wedding wedding = weddingRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wedding not found"));
 
+        if (wedding.getStatus() == WeddingStatus.DELETED) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Wedding not found");
+        }
+
         if (currentUser.getRole() != UserRole.ADMIN && !wedding.getOwnerUserId().equals(currentUser.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not owner of this wedding");
         }
@@ -266,7 +266,7 @@ public class WeddingService {
 
         Wedding wedding = weddingRepository.findByAccessCode(request.getAccessCode()).orElse(null);
 
-        if (wedding == null) {
+        if (wedding == null || wedding.getStatus() == WeddingStatus.DELETED) {
             response.setValid(false);
             response.setJoinAllowed(false);
             response.setMessage("Wedding code not found");

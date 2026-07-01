@@ -184,7 +184,7 @@ Long auto-increment
 4. `ActionType`: `LIKE`, `DISLIKE`, `FREEZE`
 5. `PoolType`: `WEDDING`, `GLOBAL`
 6. `MatchStatus`: `ACTIVE`, `BLOCKED`
-7. `WeddingStatus`: `ACTIVE`, `CLOSED`, `CANCELLED`
+7. `WeddingStatus`: `ACTIVE`, `CLOSED`, `CANCELLED`, `DELETED`
 8. `ParticipantStatus`: `ACTIVE`, `REMOVED`
 
 `Unfreeze` is not an enum value. It is an endpoint action.
@@ -633,11 +633,11 @@ These are collected future improvements and are NOT implemented at this stage. T
 - **Authorization Enforcement**: Restoring and deleting weddings are high-privilege operations reserved strictly for the `ADMIN` role. Event Managers and regular Users cannot perform or access these features. Enforced on the backend via role validation and hidden on the frontend for non-admin users.
 
 ### 28.2 Guarded Deletion Safety Invariant
-- **Guarded Delete instead of Cascade**: To prevent databases from ending up with orphan messages, user actions, or broken chats, deleting a wedding is strictly blocked if user interactions exist. A wedding is only deletable if no UserActions, Matches, or OpeningConversations have been recorded in the wedding pool.
-- **Non-Destructive for Core Entities**: Even when a wedding delete is allowed, it never deletes Users, UserPhotos, UserActions, Matches, Chats, OpeningConversations, UserReports, or ProductFeedback. Only the Wedding row, WeddingParticipants, WeddingInvites, and the local background image file are removed.
+- **Guarded Delete Superseded**: This older guarded delete policy (where deletion was blocked if user interactions existed and physically deleted the Wedding row) was superseded/updated by the Cycle 7 Wedding Hard Delete Tombstone policy. Under the current policy, deletion does not block on user interactions, and the Wedding row itself is preserved as an internal tombstone with status `DELETED` instead of being physically deleted.
+- **Non-Destructive for Core Entities**: Even when a wedding delete is executed, it never deletes Users, UserPhotos, UserActions, Matches, Chats, OpeningConversations, OpeningMessages, UserReports, ProductFeedback, UserBlocks, or global data. Under the Cycle 7 policy, only `WeddingParticipant` rows, `WeddingInvite` rows, and the local background image file (best-effort) are physically removed, while the wedding row is kept as a tombstone.
 
 ### 28.3 Active Status Gates
-- **Status Validation**: Both restore and delete require the wedding to be in an inactive status (`CLOSED` or `CANCELLED`). Active weddings cannot be restored (rejected as bad request) and cannot be deleted (rejected as bad request).
+- **Status Validation**: Both restore and delete require the wedding to be in an inactive status (`CLOSED` or `CANCELLED`). Active weddings cannot be restored (rejected as bad request) and cannot be deleted (rejected as bad request). Under Cycle 7, restore is also strictly blocked for `DELETED` weddings, as `DELETED` is a terminal state.
 
 ### 28.4 Best-Effort Disk Cleanup
 - **Background Image Deletion**: When a wedding is successfully hard deleted, the local background image file stored on the server disk is deleted on a best-effort basis, preventing disk space leaks.
@@ -771,3 +771,33 @@ These are collected future improvements and are NOT implemented at this stage. T
 - **Restricted Access**: Existing Event Manager restrictions were fully preserved. Event Managers do not gain access to global Admin Reports, Admin Product Feedback, or direct wedding-independent profiles.
 - **ProductFeedback and UserReport Separation**: `ProductFeedback` and `UserReport` remain separate workflows.
 - **No Backend/API/DB Changes**: No backend changes, database schema updates, or API endpoint updates were required for Cycle 6.
+
+---
+
+## 36. Cycle 7 MVP+ Decisions: Wedding Hard Delete Tombstone Policy
+
+### 36.1 Wedding Status DELETED & Tombstone Policy
+- **Tombstone Instead of Physical Row Delete**: The backend no longer physically deletes the `Wedding` row during an Admin hard delete. Instead, the wedding is marked with status `WeddingStatus.DELETED`.
+- **Terminal State**: `DELETED` is a hidden terminal state. A wedding marked as `DELETED` can never be restored.
+- **Staff Access restrictions**: `DELETED` weddings are hidden from normal backend wedding lists (event manager list, admin list) and active/normal lists.
+- **Cascade Deletion Boundaries**:
+  - **Physically Deleted**: `WeddingParticipant` rows, `WeddingInvite` rows, and the local wedding background image file (best-effort disk cleanup).
+  - **Preserved**: Users, UserPhotos, UserActions, Matches, ChatMessages, OpeningConversations, OpeningMessages, UserReports, ProductFeedback, UserBlocks, and all global/transactional data.
+
+### 36.2 Entry Gates & Validation Blocking
+- **Access Code invalidation**: A `DELETED` wedding retains its `accessCode` internally to prevent orphan references, but the code is not reusable. Endpoint validation (`validate-code`) and joining (`join-wedding`) reject `DELETED` weddings as invalid / not joinable.
+- **Discover Invalidation**: Discover matching/feed fetches exclude `DELETED` weddings.
+
+### 36.3 Relationship Safety & Chat Continuity
+- **Blocked Opening Replies**: Tapping "Reply" or sending messages in an opening conversation context of a `DELETED`, missing, or non-active wedding is blocked.
+- **Match-Creation Block**: An older opening conversation in a `DELETED` or non-active wedding context cannot create a new match.
+- **Lists / Liked Me Filtering**: User lists (e.g., Liked Me, Match list, etc.) filter out candidate items or actions tied to `DELETED` or missing weddings.
+- **Chat Accessibility**: Existing matches and chats remain accessible to users as historical records.
+
+### 36.4 Restore Restrictions
+- **CLOSED/CANCELLED Restore Only**: The restore wedding action is allowed only for `CLOSED` and `CANCELLED` weddings under standard permission rules.
+- **Blocked for DELETED**: Restoring is strictly blocked for `DELETED` weddings (returns HTTP 400 Bad Request).
+
+### 36.5 Admin Delete Eligibility
+- **Active Blocked**: Active weddings remain blocked from Admin hard delete (returns HTTP 400 Bad Request).
+- **Closed/Cancelled Allowed**: Closed or cancelled weddings are eligible for deletion even if historical user-to-user interactions exist.

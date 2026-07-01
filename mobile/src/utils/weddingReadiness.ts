@@ -63,7 +63,7 @@ export function getWeddingReadiness(input: WeddingReadinessInput): WeddingReadin
       canOpenDiscover: false,
       missingBasicProfile: false,
       missingPrimaryPhoto: false,
-      isInactiveWedding: weddingStatus === 'CLOSED' || weddingStatus === 'CANCELLED',
+      isInactiveWedding: weddingStatus === 'CLOSED' || weddingStatus === 'CANCELLED' || weddingStatus === 'DELETED',
       isBlocked: false,
       message: 'יש להתחבר כדי להצטרף לחתונה.',
       primaryAction: 'LOGIN',
@@ -78,7 +78,7 @@ export function getWeddingReadiness(input: WeddingReadinessInput): WeddingReadin
       canOpenDiscover: false,
       missingBasicProfile: false,
       missingPrimaryPhoto: false,
-      isInactiveWedding: weddingStatus === 'CLOSED' || weddingStatus === 'CANCELLED',
+      isInactiveWedding: weddingStatus === 'CLOSED' || weddingStatus === 'CANCELLED' || weddingStatus === 'DELETED',
       isBlocked: true,
       message: 'המשתמש חסום. פנה להנהלת המערכת.',
       primaryAction: 'NONE',
@@ -93,7 +93,7 @@ export function getWeddingReadiness(input: WeddingReadinessInput): WeddingReadin
       canOpenDiscover: false,
       missingBasicProfile: false,
       missingPrimaryPhoto: false,
-      isInactiveWedding: weddingStatus === 'CLOSED' || weddingStatus === 'CANCELLED',
+      isInactiveWedding: weddingStatus === 'CLOSED' || weddingStatus === 'CANCELLED' || weddingStatus === 'DELETED',
       isBlocked: false,
       message: 'מנהלים אינם יכולים להצטרף למאגר הזיווגים של החתונה.',
       primaryAction: 'NONE',
@@ -101,7 +101,7 @@ export function getWeddingReadiness(input: WeddingReadinessInput): WeddingReadin
   }
 
   // 4. Check if wedding is inactive (if wedding status is provided)
-  const isInactiveWedding = weddingStatus === 'CLOSED' || weddingStatus === 'CANCELLED';
+  const isInactiveWedding = weddingStatus === 'CLOSED' || weddingStatus === 'CANCELLED' || weddingStatus === 'DELETED';
   if (isInactiveWedding) {
     return {
       state: 'INACTIVE_WEDDING',

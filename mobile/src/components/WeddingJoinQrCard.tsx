@@ -7,7 +7,7 @@ import { generateWeddingInvitationText } from '../utils/weddingInvitationText';
 
 interface WeddingJoinQrCardProps {
   accessCode: string;
-  status: 'ACTIVE' | 'CLOSED' | 'CANCELLED';
+  status: 'ACTIVE' | 'CLOSED' | 'CANCELLED' | 'DELETED';
   weddingName?: string;
   city?: string;
   weddingDate?: string;
@@ -20,7 +20,7 @@ export const WeddingJoinQrCard: React.FC<WeddingJoinQrCardProps> = ({
   city,
   weddingDate,
 }) => {
-  if (status === 'CLOSED' || status === 'CANCELLED') {
+  if (status === 'CLOSED' || status === 'CANCELLED' || status === 'DELETED') {
     return (
       <View style={styles.card}>
         <Text style={styles.warningText}>

@@ -247,6 +247,18 @@ public class OpeningMessageService {
                     "This conversation is no longer accepting pre-match replies. Use normal chat instead.");
         }
 
+        // --- Context Safety: Check wedding status if poolType=WEDDING ---
+        if (conversation.getPoolType() == PoolType.WEDDING) {
+            if (conversation.getWeddingId() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wedding ID is missing for WEDDING pool");
+            }
+            Wedding wedding = weddingRepository.findById(conversation.getWeddingId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wedding not found"));
+            if (wedding.getStatus() != WeddingStatus.ACTIVE) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot reply because the wedding is not ACTIVE");
+            }
+        }
+
         // --- Reload other user with fresh state ---
         Long otherUserId = openerId;
         User otherUser = userRepository.findById(otherUserId)

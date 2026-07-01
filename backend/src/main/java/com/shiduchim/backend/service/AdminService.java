@@ -170,6 +170,7 @@ public class AdminService {
     public List<AdminWeddingResponse> getWeddings(User currentUser) {
         validateAdmin(currentUser);
         return weddingRepository.findAll().stream()
+                .filter(w -> w.getStatus() != WeddingStatus.DELETED)
                 .map(this::toAdminWeddingResponse)
                 .collect(Collectors.toList());
     }
@@ -264,6 +265,9 @@ public class AdminService {
         validateAdmin(currentUser);
         Wedding wedding = weddingRepository.findById(weddingId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wedding not found"));
+        if (wedding.getStatus() == WeddingStatus.DELETED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot restore a deleted wedding");
+        }
         if (wedding.getStatus() == WeddingStatus.ACTIVE) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wedding is already active");
         }
@@ -281,20 +285,14 @@ public class AdminService {
         if (wedding.getStatus() == WeddingStatus.ACTIVE) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot hard delete an active wedding");
         }
-
-        boolean hasUserActions = userActionRepository.existsByPoolTypeAndWeddingId(com.shiduchim.backend.enums.PoolType.WEDDING, weddingId);
-        boolean hasMatches = matchRepository.existsByPoolTypeAndWeddingId(com.shiduchim.backend.enums.PoolType.WEDDING, weddingId);
-        boolean hasConversations = openingConversationRepository.existsByPoolTypeAndWeddingId(com.shiduchim.backend.enums.PoolType.WEDDING, weddingId);
-
-        if (hasUserActions || hasMatches || hasConversations) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Wedding cannot be hard deleted because it has existing wedding-scoped interactions");
+        if (wedding.getStatus() == WeddingStatus.DELETED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wedding is already deleted");
         }
 
         weddingInviteRepository.deleteByWeddingId(weddingId);
         weddingParticipantRepository.deleteByWeddingId(weddingId);
 
         String storagePath = wedding.getBackgroundStoragePath();
-        weddingRepository.delete(wedding);
 
         if (storagePath != null) {
             try {
@@ -303,6 +301,11 @@ public class AdminService {
                 System.err.println("[AdminService] Warning: could not delete file at " + storagePath + " - " + e.getMessage());
             }
         }
+
+        wedding.setBackgroundImageUrl(null);
+        wedding.setBackgroundStoragePath(null);
+        wedding.setStatus(WeddingStatus.DELETED);
+        weddingRepository.save(wedding);
     }
 
 
@@ -353,7 +356,7 @@ public class AdminService {
         validateAdmin(currentUser);
         long usersCount = userRepository.countByRole(UserRole.USER);
         long eventManagersCount = userRepository.countByRole(UserRole.EVENT_MANAGER);
-        long weddingsCount = weddingRepository.count();
+        long weddingsCount = weddingRepository.count() - weddingRepository.countByStatus(WeddingStatus.DELETED);
         long activeWeddingsCount = weddingRepository.countByStatus(WeddingStatus.ACTIVE);
         return new AdminDashboardResponse(usersCount, eventManagersCount, weddingsCount, activeWeddingsCount);
     }

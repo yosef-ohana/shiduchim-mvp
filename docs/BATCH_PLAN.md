@@ -1247,22 +1247,25 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
 - **DoD**: TypeScript checks pass; Admin can trigger wedding restoration with full Hebrew prompts and success updates.
 
 ### Batch 5.3 — Backend Guarded Hard Delete Wedding
-- **Goal**: Implement guarded hard delete for weddings.
-- **Scope**:
+- **Goal**: Implement hard delete for weddings.
+- **Superseded by Cycle 7 Policy**: Note that the older guarded delete policy (which blocked deletion if user interactions existed, and physically deleted the Wedding row) was superseded/updated by the Cycle 7 Wedding Hard Delete Tombstone policy.
+- **Scope (Current Policy)**:
   - Implement `DELETE /api/admin/weddings/{weddingId}` for Admin role.
   - Reject active wedding deletion with HTTP 400 Bad Request.
-  - Check user interactions (UserActions, Matches, OpeningConversations) and block deletion if any exist.
-  - Delete only wedding invites, wedding participants, local background image files (best-effort), and the wedding row.
-  - Exclude users, photos, global actions/matches/conversations, reports, and feedback from deletion.
-- **DoD**: Maven compile passes; guarded deletion logic verified.
+  - Allow deletion even if historical user interactions exist (does not block on UserActions, Matches, OpeningConversations).
+  - Update status to `DELETED` as an internal tombstone (never physically delete the Wedding row).
+  - Delete only wedding invites, wedding participants, local background image files (best-effort).
+  - Exclude users, photos, user actions, matches, chats, opening conversations, messages, reports, feedback, blocks, and global data from deletion.
+- **DoD**: Maven compile passes; tombstone deletion logic verified.
 
 ### Batch 5.4 — Mobile Admin Hard Delete UI
 - **Goal**: Add Hard Delete Wedding UI to the Admin mobile app.
-- **Scope**:
+- **Superseded by Cycle 7 Policy**: Note that the older guarded delete UI and warning copy was superseded/updated by the Cycle 7 Wedding Hard Delete Tombstone policy.
+- **Scope (Current Policy)**:
   - Add API client wrapper for delete wedding in `adminApi.ts`.
   - Add "Hard Delete" button in `AdminWeddingDetailsScreen.tsx` visible only for closed or cancelled weddings.
-  - Display a detailed warning prompt in Hebrew notifying that deletion is irreversible, users are not deleted, and the action will fail if user interactions exist.
-- **DoD**: TypeScript checks pass; Admin can trigger guarded delete with warnings.
+  - Display a warning prompt in Hebrew notifying that deletion is irreversible and users are not deleted (the old warning about deletion failing if user interactions exist was removed).
+- **DoD**: TypeScript checks pass; Admin can trigger delete with updated warnings.
 
 ### Batch 5.5A — Docs, Efficient Technical Closure, and Cleanup Review
 - **Goal**: Complete documentation updates, verify clean workspace status, and perform final static/compile validation.
@@ -1425,3 +1428,44 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
 ### Batch 6.2 — Docs, focused validation, cleanup, and final cycle closure
 - **Goal**: Run focused validation checks, clean up junk/artifact files inside the repository, update project documentation, commit and push Cycle 6 changes.
 - **DoD**: Mobile TypeScript check passes, Backend Maven compile passes, repository clean of temporary files, and changes committed/pushed.
+
+---
+
+## Cycle 7 MVP+ — Wedding Hard Delete Tombstone Policy
+
+### Batch 7.1 — Backend Wedding Tombstone Implementation
+- **Goal**: Implement the "Product Hard Delete with internal tombstone" policy for the wedding lifecycle.
+- **Scope**:
+  - Add `WeddingStatus.DELETED` to the backend.
+  - Update Admin delete service method to flag the `Wedding` row as `DELETED` rather than physically removing it.
+  - Cascade physical deletion to related `WeddingInvite` and `WeddingParticipant` rows.
+  - Delete local background images on a best-effort basis.
+  - Hide `DELETED` weddings from normal Admin and Event Manager wedding lists.
+  - Block joining (`join-wedding`) or validation (`validate-code`) for `DELETED` weddings.
+  - Reject restoration requests (`restore`) for `DELETED` weddings with HTTP 400 Bad Request.
+- **DoD**: Backend compile passes; tombstone lifecycle rules enforced.
+
+### Batch 7.2 — Backend Wedding Relationship Safety
+- **Goal**: Implement relationship safety gates for deleted weddings.
+- **Scope**:
+  - Block opening conversation replies in `DELETED`, missing, or non-active wedding contexts.
+  - Filter out profiles/actions associated with `DELETED` or missing weddings from user-facing lists (Liked Me, Matches, etc.).
+  - Preserve history by allowing existing matches and chats to remain accessible.
+- **DoD**: Backend compile passes; safety filters and blocks active.
+
+### Batch 7.3 — Mobile Delete UX Status Typing
+- **Goal**: Add defensive support for the `DELETED` status in the mobile application.
+- **Scope**:
+  - Add `DELETED` support to mobile TypeScript types.
+  - Update the Admin wedding delete confirmation dialog's Hebrew copy to state that deletion is irreversible and users are preserved, removing the old warning about blocked user interactions.
+  - Treat `DELETED` as inactive/invalid in QR code validation, display label helpers, and onboarding checks (e.g. `isWeddingPoolEligible`).
+- **DoD**: Mobile TypeScript typechecks pass successfully.
+
+### Batch 7.4 — Documentation Update
+- **Goal**: Update active documentation files to accurately reflect the new wedding hard delete tombstone policy.
+- **Scope**:
+  - Update `PROJECT_RULES.md`, `API_CONTRACT.md`, `DECISIONS.md`, `TECH_SPEC.md`, and `BATCH_PLAN.md`.
+  - Document enums, deletion cascade boundaries, safety checks, and restoration blocks.
+  - Correct or annotate old contradictory Cycle 5 documentation as superseded.
+  - This is a docs-only batch; do not modify any backend or mobile source code files.
+- **DoD**: Clean git repository (only docs changed), git diff --check passes, all documentation consistent.

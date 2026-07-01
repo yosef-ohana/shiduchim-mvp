@@ -14,6 +14,9 @@ import com.shiduchim.backend.repository.UserActionRepository;
 import com.shiduchim.backend.repository.UserRepository;
 import com.shiduchim.backend.repository.UserPhotoRepository;
 import com.shiduchim.backend.repository.MatchRepository;
+import com.shiduchim.backend.repository.WeddingRepository;
+import com.shiduchim.backend.entity.Wedding;
+import com.shiduchim.backend.enums.WeddingStatus;
 import com.shiduchim.backend.repository.OpeningConversationRepository;
 import com.shiduchim.backend.entity.OpeningConversation;
 import com.shiduchim.backend.enums.OpeningConversationStatus;
@@ -35,6 +38,7 @@ public class ListsService {
     private final MatchRepository matchRepository;
     private final UserBlockService userBlockService;
     private final OpeningConversationRepository openingConversationRepository;
+    private final WeddingRepository weddingRepository;
 
     public ListsService(
             UserActionRepository userActionRepository,
@@ -42,13 +46,15 @@ public class ListsService {
             UserPhotoRepository userPhotoRepository,
             MatchRepository matchRepository,
             UserBlockService userBlockService,
-            OpeningConversationRepository openingConversationRepository) {
+            OpeningConversationRepository openingConversationRepository,
+            WeddingRepository weddingRepository) {
         this.userActionRepository = userActionRepository;
         this.userRepository = userRepository;
         this.userPhotoRepository = userPhotoRepository;
         this.matchRepository = matchRepository;
         this.userBlockService = userBlockService;
         this.openingConversationRepository = openingConversationRepository;
+        this.weddingRepository = weddingRepository;
     }
 
     public List<ActionListItemResponse> getOutgoingActionsList(User currentUser, ActionType actionType, PoolType poolType, Long weddingId) {
@@ -79,6 +85,14 @@ public class ListsService {
         }
 
         for (UserAction action : actions) {
+            if (action.getPoolType() == PoolType.WEDDING) {
+                if (action.getWeddingId() == null) continue;
+                Wedding wedding = weddingRepository.findById(action.getWeddingId()).orElse(null);
+                if (wedding == null || wedding.getStatus() == WeddingStatus.DELETED) {
+                    continue;
+                }
+            }
+
             User targetUser = userRepository.findById(action.getTargetUserId()).orElse(null);
             if (targetUser == null || Boolean.TRUE.equals(targetUser.getAdminBlocked())) {
                 continue;
@@ -160,6 +174,14 @@ public class ListsService {
 
         List<LikedMeItemResponse> responseList = new ArrayList<>();
         for (UserAction action : actions) {
+            if (action.getPoolType() == PoolType.WEDDING) {
+                if (action.getWeddingId() == null) continue;
+                Wedding wedding = weddingRepository.findById(action.getWeddingId()).orElse(null);
+                if (wedding == null || wedding.getStatus() == WeddingStatus.DELETED) {
+                    continue;
+                }
+            }
+
             User liker = userRepository.findById(action.getActorUserId()).orElse(null);
             if (liker == null || Boolean.TRUE.equals(liker.getAdminBlocked())) {
                 continue;

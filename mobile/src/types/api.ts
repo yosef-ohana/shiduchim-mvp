@@ -323,7 +323,7 @@ export interface AdminUserResponse {
   createdAt: string;
 }
 
-export type WeddingStatus = 'ACTIVE' | 'CLOSED' | 'CANCELLED';
+export type WeddingStatus = 'ACTIVE' | 'CLOSED' | 'CANCELLED' | 'DELETED';
 
 export interface AdminWeddingResponse {
   id: number;
@@ -410,7 +410,7 @@ export interface ValidateWeddingCodeResponse {
   weddingName: string | null;
   city: string | null;
   weddingDate: string | null;
-  status: 'ACTIVE' | 'CLOSED' | 'CANCELLED' | null;
+  status: WeddingStatus | null;
   joinAllowed: boolean;
   message: string;
   backgroundImageUrl?: string | null;

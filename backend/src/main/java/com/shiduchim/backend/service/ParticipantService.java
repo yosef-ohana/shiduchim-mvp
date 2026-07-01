@@ -187,6 +187,9 @@ public class ParticipantService {
                 .map(p -> {
                     try {
                         Wedding w = weddingService.getWeddingEntityAndCheckOwner(p.getWeddingId(), currentUser);
+                        if (w.getStatus() == WeddingStatus.DELETED) {
+                            return null;
+                        }
                         com.shiduchim.backend.dto.wedding.StaffParticipantWeddingResponse wr = new com.shiduchim.backend.dto.wedding.StaffParticipantWeddingResponse();
                         wr.setWeddingId(w.getId());
                         wr.setWeddingName(w.getName());
