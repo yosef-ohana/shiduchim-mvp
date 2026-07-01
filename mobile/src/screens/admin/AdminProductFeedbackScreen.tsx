@@ -47,38 +47,53 @@ export const AdminProductFeedbackScreen = ({ navigation }: any) => {
   };
 
   const renderItem = ({ item }: { item: ProductFeedbackListItemResponse }) => (
-    <TouchableOpacity 
-      style={styles.card}
-      onPress={() => navigation.navigate('AdminProductFeedbackDetails', { feedbackId: item.id })}
-    >
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>פניה #{item.id}</Text>
-        <View style={[
-          styles.statusBadge, 
-          item.status === 'NEW' ? styles.statusNew : 
-          item.status === 'IN_PROGRESS' ? styles.statusInProgress : 
-          styles.statusResolved
-        ]}>
-          <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
+    <View style={styles.card}>
+      <TouchableOpacity
+        onPress={() => navigation.navigate('AdminProductFeedbackDetails', { feedbackId: item.id })}
+        activeOpacity={0.7}
+      >
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>פניה #{item.id}</Text>
+          <View style={[
+            styles.statusBadge,
+            item.status === 'NEW' ? styles.statusNew :
+            item.status === 'IN_PROGRESS' ? styles.statusInProgress :
+            styles.statusResolved
+          ]}>
+            <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
+          </View>
         </View>
+        <View style={styles.cardRow}>
+          <Text style={styles.cardLabel}>סוג:</Text>
+          <Text style={styles.cardValue}>{getTypeText(item.type)}</Text>
+        </View>
+        <View style={styles.cardRow}>
+          <Text style={styles.cardLabel}>תאריך:</Text>
+          <Text style={styles.cardValue}>{new Date(item.createdAt).toLocaleDateString('he-IL')}</Text>
+        </View>
+        <View style={styles.cardRow}>
+          <Text style={styles.cardLabel}>שולח:</Text>
+          <Text style={styles.cardValue}>{item.senderName || 'לא ידוע'} ({item.senderEmail || 'לא ידוע'})</Text>
+        </View>
+        <View style={styles.cardRow}>
+          <Text style={styles.cardLabel}>מזהה משתמש:</Text>
+          <Text style={styles.cardValue}>{item.senderUserId}</Text>
+        </View>
+      </TouchableOpacity>
+      <View style={[styles.cardRow, { borderTopWidth: 1, borderTopColor: theme.colors.border, paddingTop: theme.spacing.s }]}>
+        <Text style={styles.cardLabel}>פרופיל:</Text>
+        <TouchableOpacity
+          style={styles.inlineButton}
+          onPress={() => navigation.navigate('StaffParticipantDetails', {
+            userId: item.senderUserId,
+            mode: 'ADMIN',
+            source: 'ADMIN_PRODUCT_FEEDBACK'
+          })}
+        >
+          <Text style={styles.inlineButtonText}>פתח פרופיל שולח</Text>
+        </TouchableOpacity>
       </View>
-      <View style={styles.cardRow}>
-        <Text style={styles.cardLabel}>סוג:</Text>
-        <Text style={styles.cardValue}>{getTypeText(item.type)}</Text>
-      </View>
-      <View style={styles.cardRow}>
-        <Text style={styles.cardLabel}>תאריך:</Text>
-        <Text style={styles.cardValue}>{new Date(item.createdAt).toLocaleDateString('he-IL')}</Text>
-      </View>
-      <View style={styles.cardRow}>
-        <Text style={styles.cardLabel}>שולח:</Text>
-        <Text style={styles.cardValue}>{item.senderName || 'לא ידוע'} ({item.senderEmail || 'לא ידוע'})</Text>
-      </View>
-      <View style={styles.cardRow}>
-        <Text style={styles.cardLabel}>מזהה משתמש:</Text>
-        <Text style={styles.cardValue}>{item.senderUserId}</Text>
-      </View>
-    </TouchableOpacity>
+    </View>
   );
 
   return (
@@ -165,5 +180,16 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xl,
     fontSize: 16,
     color: theme.colors.textSecondary,
+  },
+  inlineButton: {
+    backgroundColor: '#007bff',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  inlineButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   }
 });

@@ -945,3 +945,25 @@ This section contains the focused Cycle 5 QA checklist. Note: Manual QA has not 
 - **Navigating from Cards**: Wrapped user list card texts inside a `TouchableOpacity` targeting `StaffParticipantDetails` navigation with parameters `{ userId: item.id, mode: 'ADMIN', source: 'ADMIN_USERS' }`.
 - **Safe Block/Unblock interaction**: The `AppButton` triggering blocking state is rendered outside the `TouchableOpacity` details click zone, keeping interactions separate and preventing accidental screen switches.
 - **Exclusion of Cascade Screens**: Verified that other screens like `AdminReportDetailsScreen` or `ProductFeedback` screens are not modified or connected.
+
+---
+
+## 34. Development Cycle 6 MVP+ Additions: Admin Reports and ProductFeedback Profile Navigations
+
+### 34.1 Mobile Navigation & Route Params
+- **Route Configuration**: Extended `StaffParticipantDetails` route parameters in `MainStack.tsx` to support optional source references for Admin Reports and Admin Product Feedback contexts (`source?: 'ADMIN_USERS' | 'PARTICIPANTS' | 'ADMIN_REPORTS' | 'PRODUCT_FEEDBACK'`).
+- **Navigation Parameters**: Navigations pass `{ userId, mode: 'ADMIN', source: 'ADMIN_REPORTS' | 'PRODUCT_FEEDBACK' }` (omitting `weddingId`) to request the profile in Admin direct mode.
+
+### 34.2 Admin Reports Screen Integration
+- **Direct Navigation**: In `AdminReportDetailsScreen.tsx`, added profile navigation for:
+  - **Reporter**: Admins can tap the reporter's header/card to navigate to their details.
+  - **Reported User**: Admins can tap the reported user's header/card to navigate to their details.
+- **Visual Callouts**: Enhanced user interaction areas to indicate clickable navigation targets without interfering with resolution actions.
+
+### 34.3 Admin ProductFeedback Screen Integration
+- **Direct Navigation**: In `AdminProductFeedbackScreen.tsx` and `AdminProductFeedbackDetailsScreen.tsx`, enabled navigating to the feedback submitter's details.
+
+### 34.4 Preserved Restrictions & Exclusions
+- **Event Manager Access**: Event Managers cannot view these screens or access global profiles.
+- **ProductFeedback & UserReport Separation**: Maintained separate structures and workflows for product feedback vs. user reports.
+- **No Backend / Database changes**: Verified that no backend modifications, schema updates, or API endpoint updates were introduced.

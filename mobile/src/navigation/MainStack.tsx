@@ -100,7 +100,7 @@ export type MainStackParamList = {
     weddingId?: number;
     weddingName?: string;
     weddingStatus?: string;
-    source?: 'ADMIN_USERS' | 'PARTICIPANTS';
+    source?: 'ADMIN_USERS' | 'PARTICIPANTS' | 'ADMIN_REPORTS' | 'ADMIN_PRODUCT_FEEDBACK';
   };
   ReportUser: { userId: number };
   AdminReports: undefined;

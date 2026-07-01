@@ -88,9 +88,13 @@ export const AdminReportDetailsScreen = () => {
         <View style={styles.row}>
           <TouchableOpacity
             style={styles.inlineButton}
-            onPress={() => navigation.navigate('AdminUsers', { focusUserId: report.reporterUserId })}
+            onPress={() => navigation.navigate('StaffParticipantDetails', {
+              userId: report.reporterUserId,
+              mode: 'ADMIN',
+              source: 'ADMIN_REPORTS'
+            })}
           >
-            <Text style={styles.inlineButtonText}>פתח מדווח</Text>
+            <Text style={styles.inlineButtonText}>פתח פרופיל מדווח</Text>
           </TouchableOpacity>
           <Text style={styles.label}>מזהה מדווח:</Text>
           <Text style={styles.value}>{report.reporterUserId}</Text>
@@ -104,9 +108,13 @@ export const AdminReportDetailsScreen = () => {
         <View style={styles.row}>
           <TouchableOpacity
             style={styles.inlineButton}
-            onPress={() => navigation.navigate('AdminUsers', { focusUserId: report.reportedUserId })}
+            onPress={() => navigation.navigate('StaffParticipantDetails', {
+              userId: report.reportedUserId,
+              mode: 'ADMIN',
+              source: 'ADMIN_REPORTS'
+            })}
           >
-            <Text style={styles.inlineButtonText}>פתח המשתמש שעליו דווח</Text>
+            <Text style={styles.inlineButtonText}>פתח פרופיל נילון</Text>
           </TouchableOpacity>
           <Text style={styles.label}>מזהה נילון:</Text>
           <Text style={styles.value}>{report.reportedUserId}</Text>

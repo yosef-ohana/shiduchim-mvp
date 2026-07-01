@@ -756,3 +756,18 @@ These are collected future improvements and are NOT implemented at this stage. T
 - **No Cascade Changes**: Reports (`AdminReportDetailsScreen`) and Product Feedback (`AdminProductFeedbackDetailsScreen`) screens were intentionally left unchanged and not connected.
 - **No Event Manager Global Access**: Event managers still require a valid `weddingId` to view participant details.
 - **QA Exclusions**: Runtime manual QA is deferred per project process.
+
+---
+
+## 35. Cycle 6 MVP+ Decisions: Admin Reports and ProductFeedback Profile Navigations
+
+### 35.1 Mobile Admin Reports Direct Profile Navigation
+- **Sender/Reported User Navigation**: Updated `AdminReportDetailsScreen` to allow admins to navigate to `StaffParticipantDetailsScreen` by clicking on the sender's or reported user's card/header (in `ADMIN` direct mode, passing `userId` and omitting `weddingId`).
+
+### 35.2 Mobile Admin ProductFeedback Sender Profile Navigation
+- **Sender Navigation**: Updated `AdminProductFeedbackScreen` and `AdminProductFeedbackDetailsScreen` to allow admins to navigate to `StaffParticipantDetailsScreen` when clicking on the feedback submitter's card/header in `ADMIN` direct mode.
+
+### 35.3 Event Manager Restrictions & Boundary Preservation
+- **Restricted Access**: Existing Event Manager restrictions were fully preserved. Event Managers do not gain access to global Admin Reports, Admin Product Feedback, or direct wedding-independent profiles.
+- **ProductFeedback and UserReport Separation**: `ProductFeedback` and `UserReport` remain separate workflows.
+- **No Backend/API/DB Changes**: No backend changes, database schema updates, or API endpoint updates were required for Cycle 6.

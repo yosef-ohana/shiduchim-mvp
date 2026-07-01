@@ -1409,3 +1409,19 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
 ### Batch 4 — Final Validation, Cleanup, Minimal Docs, Commit and Push
 - **Goal**: Perform final validation of Cycle 5, clean up repository, update documentation, commit and push.
 - **DoD**: Compilation and typecheck pass, repo clean, changes committed and pushed.
+
+---
+
+## Cycle 6 MVP+ — Admin Reports and ProductFeedback Profile Navigations
+
+### Batch 6.1 — Mobile routing integration for Admin Reports and Admin ProductFeedback to StaffParticipantDetails
+- **Goal**: Connect Admin Reports and Admin ProductFeedback screens directly to the unified StaffParticipantDetailsScreen in Admin direct mode.
+- **Scope**:
+  - Update `MainStack.tsx` route types to support optional source and direct admin mode parameters.
+  - Implement direct profile navigation from Admin Reports (reporter and reported user) and Admin ProductFeedback (feedback submitter) screens by tapping cards/headers.
+  - Keep all changes mobile-only, retaining Event Manager restrictions and keeping ProductFeedback and UserReport separate.
+- **DoD**: TypeScript checks pass, navigation works correctly in admin mode, and Event Manager permissions remain untouched.
+
+### Batch 6.2 — Docs, focused validation, cleanup, and final cycle closure
+- **Goal**: Run focused validation checks, clean up junk/artifact files inside the repository, update project documentation, commit and push Cycle 6 changes.
+- **DoD**: Mobile TypeScript check passes, Backend Maven compile passes, repository clean of temporary files, and changes committed/pushed.

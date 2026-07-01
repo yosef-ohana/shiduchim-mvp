@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
 import { theme } from '../../theme/theme';
@@ -107,6 +107,20 @@ export const AdminProductFeedbackDetailsScreen = ({ route, navigation }: any) =>
           <View style={styles.row}>
             <Text style={styles.label}>מזהה משתמש:</Text>
             <Text style={styles.value}>{item.senderUserId}</Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>פרופיל:</Text>
+            <TouchableOpacity
+              style={styles.inlineButton}
+              onPress={() => navigation.navigate('StaffParticipantDetails', {
+                userId: item.senderUserId,
+                mode: 'ADMIN',
+                source: 'ADMIN_PRODUCT_FEEDBACK'
+              })}
+            >
+              <Text style={styles.inlineButtonText}>פתח פרופיל שולח</Text>
+            </TouchableOpacity>
           </View>
 
           <Text style={styles.textLabel}>תוכן הפניה:</Text>
@@ -229,5 +243,16 @@ const styles = StyleSheet.create({
   },
   actionButtonActive: {
     backgroundColor: theme.colors.primary,
+  },
+  inlineButton: {
+    backgroundColor: '#007bff',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  inlineButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   }
 });
