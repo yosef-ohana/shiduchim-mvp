@@ -16,6 +16,7 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
   const [loadingWeddings, setLoadingWeddings] = useState(false);
   const [selectedWeddingId, setSelectedWeddingId] = useState<number | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
+  const [ctaAction, setCtaAction] = useState<{ label: string; onPress: () => void } | null>(null);
 
   const fetchWeddings = async () => {
     setLoadingWeddings(true);
@@ -49,21 +50,42 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
 
   const handleDiscover = () => {
     setErrorText(null);
+    setCtaAction(null);
 
     // 1. Primary photo check
     if (!user?.hasPrimaryPhoto) {
       setErrorText("אנא העלה/י תמונה ראשית לפני השימוש בחיפוש מועמדים.");
+      setCtaAction({
+        label: "להעלאת תמונה ראשית",
+        onPress: () => navigation.navigate('Profile', { focusSection: 'photos' }),
+      });
       return;
     }
 
     if (selectedPool === 'GLOBAL') {
       // 2. Global Pool eligibility checks
-      if (!user?.profileStatus || user.profileStatus === 'NONE' || user.profileStatus === 'FULL_INCOMPLETE_BLOCKED') {
+      if (!user?.profileStatus || user.profileStatus === 'NONE') {
         setErrorText("אנא השלם/י את הפרופיל הבסיסי לפני השימוש במאגר החיפוש.");
+        setCtaAction({
+          label: "למילוי פרופיל מלא",
+          onPress: () => navigation.navigate('Profile', { intent: 'onboarding_full' }),
+        });
+        return;
+      }
+      if (user.profileStatus === 'FULL_INCOMPLETE_BLOCKED') {
+        setErrorText("אנא השלם/י את הפרופיל הבסיסי לפני השימוש במאגר החיפוש.");
+        setCtaAction({
+          label: "לתיקון והשלמת הפרופיל",
+          onPress: () => navigation.navigate('Profile', { intent: 'repair_full' }),
+        });
         return;
       }
       if (user.profileStatus === 'BASIC') {
         setErrorText("המאגר הכללי זמין רק לאחר השלמת הפרופיל המלא שלך.");
+        setCtaAction({
+          label: "להשלמת פרופיל מלא",
+          onPress: () => navigation.navigate('Profile', { intent: 'complete_full' }),
+        });
         return;
       }
       navigation.navigate('Discover', { pool: 'GLOBAL' });
@@ -97,6 +119,7 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
             onPress={() => {
               setSelectedPool('GLOBAL');
               setErrorText(null);
+              setCtaAction(null);
             }}
           >
             <Text
@@ -120,6 +143,7 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
             onPress={() => {
               setSelectedPool('WEDDING');
               setErrorText(null);
+              setCtaAction(null);
             }}
           >
             <Text
@@ -160,6 +184,7 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
                       onPress={() => {
                         setSelectedWeddingId(w.weddingId);
                         setErrorText(null);
+                        setCtaAction(null);
                       }}
                     >
                       <Text style={[styles.weddingNameText, isSelected && styles.selectedWeddingNameText]}>
@@ -180,7 +205,18 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
           </View>
         )}
 
-        {errorText ? <Text style={styles.errorText}>{errorText}</Text> : null}
+        {errorText ? (
+          <View style={{ alignItems: 'center', marginBottom: theme.spacing.m }}>
+            <Text style={styles.errorText}>{errorText}</Text>
+            {ctaAction && (
+              <AppButton
+                title={ctaAction.label}
+                onPress={ctaAction.onPress}
+                style={{ marginTop: theme.spacing.s, width: '80%' }}
+              />
+            )}
+          </View>
+        ) : null}
         <AppButton
           title="חיפוש מועמדים"
           onPress={handleDiscover}

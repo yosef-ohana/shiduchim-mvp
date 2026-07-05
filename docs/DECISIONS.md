@@ -801,3 +801,24 @@ These are collected future improvements and are NOT implemented at this stage. T
 ### 36.5 Admin Delete Eligibility
 - **Active Blocked**: Active weddings remain blocked from Admin hard delete (returns HTTP 400 Bad Request).
 - **Closed/Cancelled Allowed**: Closed or cancelled weddings are eligible for deletion even if historical user-to-user interactions exist.
+
+---
+
+## 37. Cycle 8 MVP+ Decisions: Profile Unification and Single Save
+
+### 37.1 Single Profile Level Concept
+- **Unified Profile Representation**: Basic and Full profile fields represent completion levels and eligibility thresholds of a single user profile. They are not two separate entity objects.
+- **Content Requirements**: Full profile includes all Basic profile fields. Basic-before-Full is a content hierarchy requirement, not a requirement to persist BASIC first.
+- **Direct NONE to FULL Transition**: The backend allows moving a profile directly from `NONE` status to `FULL` status without a persisted intermediate `BASIC` state.
+
+### 37.2 Atomic and Transactional Operation
+- **Single Save Endpoint**: An additive unified endpoint (`PUT /api/profile/me`) was chosen to handle saving profile text in one request.
+- **Service-Level Transactional boundaries**: The method `updateUnifiedProfile` is annotated with `@Transactional` at the method level to ensure atomicity.
+- **Validation Before Mutation**: Validations are fully completed before modifying the user object. An invalid FULL request causes no partial mutation or save of Basic fields.
+- **No Downgrades on targetLevel BASIC**: Updating a profile with target level `BASIC` does not downgrade the user status if the user is already `FULL` or `FULL_INCOMPLETE_BLOCKED`, nor does it erase existing Full fields.
+
+### 37.3 Photo APIs Independence
+- **Photos API Separation**: Photo uploads/deletions remain outside the textual profile save transaction. They are independently and immediately persisted via the existing Photo API.
+
+### 37.4 Compatibility Preservation
+- **Legacy Endpoints Retained**: The existing endpoints `GET /api/profile/me`, `PUT /api/profile/basic`, and `PUT /api/profile/full` are retained for backward compatibility with external/legacy flows.

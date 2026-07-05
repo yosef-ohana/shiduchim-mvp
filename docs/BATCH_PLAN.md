@@ -1469,3 +1469,19 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
   - Correct or annotate old contradictory Cycle 5 documentation as superseded.
   - This is a docs-only batch; do not modify any backend or mobile source code files.
 - **DoD**: Clean git repository (only docs changed), git diff --check passes, all documentation consistent.
+
+---
+
+## Cycle 8 MVP+ — Profile Unification and Single Save
+
+### Batch 8.1 — Backend Atomic Profile API
+- **Goal**: Implement the atomic, unified `PUT /api/profile/me` profile save endpoint with method-level transaction boundaries.
+- **DoD**: Backend compile passes; all 10 tests run and pass (including the 9 focused unified profile tests in `ProfileServiceUnifiedUpdateTest`).
+
+### Batch 8.2 — Mobile Unified Profile UI & Single Save
+- **Goal**: Implement unified routing, embedded forms (`BasicProfileForm`, `FullProfileForm` with `isEmbedded={true}`), and a single save action ("שמירת שינויים") using the `updateUnifiedProfile` API on `ProfileScreen.tsx`. Update eligibility mapping on `PoolSelectionScreen.tsx`.
+- **DoD**: Mobile TypeScript checks (`npx tsc --noEmit`) pass.
+
+### Batch 8.3 — Final Validation, Cleanup, Minimal Docs, Commit and Push
+- **Goal**: Clean up generated target files, update tracking documentation to reflect the profile unification, perform Git checks, and commit/push changes.
+- **DoD**: Focused automated verification passed; manual runtime QA was not performed in this finalization cycle. Repository clean, docs updated, and single commit pushed to upstream.

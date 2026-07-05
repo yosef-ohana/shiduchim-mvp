@@ -91,6 +91,26 @@ export interface FullProfileResponse {
   missingFields: string[];
 }
 
+export type ProfileUpdateTarget = 'BASIC' | 'FULL';
+
+export interface UnifiedProfileUpdateRequest {
+  targetLevel: ProfileUpdateTarget;
+  fullName: string;
+  age: number;
+  heightCm: number;
+  areaOfResidence: string;
+  religiousLevel: string;
+  phone: string;
+  education?: string | null;
+  occupation?: string | null;
+  selfDescription?: string | null;
+  hobbies?: string | null;
+  lookingFor?: string | null;
+  familyDescription?: string | null;
+  headCovering?: string | null;
+  hasDrivingLicense?: boolean | null;
+}
+
 export type ParticipantStatus = 'ACTIVE' | 'REMOVED';
 
 export interface PhotoResponse {

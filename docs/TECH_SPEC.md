@@ -998,3 +998,39 @@ This section contains the focused Cycle 5 QA checklist. Note: Manual QA has not 
 - **TypeScript support**: Added `DELETED` value to `WeddingStatus` type definitions.
 - **Defensive Helpers**: Treats `DELETED` as inactive/invalid across all UI display helpers, QR code validation, and readiness states (e.g. `isWeddingPoolEligible` evaluates to false).
 - **Admin UX Details**: Admin delete confirmation dialog wording was updated in Hebrew to explain that deletion is irreversible and users are preserved, removing the incorrect warning that deletion is blocked by interactions.
+
+---
+
+## 36. Cycle 8: Profile Unification and Single Save
+
+### 36.1 Backend API Endpoint
+- **Unified Profile Update (`PUT /api/profile/me`)**:
+  - Implemented an atomic API endpoint to handle textual profile saving.
+  - Accepts a `UnifiedProfileUpdateRequest` containing both Basic and Full profile fields, alongside a `targetLevel` (Enum: `BASIC` or `FULL`).
+  - Returns a `ProfileMeResponse` mapping the updated state directly to the client.
+  - Implements method-level `@Transactional` to ensure the operation is service-level transactional.
+  - Completes validations (validating that all required fields for `BASIC` or `FULL` are populated) *before* any entity mutation occurs. Invalid `FULL` requests cause no partial save of Basic changes.
+  - Status transitions: `NONE` can move directly to `FULL` without a persisted intermediate `BASIC` state.
+  - Field preservation: A target `BASIC` update does not erase previously stored Full fields. Updates targeting `BASIC` do not downgrade a `FULL` or `FULL_INCOMPLETE_BLOCKED` user.
+  - Photo status is independent: Textual profile updates do not require photos. Photos remain independently and immediately saved using the existing Photo API.
+  - Compatibility: Existing `GET /api/profile/me`, `PUT /api/profile/basic`, and `PUT /api/profile/full` endpoints remain fully functional and unchanged.
+
+### 36.2 Mobile Single Save Integration
+- **Unified Screen Navigation**:
+  - Navigates through `ProfileScreen.tsx` with specific intents: `onboarding_basic`, `onboarding_full`, `complete_full`, `repair_full`, and `view`.
+  - Clears intent and focus parameters immediately upon consumption in `useFocusEffect` so they do not reopen edit mode on subsequent focus cycles.
+  - Legacy routes and wedding-return wrappers remain supported.
+- **Embedded Forms**:
+  - `BasicProfileForm` and `FullProfileForm` operate in an embedded mode (`isEmbedded={true}`) exposing controlled draft changes to `ProfileScreen.tsx`.
+  - Embedded mode hides internal save buttons, while default standalone behavior remains available.
+- **Atomic Save Action**:
+  - `ProfileScreen.tsx` features exactly one combined actual invocation of `updateUnifiedProfile`.
+  - There is exactly one user-facing textual profile save action: "שמירת שינויים".
+  - The returned `ProfileMeResponse` is applied directly to the local profile state. No post-save refetch (`getMyProfile`, `fetchProfile`) overwrites it.
+  - "סיום ומעבר לאזור שלי" uses a valid navigation reset to the existing `Me` route.
+- **Eligibility Mapping**:
+  - `PoolSelectionScreen` maps and prompts redirection correctly:
+    - Missing primary photo → Profile photos section.
+    - `NONE` → `onboarding_full`.
+    - `BASIC` → `complete_full`.
+    - `FULL_INCOMPLETE_BLOCKED` → `repair_full`.

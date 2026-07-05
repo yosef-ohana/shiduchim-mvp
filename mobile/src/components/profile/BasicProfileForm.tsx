@@ -19,8 +19,9 @@ export interface BasicProfileFormProps {
   setReligiousLevel: (text: string) => void;
   phone: string;
   setPhone: (text: string) => void;
-  onSave: () => void;
-  isSubmitting: boolean;
+  onSave?: () => void;
+  isSubmitting?: boolean;
+  isEmbedded?: boolean;
 }
 
 export const BasicProfileForm = ({
@@ -38,10 +39,12 @@ export const BasicProfileForm = ({
   phone,
   setPhone,
   onSave,
-  isSubmitting,
+  isSubmitting = false,
+  isEmbedded = false,
 }: BasicProfileFormProps) => {
-  return (
-    <View style={styles.formCard}>
+  const content = (
+    <>
+      {isEmbedded && <Text style={styles.sectionHeading}>פרטים אישיים</Text>}
       <AppInput
         label="שם מלא"
         placeholder="לדוגמה: ישראל ישראלי"
@@ -99,14 +102,22 @@ export const BasicProfileForm = ({
         onChangeText={setPhone}
       />
 
-      <AppButton
-        title="שמירת פרופיל בסיסי"
-        onPress={onSave}
-        loading={isSubmitting}
-        style={styles.saveButton}
-      />
-    </View>
+      {!isEmbedded && onSave && (
+        <AppButton
+          title="שמירת פרופיל בסיסי"
+          onPress={onSave}
+          loading={isSubmitting}
+          style={styles.saveButton}
+        />
+      )}
+    </>
   );
+
+  if (isEmbedded) {
+    return <View>{content}</View>;
+  }
+
+  return <View style={styles.formCard}>{content}</View>;
 };
 
 const styles = StyleSheet.create({
@@ -153,6 +164,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textSecondary,
     marginTop: 4,
+    textAlign: 'right',
+  },
+  sectionHeading: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.m,
     textAlign: 'right',
   },
 });

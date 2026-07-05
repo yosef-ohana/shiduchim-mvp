@@ -42,7 +42,15 @@ import { DiscoverPool, UserWeddingResponse } from '../types/api';
 
 export type MainStackParamList = {
   Me: undefined;
-  Profile: { focusSection?: 'profile' | 'photos' | 'full' } | undefined;
+  Profile: {
+    focusSection?: 'profile' | 'photos' | 'full';
+    intent?:
+      | 'onboarding_basic'
+      | 'onboarding_full'
+      | 'complete_full'
+      | 'repair_full'
+      | 'view';
+  } | undefined;
   BasicProfile: {
     returnToWedding?: boolean;
     returnWeddingId?: number;

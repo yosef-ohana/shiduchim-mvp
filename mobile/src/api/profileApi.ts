@@ -6,10 +6,18 @@ import {
   FullProfileRequest,
   FullProfileResponse,
   PublicProfileResponse,
+  UnifiedProfileUpdateRequest,
 } from '../types/api';
 
 export const getMyProfile = async (): Promise<ProfileMeResponse> => {
   const response = await apiClient.get<ProfileMeResponse>('/profile/me');
+  return response.data;
+};
+
+export const updateUnifiedProfile = async (
+  request: UnifiedProfileUpdateRequest
+): Promise<ProfileMeResponse> => {
+  const response = await apiClient.put<ProfileMeResponse>('/profile/me', request);
   return response.data;
 };
 

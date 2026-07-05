@@ -8,6 +8,7 @@ import com.shiduchim.backend.repository.UserPhotoRepository;
 import com.shiduchim.backend.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
@@ -62,6 +63,72 @@ public class ProfileService {
         response.setHeadCovering(user.getHeadCovering());
         response.setHasDrivingLicense(user.getHasDrivingLicense());
         return response;
+    }
+
+    // ─── PUT /api/profile/me ─────────────────────────────────────────────────
+
+    @Transactional
+    public ProfileMeResponse updateUnifiedProfile(User user, UnifiedProfileUpdateRequest request) {
+        requireUserRole(user);
+
+        ProfileUpdateTarget target = request.getTargetLevel();
+        if (target == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "targetLevel is required");
+        }
+
+        // Additional validation for FULL target before mutation
+        if (target == ProfileUpdateTarget.FULL) {
+            List<String> missingFullFields = new ArrayList<>();
+            if (user.getGender() == null) missingFullFields.add("gender");
+            if (isBlank(user.getEmail())) missingFullFields.add("email");
+            if (isBlank(request.getEducation())) missingFullFields.add("education");
+            if (isBlank(request.getOccupation())) missingFullFields.add("occupation");
+            if (isBlank(request.getSelfDescription())) missingFullFields.add("selfDescription");
+            if (isBlank(request.getHobbies())) missingFullFields.add("hobbies");
+            if (isBlank(request.getLookingFor())) missingFullFields.add("lookingFor");
+
+            if (!missingFullFields.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing required Full fields: " + String.join(", ", missingFullFields));
+            }
+        }
+
+        // Mutate basic fields
+        user.setFullName(request.getFullName());
+        user.setAge(request.getAge());
+        user.setHeightCm(request.getHeightCm());
+        user.setAreaOfResidence(request.getAreaOfResidence());
+        user.setReligiousLevel(request.getReligiousLevel());
+        user.setPhone(request.getPhone());
+
+        // Mutate full fields if target is FULL
+        if (target == ProfileUpdateTarget.FULL) {
+            user.setEducation(request.getEducation());
+            user.setOccupation(request.getOccupation());
+            user.setSelfDescription(request.getSelfDescription());
+            user.setHobbies(request.getHobbies());
+            user.setLookingFor(request.getLookingFor());
+            user.setFamilyDescription(request.getFamilyDescription());
+            user.setHeadCovering(request.getHeadCovering());
+            user.setHasDrivingLicense(request.getHasDrivingLicense());
+        }
+
+        ProfileStatus currentStatus = user.getProfileStatus();
+
+        if (target == ProfileUpdateTarget.BASIC) {
+            if (currentStatus == ProfileStatus.NONE) {
+                // Ensure gender/email are present to match existing basic constraints,
+                // though basic fields from request are already @Valid.
+                if (user.getGender() != null && !isBlank(user.getEmail())) {
+                    user.setProfileStatus(ProfileStatus.BASIC);
+                }
+            }
+        } else if (target == ProfileUpdateTarget.FULL) {
+            user.setProfileStatus(ProfileStatus.FULL);
+        }
+
+        userRepository.save(user);
+
+        return getMyProfile(user);
     }
 
     // ─── PUT /api/profile/basic ───────────────────────────────────────────────

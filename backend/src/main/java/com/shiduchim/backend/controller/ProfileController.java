@@ -24,6 +24,14 @@ public class ProfileController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/me")
+    public ResponseEntity<ProfileMeResponse> updateUnifiedProfile(
+            @AuthenticationPrincipal User user,
+            @Valid @RequestBody UnifiedProfileUpdateRequest request) {
+        ProfileMeResponse response = profileService.updateUnifiedProfile(user, request);
+        return ResponseEntity.ok(response);
+    }
+
     @PutMapping("/basic")
     public ResponseEntity<BasicProfileResponse> updateBasicProfile(
             @AuthenticationPrincipal User user,

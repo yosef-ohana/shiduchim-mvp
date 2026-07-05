@@ -125,7 +125,7 @@ export const MeScreen = ({ navigation }: any) => {
 
             <AppButton
               title="פרטי הפרופיל שלי" 
-              onPress={() => navigation.navigate('Profile')}
+              onPress={() => navigation.navigate('Profile', { intent: 'view' })}
               style={styles.button}
             />
 
@@ -180,13 +180,13 @@ export const MeScreen = ({ navigation }: any) => {
 
                 <AppButton
                   title="פרופיל בסיסי — מתאים למאגרי חתונה"
-                  onPress={() => navigation.navigate('BasicProfile')}
+                  onPress={() => navigation.navigate('Profile', { intent: 'onboarding_basic' })}
                   style={styles.guidedButton}
                 />
 
                 <AppButton
                   title="פרופיל מלא — מתאים גם למאגר הגלובלי"
-                  onPress={() => navigation.navigate('BasicProfile', { continueToFullAfterBasic: true })}
+                  onPress={() => navigation.navigate('Profile', { intent: 'onboarding_full' })}
                   style={[styles.guidedButton, styles.guidedButtonPrimary]}
                 />
               </View>
@@ -195,7 +195,7 @@ export const MeScreen = ({ navigation }: any) => {
             {user.profileStatus === 'BASIC' && (
               <AppButton
                 title="השלם/י לפרופיל מלא"
-                onPress={() => navigation.navigate('FullProfile')}
+                onPress={() => navigation.navigate('Profile', { intent: 'complete_full' })}
                 style={styles.button}
               />
             )}
@@ -203,7 +203,7 @@ export const MeScreen = ({ navigation }: any) => {
             {user.profileStatus === 'FULL_INCOMPLETE_BLOCKED' && (
               <AppButton
                 title="עריכת פרופיל מלא"
-                onPress={() => navigation.navigate('FullProfile')}
+                onPress={() => navigation.navigate('Profile', { intent: 'repair_full' })}
                 style={styles.button}
               />
             )}

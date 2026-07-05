@@ -21,9 +21,10 @@ export interface FullProfileFormProps {
   setLookingFor: (text: string) => void;
   familyDescription: string;
   setFamilyDescription: (text: string) => void;
-  onSave: () => void;
-  isSubmitting: boolean;
+  onSave?: () => void;
+  isSubmitting?: boolean;
   profileStatus: string | null;
+  isEmbedded?: boolean;
 }
 
 export const FullProfileForm = ({
@@ -44,12 +45,14 @@ export const FullProfileForm = ({
   familyDescription,
   setFamilyDescription,
   onSave,
-  isSubmitting,
+  isSubmitting = false,
   profileStatus,
+  isEmbedded = false,
 }: FullProfileFormProps) => {
-  return (
-    <View style={styles.formCard}>
-      {profileStatus === 'BASIC' && (
+  const content = (
+    <>
+      {isEmbedded && <Text style={styles.sectionHeading}>עליי ומה אני מחפש/ת</Text>}
+      {!isEmbedded && profileStatus === 'BASIC' && (
         <View style={styles.noteCard}>
           <Text style={styles.noteText}>
             לתשומת לבך: ניתן לעצור את מילוי הפרטים בכל שלב. הפרופיל שלך יישאר בסטטוס "פרופיל בסיסי" בלבד, ולא ישתנה לפרופיל מלא עד לשמירת הטופס.
@@ -127,14 +130,22 @@ export const FullProfileForm = ({
         onChangeText={setFamilyDescription}
       />
 
-      <AppButton
-        title="שמירת פרופיל מלא"
-        onPress={onSave}
-        loading={isSubmitting}
-        style={styles.saveButton}
-      />
-    </View>
+      {!isEmbedded && onSave && (
+        <AppButton
+          title="שמירת פרופיל מלא"
+          onPress={onSave}
+          loading={isSubmitting}
+          style={styles.saveButton}
+        />
+      )}
+    </>
   );
+
+  if (isEmbedded) {
+    return <View>{content}</View>;
+  }
+
+  return <View style={styles.formCard}>{content}</View>;
 };
 
 const styles = StyleSheet.create({
@@ -186,5 +197,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'right',
     lineHeight: 20,
+  },
+  sectionHeading: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.m,
+    textAlign: 'right',
   },
 });

@@ -108,6 +108,23 @@ Standard errors:
 - `globalPoolEnabled`
 - `missingFields`
 
+`UnifiedProfileUpdateRequest`
+- `targetLevel` (BASIC | FULL)
+- `fullName`
+- `age`
+- `heightCm`
+- `areaOfResidence`
+- `religiousLevel`
+- `phone`
+- `education` (optional for BASIC, required for FULL)
+- `occupation` (optional for BASIC, required for FULL)
+- `selfDescription` (optional for BASIC, required for FULL)
+- `hobbies` (optional for BASIC, required for FULL)
+- `lookingFor` (optional for BASIC, required for FULL)
+- `familyDescription` (optional)
+- `headCovering` (optional)
+- `hasDrivingLicense` (optional)
+
 `PublicUserCardResponse`
 - `userId`
 - `primaryPhotoUrl`
@@ -455,6 +472,7 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 | Method | Path | Role | Request | Response | Rules | Errors |
 |---|---|---|---|---|---|---|
 | GET | `/api/profile/me` | USER | — | `ProfileMeResponse` | Returns private profile | 401, 403 |
+| PUT | `/api/profile/me` | USER | `UnifiedProfileUpdateRequest` | `ProfileMeResponse` | Atomic unified profile update; updates BASIC/FULL targets; validation before mutation; method-level `@Transactional`; photo not required; legacy endpoints preserved | 400, 401, 403 |
 | PUT | `/api/profile/basic` | USER | `BasicProfileRequest` | `BasicProfileResponse` | Completes BASIC; fullName locked after confirmation; gender not changed here | 400, 401, 403 |
 | PUT | `/api/profile/full` | USER | `FullProfileRequest` | `FullProfileResponse` | Completes FULL; opens global; missing required fields handled | 400, 401, 403 |
 | GET | `/api/profiles/{userId}` | USER | — | `PublicProfileResponse` | Candidate must be eligible/opposite gender; no email/phone | 401, 403, 404 |
