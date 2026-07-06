@@ -89,30 +89,45 @@ export const ChatsScreen = ({ navigation }: any) => {
 
     return (
       <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          {avatarUrl ? (
-            <Image source={{ uri: avatarUrl }} style={styles.avatar} />
-          ) : (
-            <View style={styles.placeholderAvatar}>
-              <Text style={styles.placeholderText}>אין תמונה</Text>
-            </View>
-          )}
+        <TouchableOpacity
+          style={StyleSheet.absoluteFill}
+          onPress={() => navigation.navigate('Chat', { matchId: item.matchId })}
+          activeOpacity={0.7}
+        />
+        <View style={styles.cardHeader} pointerEvents="box-none">
+          <TouchableOpacity
+            onPress={() => navigation.navigate('CandidateProfile', { userId: item.otherUserId })}
+            activeOpacity={0.7}
+          >
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+            ) : (
+              <View style={styles.placeholderAvatar}>
+                <Text style={styles.placeholderText}>אין תמונה</Text>
+              </View>
+            )}
+          </TouchableOpacity>
 
-          <View style={styles.headerInfo}>
-            <View style={styles.nameTimeRow}>
-              <Text style={styles.name} numberOfLines={1}>
-                {item.otherUserFullName}
-              </Text>
+          <View style={styles.headerInfo} pointerEvents="box-none">
+            <View style={styles.nameTimeRow} pointerEvents="box-none">
+              <TouchableOpacity
+                onPress={() => navigation.navigate('CandidateProfile', { userId: item.otherUserId })}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.name} numberOfLines={1}>
+                  {item.otherUserFullName}
+                </Text>
+              </TouchableOpacity>
               {!!messageTime && (
-                <Text style={styles.timeText}>{messageTime}</Text>
+                <Text style={styles.timeText} pointerEvents="none">{messageTime}</Text>
               )}
             </View>
 
-            <Text style={styles.lastMessage} numberOfLines={1}>
+            <Text style={styles.lastMessage} numberOfLines={1} pointerEvents="none">
               {item.lastMessagePreview || 'עדיין אין הודעות'}
             </Text>
 
-            <View style={styles.badgeContainer}>
+            <View style={styles.badgeContainer} pointerEvents="none">
               <Text style={styles.contextLabel}>{contextText}</Text>
               {item.unreadCount !== undefined && item.unreadCount > 0 && (
                 <View style={styles.unreadBadge}>
@@ -121,19 +136,6 @@ export const ChatsScreen = ({ navigation }: any) => {
               )}
             </View>
           </View>
-        </View>
-
-        <View style={styles.actionsContainer}>
-          <AppButton
-            title="💬 פתיחת צ׳אט"
-            onPress={() => navigation.navigate('Chat', { matchId: item.matchId })}
-            style={styles.chatButton}
-          />
-          <AppButton
-            title="👤 צפייה בפרופיל"
-            onPress={() => navigation.navigate('MatchDetails', { matchId: item.matchId })}
-            style={styles.profileButton}
-          />
         </View>
       </View>
     );
@@ -331,22 +333,6 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 11,
     fontWeight: 'bold',
-  },
-  actionsContainer: {
-    flexDirection: 'row-reverse',
-    justifyContent: 'space-between',
-    marginTop: theme.spacing.m,
-    gap: theme.spacing.m,
-  },
-  chatButton: {
-    flex: 1,
-    backgroundColor: theme.colors.primary,
-    paddingVertical: theme.spacing.s,
-  },
-  profileButton: {
-    flex: 1,
-    backgroundColor: '#4A4A4A',
-    paddingVertical: theme.spacing.s,
   },
   emptyContainer: {
     flex: 1,

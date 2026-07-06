@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
@@ -33,7 +33,8 @@ type UnifiedItem =
       reportedUserName?: string | null;
     };
 
-export const MyProductFeedbackScreen = () => {
+export const MyProductFeedbackScreen = ({ route, navigation }: any) => {
+  const { focusKind, focusId } = route?.params || {};
   const [items, setItems] = useState<UnifiedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -77,6 +78,18 @@ export const MyProductFeedbackScreen = () => {
       });
 
       setItems(sortedData);
+
+      if (focusKind && focusId) {
+        const exists = sortedData.some(item => {
+          if (focusKind === 'ProductFeedback' && item.kind === 'FEEDBACK' && item.id === focusId) return true;
+          if (focusKind === 'UserReport' && item.kind === 'REPORT' && item.id === focusId) return true;
+          return false;
+        });
+        if (!exists) {
+          Alert.alert('שגיאה', 'הפנייה המבוקשת לא נמצאה או שאינה נגישה.');
+          navigation.setParams({ focusKind: undefined, focusId: undefined });
+        }
+      }
     } catch (err) {
       console.error('Error fetching my requests:', err);
       setError('אירעה שגיאה בטעינת הפניות והדיווחים');
@@ -89,7 +102,7 @@ export const MyProductFeedbackScreen = () => {
   useFocusEffect(
     useCallback(() => {
       fetchFeedback();
-    }, [])
+    }, [focusKind, focusId])
   );
 
   const getTypeText = (item: UnifiedItem) => {
@@ -203,10 +216,26 @@ export const MyProductFeedbackScreen = () => {
     );
   }
 
+  const displayedItems = (focusKind && focusId)
+    ? items.filter(item => {
+        if (focusKind === 'ProductFeedback' && item.kind === 'FEEDBACK' && item.id === focusId) return true;
+        if (focusKind === 'UserReport' && item.kind === 'REPORT' && item.id === focusId) return true;
+        return false;
+      })
+    : items;
+
   return (
     <Screen>
+      {focusKind && focusId && (
+        <View style={styles.banner}>
+          <Text style={styles.bannerText}>מציג פנייה מסוימת</Text>
+          <TouchableOpacity onPress={() => navigation.setParams({ focusKind: undefined, focusId: undefined })}>
+            <Text style={styles.bannerAction}>הצג את כל הפניות</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       <FlatList
-        data={items}
+        data={displayedItems}
         keyExtractor={item => `${item.kind}-${item.id}`}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
@@ -341,5 +370,27 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     minWidth: 120,
+  },
+  banner: {
+    backgroundColor: theme.colors.primary + '15',
+    borderColor: theme.colors.primary,
+    borderWidth: 1,
+    borderRadius: theme.borderRadius.m,
+    padding: theme.spacing.m,
+    marginHorizontal: theme.spacing.m,
+    marginTop: theme.spacing.m,
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  bannerText: {
+    color: theme.colors.text,
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  bannerAction: {
+    color: theme.colors.primary,
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 });

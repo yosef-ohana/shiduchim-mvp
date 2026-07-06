@@ -59,8 +59,25 @@ export const AdminWeddingDetailsScreen = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, [weddingId]);
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchData();
+    });
+    return unsubscribe;
+  }, [navigation, weddingId]);
+
+  useEffect(() => {
+    if (managerIdInput && eventManagers.length > 0) {
+      const selectedManager = eventManagers.find(m => m.id.toString() === managerIdInput);
+      if (selectedManager) {
+        const isBlocked = selectedManager.adminBlocked === true;
+        const isActive = selectedManager.eventManagerActive !== false;
+        if (isBlocked || !isActive) {
+          setManagerIdInput('');
+          Alert.alert('עדכון סטטוס', 'מנהל האירוע שנבחר אינו זמין יותר. אנא בחר מנהל אחר.');
+        }
+      }
+    }
+  }, [eventManagers, managerIdInput]);
 
   const handleAssignManager = async () => {
     if (!managerIdInput) return;
@@ -276,9 +293,19 @@ export const AdminWeddingDetailsScreen = () => {
           <Text style={styles.info}>תאריך החתונה: {formatDisplayDate(wedding.weddingDate)}</Text>
           <Text style={styles.info}>סטטוס: {getWeddingStatusLabel(wedding.status)}</Text>
           <Text style={styles.info}>קוד גישה: {wedding.accessCode || 'לא צוין'}</Text>
-          <Text style={styles.info}>
-            בעלים: {wedding.ownerName ? `${wedding.ownerName} (${wedding.ownerEmail})` : 'לא צוין'} (מזהה: {wedding.ownerUserId || 'לא צוין'})
-          </Text>
+          <View style={styles.ownerRow}>
+            <Text style={[styles.info, { flex: 1 }]}>
+              בעלים: {wedding.ownerName ? `${wedding.ownerName} (${wedding.ownerEmail})` : 'לא צוין'} (מזהה: {wedding.ownerUserId || 'לא צוין'})
+            </Text>
+            {wedding.ownerUserId && eventManagers.some(em => em.id === wedding.ownerUserId) && (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('AdminEventManagerDetails', { managerId: wedding.ownerUserId })}
+                style={styles.ownerDetailsLink}
+              >
+                <Text style={styles.ownerDetailsLinkText}>פרטים וניהול</Text>
+              </TouchableOpacity>
+            )}
+          </View>
           <Text style={styles.info}>משתתפים: {wedding.participantsCount}</Text>
           <Text style={styles.info}>שידוכים: {wedding.matchesCount}</Text>
         </View>
@@ -323,27 +350,55 @@ export const AdminWeddingDetailsScreen = () => {
             <ScrollView style={styles.managerList} nestedScrollEnabled={true}>
               {eventManagers.map(manager => {
                 const isCurrentOwner = manager.id === wedding.ownerUserId;
+                const isBlocked = manager.adminBlocked === true;
+                const isActive = manager.eventManagerActive !== false;
+                const isSelectable = !isBlocked && isActive;
+                const isSelected = managerIdInput === manager.id.toString();
+
                 return (
-                  <TouchableOpacity
+                  <View
                     key={manager.id}
                     style={[
-                      styles.managerCard,
-                      managerIdInput === manager.id.toString() && styles.managerCardSelected,
-                      isCurrentOwner && styles.managerCardCurrent
+                      styles.managerCardRow,
+                      isSelected && styles.managerCardSelected,
+                      isCurrentOwner && styles.managerCardCurrent,
+                      !isSelectable && styles.managerCardUnavailable
                     ]}
-                    onPress={() => setManagerIdInput(manager.id.toString())}
-                    disabled={isCurrentOwner}
                   >
-                    <View style={styles.managerHeaderRow}>
-                      {isCurrentOwner && (
-                        <View style={styles.currentBadge}>
-                          <Text style={styles.currentBadgeText}>מנהל נוכחי</Text>
-                        </View>
-                      )}
-                      <Text style={styles.managerName}>{manager.fullName}</Text>
-                    </View>
-                    <Text style={styles.managerEmail}>{manager.email}</Text>
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.managerSelectionArea}
+                      onPress={() => {
+                        if (isSelectable && !isCurrentOwner) {
+                          setManagerIdInput(manager.id.toString());
+                        }
+                      }}
+                      disabled={!isSelectable || isCurrentOwner}
+                    >
+                      <View style={styles.managerHeaderRow}>
+                        {isCurrentOwner && (
+                          <View style={styles.currentBadge}>
+                            <Text style={styles.currentBadgeText}>מנהל נוכחי</Text>
+                          </View>
+                        )}
+                        {!isSelectable && (
+                          <View style={styles.unavailableBadge}>
+                            <Text style={styles.unavailableBadgeText}>
+                              {isBlocked && !isActive ? 'חסום ומושבת' : isBlocked ? 'חסום' : 'מושבת'}
+                            </Text>
+                          </View>
+                        )}
+                        <Text style={styles.managerName}>{manager.fullName}</Text>
+                      </View>
+                      <Text style={styles.managerEmail}>{manager.email}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.managerDetailsAction}
+                      onPress={() => navigation.navigate('AdminEventManagerDetails', { managerId: manager.id })}
+                    >
+                      <Text style={styles.managerDetailsActionText}>פרטים ➔</Text>
+                    </TouchableOpacity>
+                  </View>
                 );
               })}
             </ScrollView>
@@ -528,9 +583,67 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.s,
     backgroundColor: theme.colors.surface,
   },
+  managerCardRow: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e1e1e1',
+    borderRadius: theme.borderRadius.m,
+    marginBottom: theme.spacing.s,
+    backgroundColor: theme.colors.surface,
+  },
   managerCardSelected: {
     borderColor: theme.colors.primary,
     backgroundColor: theme.colors.primary + '10',
+  },
+  managerCardUnavailable: {
+    backgroundColor: '#FAFAFA',
+    borderColor: '#E0E0E0',
+    opacity: 0.8,
+  },
+  managerSelectionArea: {
+    flex: 1,
+    padding: theme.spacing.m,
+  },
+  managerDetailsAction: {
+    padding: theme.spacing.m,
+    borderLeftWidth: 1,
+    borderLeftColor: '#e1e1e1',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  managerDetailsActionText: {
+    color: theme.colors.primary,
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  unavailableBadge: {
+    backgroundColor: '#FFEBEE',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  unavailableBadgeText: {
+    color: '#D32F2F',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  ownerRow: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  ownerDetailsLink: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: theme.colors.primary + '15',
+    borderRadius: theme.borderRadius.s,
+  },
+  ownerDetailsLinkText: {
+    color: theme.colors.primary,
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   managerName: {
     fontSize: 16,

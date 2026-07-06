@@ -86,6 +86,10 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account is blocked");
         }
 
+        if (user.getRole() == UserRole.EVENT_MANAGER && !user.isEffectiveEventManagerActive()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account is inactive");
+        }
+
         String token = tokenService.generateToken(user.getId());
         return toAuthResponse(user, token);
     }

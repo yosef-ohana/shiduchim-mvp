@@ -340,7 +340,34 @@ export interface AdminUserResponse {
   role: 'USER' | 'EVENT_MANAGER' | 'ADMIN';
   profileStatus: ProfileStatus;
   adminBlocked: boolean;
+  eventManagerActive?: boolean | null;
   createdAt: string;
+}
+
+export interface ManagedWeddingSummaryResponse {
+  id: number;
+  name: string;
+  city: string;
+  weddingDate: string;
+  status: WeddingStatus;
+  accessCode: string;
+  participantsCount: number;
+  matchesCount: number;
+}
+
+export interface AdminEventManagerDetailsResponse {
+  id: number;
+  fullName: string;
+  email: string;
+  role: 'USER' | 'EVENT_MANAGER' | 'ADMIN';
+  createdAt: string;
+  adminBlocked: boolean;
+  eventManagerActive: boolean | null;
+  weddings: ManagedWeddingSummaryResponse[];
+}
+
+export interface ReassignManagedWeddingsRequest {
+  weddingIds: number[];
 }
 
 export type WeddingStatus = 'ACTIVE' | 'CLOSED' | 'CANCELLED' | 'DELETED';
@@ -613,4 +640,34 @@ export interface StaffParticipantDetailsResponse {
   manageableWeddings: StaffParticipantWeddingResponse[];
   canAdminBlock?: boolean;
   canAdminUnblock?: boolean;
+}
+
+export type NotificationType =
+  | 'LIKE_RECEIVED'
+  | 'MATCH_CREATED'
+  | 'OPENING_RECEIVED'
+  | 'PRODUCT_FEEDBACK_STATUS_CHANGED'
+  | 'USER_REPORT_STATUS_CHANGED';
+
+export interface NotificationResponse {
+  id: number;
+  type: NotificationType;
+  actorUserId: number | null;
+  referenceId: number;
+  statusValue: string | null;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationPageResponse {
+  items: NotificationResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
+}
+
+export interface UnreadNotificationCountResponse {
+  unreadCount: number;
 }

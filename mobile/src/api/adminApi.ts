@@ -12,7 +12,9 @@ import {
   UserReportDetailsResponse,
   ParticipantResponse,
   AddParticipantRequest,
-  StaffParticipantDetailsResponse
+  StaffParticipantDetailsResponse,
+  AdminEventManagerDetailsResponse,
+  ReassignManagedWeddingsRequest
 } from '../types/api';
 
 export const adminApi = {
@@ -38,6 +40,21 @@ export const adminApi = {
 
   deactivateEventManager: async (id: number): Promise<AdminUserResponse> => {
     const response = await apiClient.patch<AdminUserResponse>(`/admin/event-managers/${id}/deactivate`);
+    return response.data;
+  },
+
+  activateEventManager: async (id: number): Promise<AdminUserResponse> => {
+    const response = await apiClient.patch<AdminUserResponse>(`/admin/event-managers/${id}/activate`);
+    return response.data;
+  },
+
+  getEventManagerDetails: async (managerId: number): Promise<AdminEventManagerDetailsResponse> => {
+    const response = await apiClient.get<AdminEventManagerDetailsResponse>(`/admin/event-managers/${managerId}`);
+    return response.data;
+  },
+
+  reassignManagedWeddingsToCurrentAdmin: async (managerId: number, weddingIds: number[]): Promise<AdminEventManagerDetailsResponse> => {
+    const response = await apiClient.patch<AdminEventManagerDetailsResponse>(`/admin/event-managers/${managerId}/weddings/reassign-to-current-admin`, { weddingIds });
     return response.data;
   },
 

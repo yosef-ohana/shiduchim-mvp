@@ -49,6 +49,19 @@ public class AdminController {
         return adminService.getEventManagers(currentUser);
     }
 
+    @GetMapping("/event-managers/{managerId}")
+    public com.shiduchim.backend.dto.admin.AdminEventManagerDetailsResponse getEventManagerDetails(@PathVariable Long managerId, @AuthenticationPrincipal User currentUser) {
+        return adminService.getEventManagerDetails(managerId, currentUser);
+    }
+
+    @PatchMapping("/event-managers/{managerId}/weddings/reassign-to-current-admin")
+    public com.shiduchim.backend.dto.admin.AdminEventManagerDetailsResponse reassignManagedWeddingsToCurrentAdmin(
+            @PathVariable Long managerId,
+            @RequestBody com.shiduchim.backend.dto.admin.ReassignManagedWeddingsRequest request,
+            @AuthenticationPrincipal User currentUser) {
+        return adminService.reassignManagedWeddingsToCurrentAdmin(managerId, request, currentUser);
+    }
+
     @PatchMapping("/event-managers/{id}/block")
     public AdminUserResponse blockEventManager(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
         return adminService.blockEventManager(id, currentUser);
@@ -62,6 +75,11 @@ public class AdminController {
     @PatchMapping("/event-managers/{id}/deactivate")
     public AdminUserResponse deactivateEventManager(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
         return adminService.deactivateEventManager(id, currentUser);
+    }
+
+    @PatchMapping("/event-managers/{id}/activate")
+    public AdminUserResponse activateEventManager(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
+        return adminService.activateEventManager(id, currentUser);
     }
 
     @GetMapping("/users")

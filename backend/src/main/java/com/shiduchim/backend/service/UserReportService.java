@@ -27,10 +27,12 @@ public class UserReportService {
 
     private final UserReportRepository userReportRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
-    public UserReportService(UserReportRepository userReportRepository, UserRepository userRepository) {
+    public UserReportService(UserReportRepository userReportRepository, UserRepository userRepository, NotificationService notificationService) {
         this.userReportRepository = userReportRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -189,6 +191,15 @@ public class UserReportService {
             report.setStatus(ReportStatus.RESOLVED);
             report.setResolvedAt(LocalDateTime.now());
             userReportRepository.save(report);
+
+            notificationService.createSingleRecipientTransition(
+                report.getReporterUserId(),
+                com.shiduchim.backend.enums.NotificationType.USER_REPORT_STATUS_CHANGED,
+                currentUser.getId(),
+                report.getId(),
+                ReportStatus.RESOLVED.name(),
+                "TO_" + ReportStatus.RESOLVED.name()
+            );
         }
     }
 }

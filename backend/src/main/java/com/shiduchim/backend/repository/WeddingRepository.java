@@ -16,4 +16,6 @@ public interface WeddingRepository extends JpaRepository<Wedding, Long> {
     java.util.List<Wedding> findByOwnerUserId(Long ownerUserId);
 
     long countByStatus(com.shiduchim.backend.enums.WeddingStatus status);
+
+    java.util.List<Wedding> findByOwnerUserIdAndStatusNotOrderByWeddingDateAscIdAsc(Long ownerUserId, com.shiduchim.backend.enums.WeddingStatus status);
 }

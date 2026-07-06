@@ -41,6 +41,7 @@ public class ActionService {
     private final MatchRepository matchRepository;
     private final UserBlockService userBlockService;
     private final OpeningMessageService openingMessageService;
+    private final NotificationService notificationService;
 
     public ActionService(
             UserRepository userRepository,
@@ -50,7 +51,8 @@ public class ActionService {
             UserActionRepository userActionRepository,
             MatchRepository matchRepository,
             UserBlockService userBlockService,
-            OpeningMessageService openingMessageService) {
+            OpeningMessageService openingMessageService,
+            NotificationService notificationService) {
         this.userRepository = userRepository;
         this.userPhotoRepository = userPhotoRepository;
         this.weddingRepository = weddingRepository;
@@ -59,6 +61,7 @@ public class ActionService {
         this.matchRepository = matchRepository;
         this.userBlockService = userBlockService;
         this.openingMessageService = openingMessageService;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -72,25 +75,45 @@ public class ActionService {
         List<UserAction> existingActions = userActionRepository.findByActorUserIdAndTargetUserIdOrderByUpdatedAtDesc(
                 actor.getId(), targetUserId);
 
+        boolean isNewRealLike = false;
+        UserAction primaryAction;
+
         if (!existingActions.isEmpty()) {
-            UserAction primaryAction = existingActions.get(0);
+            primaryAction = existingActions.get(0);
+            if (primaryAction.getActionType() != ActionType.LIKE && actionType == ActionType.LIKE) {
+                isNewRealLike = true;
+            }
             primaryAction.setActionType(actionType);
             primaryAction.setPoolType(poolType);
             primaryAction.setWeddingId(weddingId);
-            userActionRepository.save(primaryAction);
+            primaryAction = userActionRepository.save(primaryAction);
 
             // Clean up duplicates for this exact actor+target pair
             for (int i = 1; i < existingActions.size(); i++) {
                 userActionRepository.delete(existingActions.get(i));
             }
         } else {
-            UserAction newAction = new UserAction();
-            newAction.setActorUserId(actor.getId());
-            newAction.setTargetUserId(targetUserId);
-            newAction.setActionType(actionType);
-            newAction.setPoolType(poolType);
-            newAction.setWeddingId(weddingId);
-            userActionRepository.save(newAction);
+            primaryAction = new UserAction();
+            primaryAction.setActorUserId(actor.getId());
+            primaryAction.setTargetUserId(targetUserId);
+            primaryAction.setActionType(actionType);
+            primaryAction.setPoolType(poolType);
+            primaryAction.setWeddingId(weddingId);
+            primaryAction = userActionRepository.save(primaryAction);
+            if (actionType == ActionType.LIKE) {
+                isNewRealLike = true;
+            }
+        }
+
+        if (isNewRealLike) {
+            notificationService.createSingleRecipientTransition(
+                targetUserId,
+                com.shiduchim.backend.enums.NotificationType.LIKE_RECEIVED,
+                actor.getId(),
+                primaryAction.getId(),
+                null,
+                "TO_LIKE"
+            );
         }
 
         boolean matchCreated = false;
@@ -117,12 +140,17 @@ public class ActionService {
                     return m;
                 });
                 
+                boolean matchActivated = !existingMatchOpt.isPresent() || match.getStatus() != MatchStatus.ACTIVE;
                 match.setStatus(MatchStatus.ACTIVE);
                 match.setBlockedAt(null);
-                matchRepository.save(match);
+                match = matchRepository.save(match);
                 
-                matchCreated = true;
+                matchCreated = matchActivated;
                 matchId = match.getId();
+
+                if (matchActivated) {
+                    notificationService.createMatchActivationPair(matchId, user1Id, user2Id);
+                }
 
                 openingMessageService.attachOpenConversationsToMatchAfterMutualLike(
                         actor.getId(), targetUserId, matchId, poolType, weddingId);

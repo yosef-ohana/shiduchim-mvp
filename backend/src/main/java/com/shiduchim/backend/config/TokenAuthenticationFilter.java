@@ -44,6 +44,11 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
             if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 userRepository.findById(userId).ifPresent(user -> {
+                    if (user.getRole() == com.shiduchim.backend.enums.UserRole.EVENT_MANAGER) {
+                        if (Boolean.TRUE.equals(user.getAdminBlocked()) || !user.isEffectiveEventManagerActive()) {
+                            return;
+                        }
+                    }
                     UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                             user,
                             null,

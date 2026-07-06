@@ -80,6 +80,7 @@ public class AdminService {
         user.setRole(UserRole.EVENT_MANAGER);
         user.setProfileStatus(ProfileStatus.NONE);
         user.setAdminBlocked(false);
+        user.setEventManagerActive(true);
 
         user = userRepository.save(user);
 
@@ -102,7 +103,29 @@ public class AdminService {
     }
 
     public AdminUserResponse deactivateEventManager(Long userId, User currentUser) {
-        return toggleEventManagerStatus(userId, currentUser, true);
+        validateAdmin(currentUser);
+        User target = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (target.getRole() != UserRole.EVENT_MANAGER) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is not an Event Manager");
+        }
+
+        target.setEventManagerActive(false);
+        return new AdminUserResponse(userRepository.save(target));
+    }
+
+    public AdminUserResponse activateEventManager(Long userId, User currentUser) {
+        validateAdmin(currentUser);
+        User target = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (target.getRole() != UserRole.EVENT_MANAGER) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is not an Event Manager");
+        }
+
+        target.setEventManagerActive(true);
+        return new AdminUserResponse(userRepository.save(target));
     }
 
     private AdminUserResponse toggleEventManagerStatus(Long userId, User currentUser, boolean block) {
@@ -186,6 +209,11 @@ public class AdminService {
             if (ownerUser.getRole() != UserRole.EVENT_MANAGER && ownerUser.getRole() != UserRole.ADMIN) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Owner must be EVENT_MANAGER or ADMIN");
             }
+            if (ownerUser.getRole() == UserRole.EVENT_MANAGER) {
+                if (Boolean.TRUE.equals(ownerUser.getAdminBlocked()) || !ownerUser.isEffectiveEventManagerActive()) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Event Manager is blocked or inactive");
+                }
+            }
         } else {
             ownerId = currentUser.getId();
         }
@@ -232,6 +260,11 @@ public class AdminService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Manager user not found"));
         if (ownerUser.getRole() != UserRole.EVENT_MANAGER && ownerUser.getRole() != UserRole.ADMIN) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Assigned user must be EVENT_MANAGER or ADMIN");
+        }
+        if (ownerUser.getRole() == UserRole.EVENT_MANAGER) {
+            if (Boolean.TRUE.equals(ownerUser.getAdminBlocked()) || !ownerUser.isEffectiveEventManagerActive()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Event Manager is blocked or inactive");
+            }
         }
 
         wedding.setOwnerUserId(ownerUser.getId());
@@ -359,5 +392,82 @@ public class AdminService {
         long weddingsCount = weddingRepository.count() - weddingRepository.countByStatus(WeddingStatus.DELETED);
         long activeWeddingsCount = weddingRepository.countByStatus(WeddingStatus.ACTIVE);
         return new AdminDashboardResponse(usersCount, eventManagersCount, weddingsCount, activeWeddingsCount);
+    }
+
+    public com.shiduchim.backend.dto.admin.AdminEventManagerDetailsResponse getEventManagerDetails(Long managerId, User currentUser) {
+        validateAdmin(currentUser);
+        User target = userRepository.findById(managerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Target manager not found"));
+
+        if (target.getRole() != UserRole.EVENT_MANAGER) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Target user is not an Event Manager");
+        }
+
+        List<Wedding> weddings = weddingRepository.findByOwnerUserIdAndStatusNotOrderByWeddingDateAscIdAsc(managerId, WeddingStatus.DELETED);
+
+        List<com.shiduchim.backend.dto.admin.ManagedWeddingSummaryResponse> summaries = weddings.stream().map(w -> {
+            long pCount = weddingParticipantRepository.countByWeddingId(w.getId());
+            long mCount = matchRepository.countByWeddingId(w.getId());
+            return new com.shiduchim.backend.dto.admin.ManagedWeddingSummaryResponse(w, pCount, mCount);
+        }).collect(Collectors.toList());
+
+        return new com.shiduchim.backend.dto.admin.AdminEventManagerDetailsResponse(target, summaries);
+    }
+
+    @Transactional
+    public com.shiduchim.backend.dto.admin.AdminEventManagerDetailsResponse reassignManagedWeddingsToCurrentAdmin(Long managerId, com.shiduchim.backend.dto.admin.ReassignManagedWeddingsRequest request, User currentUser) {
+        validateAdmin(currentUser);
+
+        User target = userRepository.findById(managerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Target manager not found"));
+
+        if (target.getRole() != UserRole.EVENT_MANAGER) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Target user is not an Event Manager");
+        }
+
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
+        }
+
+        List<Long> weddingIds = request.getWeddingIds();
+        if (weddingIds == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "weddingIds list is required");
+        }
+
+        if (weddingIds.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "weddingIds list cannot be empty");
+        }
+
+        if (weddingIds.stream().anyMatch(id -> id == null)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "weddingIds list cannot contain null IDs");
+        }
+
+        long distinctCount = weddingIds.stream().distinct().count();
+        if (distinctCount != weddingIds.size()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "weddingIds list contains duplicate IDs");
+        }
+
+        List<Wedding> requestedWeddings = weddingRepository.findAllById(weddingIds);
+
+        if (requestedWeddings.size() != weddingIds.size()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One or more requested weddings do not exist");
+        }
+
+        for (Wedding w : requestedWeddings) {
+            if (w.getOwnerUserId() == null || !w.getOwnerUserId().equals(managerId)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wedding " + w.getId() + " is not owned by the target manager");
+            }
+            if (w.getStatus() == WeddingStatus.DELETED) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wedding " + w.getId() + " is deleted and cannot be reassigned");
+            }
+        }
+
+        for (Wedding w : requestedWeddings) {
+            w.setOwnerUserId(currentUser.getId());
+        }
+
+        weddingRepository.saveAll(requestedWeddings);
+
+        return getEventManagerDetails(managerId, currentUser);
     }
 }

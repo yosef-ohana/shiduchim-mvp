@@ -20,6 +20,7 @@ import { AdminUsersScreen } from '../screens/admin/AdminUsersScreen';
 import { AdminWeddingsScreen } from '../screens/admin/AdminWeddingsScreen';
 import { AdminEventManagersScreen } from '../screens/admin/AdminEventManagersScreen';
 import { CreateEventManagerScreen } from '../screens/admin/CreateEventManagerScreen';
+import { AdminEventManagerDetailsScreen } from '../screens/admin/AdminEventManagerDetailsScreen';
 import { EventManagerWeddingsScreen } from '../screens/eventManager/EventManagerWeddingsScreen';
 import { CreateWeddingScreen } from '../screens/eventManager/CreateWeddingScreen';
 import { EventManagerWeddingDetailsScreen } from '../screens/eventManager/EventManagerWeddingDetailsScreen';
@@ -90,6 +91,7 @@ export type MainStackParamList = {
   AdminUsers: { focusUserId?: number } | undefined;
   AdminWeddings: undefined;
   AdminEventManagers: undefined;
+  AdminEventManagerDetails: { managerId: number };
   CreateEventManager: undefined;
   EventManagerWeddings: undefined;
   CreateWedding: undefined;
@@ -120,7 +122,7 @@ export type MainStackParamList = {
     otherUserName?: string;
   };
   SendProductFeedback: undefined;
-  MyProductFeedback: undefined;
+  MyProductFeedback: { focusKind?: 'ProductFeedback' | 'UserReport'; focusId?: number } | undefined;
   AdminProductFeedback: undefined;
   AdminProductFeedbackDetails: { feedbackId: number };
   Notifications: undefined;
@@ -159,6 +161,7 @@ export const MainStack = () => {
       <Stack.Screen name="AdminUsers" component={AdminUsersScreen} options={{ title: 'ניהול משתמשים' }} />
       <Stack.Screen name="AdminWeddings" component={AdminWeddingsScreen} options={{ title: 'ניהול חתונות' }} />
       <Stack.Screen name="AdminEventManagers" component={AdminEventManagersScreen} options={{ title: 'מנהלי אירועים' }} />
+      <Stack.Screen name="AdminEventManagerDetails" component={AdminEventManagerDetailsScreen} options={{ title: 'פרטי מנהל אירועים' }} />
       <Stack.Screen name="CreateEventManager" component={CreateEventManagerScreen} options={{ title: 'מנהל אירוע חדש' }} />
       <Stack.Screen name="EventManagerWeddings" component={EventManagerWeddingsScreen} options={{ title: 'החתונות שלי' }} />
       <Stack.Screen name="CreateWedding" component={CreateWeddingScreen} options={{ title: 'יצירת חתונה' }} />

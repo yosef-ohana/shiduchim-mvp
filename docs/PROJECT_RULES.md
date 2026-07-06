@@ -203,3 +203,35 @@ Stop and ask before continuing if:
 - new library is needed
 
 Do not guess. Do not continue silently.
+
+---
+
+## 13. Persistent Invariants & Stop Conditions (Batch 9A Updates)
+
+To preserve the architectural boundaries and business rules, enforce the following limits:
+- **No Historical Backfill**: Notifications are not generated retroactively. The timeline begins only with events created after deployment.
+- **No Normal Chat Notifications**: Do not trigger notifications for standard chat messages.
+- **No Push or WebSocket**: All features (including chats and notifications) must use HTTP request-response flow only.
+- **No Chat before Match**: Standard chat conversations remain locked and are only created after a formal mutual Match.
+- **No Changes to Eligibility**: Onboarding, QR codes, and notifications do not bypass profile completeness or primary photo eligibility requirements.
+- **No Hard Delete (Tombstone Policy)**: Wedding deletion does not physically delete the `Wedding` row; it marks status as `DELETED` (terminal status).
+- **No Ownerless Wedding**: Wedding owner must always be an active `EVENT_MANAGER` or `ADMIN`. The owner never becomes null.
+- **No Partial Reassignment**: Event Manager wedding reassignment is transactional and all-or-nothing.
+- **No Event Manager Admin Access**: Event Managers do not gain access to global Admin Reports, Admin Product Feedback, or direct wedding-independent profiles.
+- **No Automatic Wedding Transfer**: Blocking or deactivating an Event Manager does not automatically transfer their owned weddings.
+- **Product Feedback & User Report Separation**: Product Feedback and User Reports remain strictly separate entities, services, and workflows.
+- **Wedding Tombstone Behavior Remains**: Deleted weddings remain invisible in normal lists, but their matches and chats remain accessible in history.
+
+---
+
+## 14. QA and Current Release Status
+
+- **Automated Technical Gate**: PASSED
+  - Backend: 65 tests passed, 0 failures, 0 errors.
+  - Mobile TypeScript: Compilation successful.
+  - Repository Integrity: `git diff --check` passed, no tracking conflicts.
+  - API/Type parity: Fully aligned.
+- **Manual QA Status**: PENDING
+  - Unified manual QA has been explicitly deferred and will be performed after the GitHub checkpoint.
+  - Do not describe features as manually QA-approved or Production-verified in any release documentation.
+  - Any issues discovered during the deferred manual QA will require a focused follow-up fix and a subsequent commit.

@@ -48,6 +48,9 @@ public class User {
     @Column(nullable = false)
     private Boolean adminBlocked = false;
 
+    @Column(nullable = true)
+    private Boolean eventManagerActive;
+
     private String education;
 
     private String occupation;
@@ -124,6 +127,13 @@ public class User {
 
     public Boolean getAdminBlocked() { return adminBlocked; }
     public void setAdminBlocked(Boolean adminBlocked) { this.adminBlocked = adminBlocked; }
+
+    public Boolean getEventManagerActive() { return eventManagerActive; }
+    public void setEventManagerActive(Boolean eventManagerActive) { this.eventManagerActive = eventManagerActive; }
+
+    public boolean isEffectiveEventManagerActive() {
+        return eventManagerActive == null || eventManagerActive;
+    }
 
     public String getEducation() { return education; }
     public void setEducation(String education) { this.education = education; }

@@ -29,6 +29,8 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
 
     List<Match> findByUser2IdAndPoolType(Long user2Id, PoolType poolType);
 
+    long countByWeddingId(Long weddingId);
+
     long countByWeddingIdAndStatus(Long weddingId, com.shiduchim.backend.enums.MatchStatus status);
 
     @org.springframework.data.jpa.repository.Query("SELECT m FROM Match m WHERE (m.user1Id = :userId OR m.user2Id = :userId) AND m.status = :status")

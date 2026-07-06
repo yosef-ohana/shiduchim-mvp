@@ -1,39 +1,33 @@
 package com.shiduchim.backend.dto.admin;
 
 import com.shiduchim.backend.entity.User;
-import com.shiduchim.backend.enums.Gender;
-import com.shiduchim.backend.enums.ProfileStatus;
 import com.shiduchim.backend.enums.UserRole;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-public class AdminUserResponse {
+public class AdminEventManagerDetailsResponse {
     private Long id;
     private String fullName;
     private String email;
-    private Gender gender;
     private UserRole role;
-    private ProfileStatus profileStatus;
+    private LocalDateTime createdAt;
     private Boolean adminBlocked;
     private Boolean eventManagerActive;
-    private LocalDateTime createdAt;
+    private List<ManagedWeddingSummaryResponse> weddings;
 
-    public AdminUserResponse() {}
+    public AdminEventManagerDetailsResponse() {
+    }
 
-    public AdminUserResponse(User user) {
+    public AdminEventManagerDetailsResponse(User user, List<ManagedWeddingSummaryResponse> weddings) {
         this.id = user.getId();
         this.fullName = user.getFullName();
         this.email = user.getEmail();
-        this.gender = user.getGender();
         this.role = user.getRole();
-        this.profileStatus = user.getProfileStatus();
-        this.adminBlocked = user.getAdminBlocked();
-        if (user.getRole() == UserRole.EVENT_MANAGER) {
-            this.eventManagerActive = user.isEffectiveEventManagerActive();
-        } else {
-            this.eventManagerActive = user.getEventManagerActive();
-        }
         this.createdAt = user.getCreatedAt();
+        this.adminBlocked = user.getAdminBlocked();
+        this.eventManagerActive = user.isEffectiveEventManagerActive();
+        this.weddings = weddings;
     }
 
     public Long getId() { return id; }
@@ -45,14 +39,11 @@ public class AdminUserResponse {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
-    public Gender getGender() { return gender; }
-    public void setGender(Gender gender) { this.gender = gender; }
-
     public UserRole getRole() { return role; }
     public void setRole(UserRole role) { this.role = role; }
 
-    public ProfileStatus getProfileStatus() { return profileStatus; }
-    public void setProfileStatus(ProfileStatus profileStatus) { this.profileStatus = profileStatus; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
     public Boolean getAdminBlocked() { return adminBlocked; }
     public void setAdminBlocked(Boolean adminBlocked) { this.adminBlocked = adminBlocked; }
@@ -60,6 +51,6 @@ public class AdminUserResponse {
     public Boolean getEventManagerActive() { return eventManagerActive; }
     public void setEventManagerActive(Boolean eventManagerActive) { this.eventManagerActive = eventManagerActive; }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public List<ManagedWeddingSummaryResponse> getWeddings() { return weddings; }
+    public void setWeddings(List<ManagedWeddingSummaryResponse> weddings) { this.weddings = weddings; }
 }

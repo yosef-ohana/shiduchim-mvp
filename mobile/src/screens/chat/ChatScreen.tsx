@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
@@ -15,9 +16,11 @@ import { AppButton } from '../../components/AppButton';
 import { AppInput } from '../../components/AppInput';
 import { theme } from '../../theme/theme';
 import { getChatMessages, sendChatMessage, markMessagesAsRead } from '../../api/chatApi';
-import { ChatMessageResponse } from '../../types/api';
+import { ChatMessageResponse, MatchDetailsResponse } from '../../types/api';
 import { ChatMessageBubble } from '../../components/ChatMessageBubble';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+import { getMatchDetails } from '../../api/matchesApi';
+import { getImageUrl } from '../../utils/imageUrl';
 
 export const ChatScreen = ({ route, navigation }: any) => {
   const { matchId } = route.params || {};
@@ -27,6 +30,7 @@ export const ChatScreen = ({ route, navigation }: any) => {
   const [error, setError] = useState<string | null>(null);
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
+  const [matchDetails, setMatchDetails] = useState<MatchDetailsResponse | null>(null);
   const flatListRef = useRef<FlatList>(null);
   const fetchingRef = useRef(false);
   const isFirstLoad = useRef(true);
@@ -73,6 +77,18 @@ export const ChatScreen = ({ route, navigation }: any) => {
 
   useEffect(() => {
     isFirstLoad.current = true;
+  }, [matchId]);
+
+  useEffect(() => {
+    const fetchMatchDetails = async () => {
+      try {
+        const details = await getMatchDetails(matchId);
+        setMatchDetails(details);
+      } catch (err) {
+        console.warn('Failed to load match details for header:', err);
+      }
+    };
+    fetchMatchDetails();
   }, [matchId]);
 
   useFocusEffect(
@@ -136,6 +152,33 @@ export const ChatScreen = ({ route, navigation }: any) => {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <View style={styles.header}>
+          {matchDetails?.otherUserProfile && (
+            <TouchableOpacity
+              onPress={() => {
+                if (matchDetails.otherUserProfile.userId) {
+                  navigation.navigate('CandidateProfile', {
+                    userId: matchDetails.otherUserProfile.userId,
+                  });
+                }
+              }}
+              style={styles.headerProfileContainer}
+              activeOpacity={0.7}
+            >
+              {getImageUrl(matchDetails.otherUserProfile.primaryPhotoUrl) ? (
+                <Image
+                  source={{ uri: getImageUrl(matchDetails.otherUserProfile.primaryPhotoUrl) }}
+                  style={styles.headerAvatar}
+                />
+              ) : (
+                <View style={styles.headerPlaceholderAvatar}>
+                  <Text style={styles.headerPlaceholderText}>אין תמונה</Text>
+                </View>
+              )}
+              <Text style={styles.headerName}>
+                {matchDetails.otherUserProfile.fullName}
+              </Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity onPress={() => fetchMessages()} style={styles.refreshButton}>
             <Text style={styles.refreshButtonText}>🔄 רענון צ׳אט</Text>
           </TouchableOpacity>
@@ -208,7 +251,38 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
-    alignItems: 'flex-start',
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerProfileContainer: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+  },
+  headerAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.colors.border,
+  },
+  headerPlaceholderAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#EAEAEA',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerPlaceholderText: {
+    fontSize: 8,
+    color: theme.colors.textSecondary,
+    fontWeight: 'bold',
+  },
+  headerName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: theme.colors.text,
+    marginRight: theme.spacing.s,
   },
   refreshButton: {
     paddingVertical: 6,

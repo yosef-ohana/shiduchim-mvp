@@ -30,6 +30,7 @@ public class OpeningMessageService {
     private final ChatMessageRepository chatMessageRepository;
     private final WeddingRepository weddingRepository;
     private final WeddingParticipantRepository weddingParticipantRepository;
+    private final NotificationService notificationService;
 
     public OpeningMessageService(
             OpeningConversationRepository openingConversationRepository,
@@ -40,7 +41,8 @@ public class OpeningMessageService {
             MatchRepository matchRepository,
             ChatMessageRepository chatMessageRepository,
             WeddingRepository weddingRepository,
-            WeddingParticipantRepository weddingParticipantRepository) {
+            WeddingParticipantRepository weddingParticipantRepository,
+            NotificationService notificationService) {
         this.openingConversationRepository = openingConversationRepository;
         this.openingMessageRepository = openingMessageRepository;
         this.userRepository = userRepository;
@@ -50,6 +52,7 @@ public class OpeningMessageService {
         this.chatMessageRepository = chatMessageRepository;
         this.weddingRepository = weddingRepository;
         this.weddingParticipantRepository = weddingParticipantRepository;
+        this.notificationService = notificationService;
     }
 
     // -------------------------------------------------------------------------
@@ -186,6 +189,15 @@ public class OpeningMessageService {
         message.setContent(content);
         
         openingMessageRepository.save(message);
+
+        notificationService.createSingleRecipientTransition(
+            targetUserId,
+            com.shiduchim.backend.enums.NotificationType.OPENING_RECEIVED,
+            currentUser.getId(),
+            conversation.getId(),
+            null,
+            "CREATE"
+        );
     }
 
     // -------------------------------------------------------------------------
@@ -343,6 +355,8 @@ public class OpeningMessageService {
             match.setStatus(MatchStatus.ACTIVE);
             match = matchRepository.save(match);
             final Long newMatchId = match.getId();
+
+            notificationService.createMatchActivationPair(newMatchId, canonicalUser1, canonicalUser2);
 
             // --- Copy all existing OpeningMessages → ChatMessage (chronological) ---
             for (OpeningMessage om : existingMessages) {

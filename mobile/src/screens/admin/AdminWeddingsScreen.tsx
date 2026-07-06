@@ -16,12 +16,21 @@ export const AdminWeddingsScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const [weddings, setWeddings] = useState<AdminWeddingResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [eventManagerIds, setEventManagerIds] = useState<Set<number>>(new Set());
 
   const fetchWeddings = async () => {
     setLoading(true);
     try {
-      const data = await adminApi.getWeddings();
-      setWeddings(data);
+      const weddingsData = await adminApi.getWeddings();
+      setWeddings(weddingsData);
+
+      try {
+        const managers = await adminApi.getEventManagers();
+        setEventManagerIds(new Set(managers.map(m => m.id)));
+      } catch (err) {
+        console.error('Failed to fetch event managers for lookup', err);
+        setEventManagerIds(new Set());
+      }
     } catch (error) {
       console.error('Failed to fetch weddings', error);
       Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'טעינת החתונות נכשלה.'));
@@ -37,34 +46,63 @@ export const AdminWeddingsScreen = () => {
     return unsubscribe;
   }, [navigation]);
 
-  const renderItem = ({ item }: { item: AdminWeddingResponse }) => (
-    <TouchableOpacity 
-      style={styles.card}
-      onPress={() => navigation.navigate('AdminWeddingDetails', { weddingId: item.id })}
-    >
-      <Text style={styles.name}>{item.name || 'לא צוין'} (מזהה: {item.id})</Text>
-      <Text style={styles.info}>עיר: {item.city || 'לא צוין'}</Text>
-      <Text style={styles.info}>תאריך החתונה: {formatDisplayDate(item.weddingDate)}</Text>
-      <Text style={styles.info}>סטטוס: {getWeddingStatusLabel(item.status)}</Text>
-      <Text style={styles.info}>קוד גישה: {item.accessCode || 'לא צוין'}</Text>
-      {item.ownerName ? (
-        <>
-          <Text style={styles.info}>מנהל אירוע: {item.ownerName}</Text>
-          {item.ownerEmail ? <Text style={styles.info}>אימייל: {item.ownerEmail}</Text> : null}
-          {item.ownerUserId ? <Text style={styles.info}>מזהה מנהל: {item.ownerUserId}</Text> : null}
-        </>
-      ) : (
-        <Text style={styles.info}>מזהה מנהל: {item.ownerUserId || 'לא צוין'}</Text>
-      )}
-      <Text style={styles.info}>משתתפים: {item.participantsCount}</Text>
-      <Text style={styles.info}>שידוכים: {item.matchesCount}</Text>
-    </TouchableOpacity>
-  );
+  const renderItem = ({ item }: { item: AdminWeddingResponse }) => {
+    const isOwnerEventManager = item.ownerUserId && eventManagerIds.has(item.ownerUserId);
+
+    return (
+      <View style={styles.card}>
+        {/* Main Wedding Details Touch Zone */}
+        <TouchableOpacity
+          onPress={() => navigation.navigate('AdminWeddingDetails', { weddingId: item.id })}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.name}>{item.name || 'לא צוין'} (מזהה: {item.id})</Text>
+          <Text style={styles.info}>עיר: {item.city || 'לא צוין'}</Text>
+          <Text style={styles.info}>תאריך החתונה: {formatDisplayDate(item.weddingDate)}</Text>
+          <Text style={styles.info}>סטטוס: {getWeddingStatusLabel(item.status)}</Text>
+          <Text style={styles.info}>קוד גישה: {item.accessCode || 'לא צוין'}</Text>
+          <Text style={styles.info}>משתתפים: {item.participantsCount}</Text>
+          <Text style={styles.info}>שידוכים: {item.matchesCount}</Text>
+        </TouchableOpacity>
+
+        {/* Separator / Divider */}
+        <View style={styles.divider} />
+
+        {/* Owner Info Touch Zone */}
+        {isOwnerEventManager ? (
+          <TouchableOpacity
+            style={styles.ownerActionContainer}
+            onPress={() => navigation.navigate('AdminEventManagerDetails', { managerId: item.ownerUserId })}
+            activeOpacity={0.7}
+          >
+            <View style={styles.ownerHeaderRow}>
+              <Text style={styles.ownerLinkText}>פרטים וניהול מנהל אירוע ➔</Text>
+              <Text style={styles.ownerLabel}>מנהל אירוע: {item.ownerName || 'לא צוין'}</Text>
+            </View>
+            {item.ownerEmail ? <Text style={styles.info}>אימייל: {item.ownerEmail}</Text> : null}
+            <Text style={styles.info}>מזהה מנהל: {item.ownerUserId}</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.ownerStaticContainer}>
+            {item.ownerName ? (
+              <>
+                <Text style={styles.info}>מנהל אירוע: {item.ownerName}</Text>
+                {item.ownerEmail ? <Text style={styles.info}>אימייל: {item.ownerEmail}</Text> : null}
+                {item.ownerUserId ? <Text style={styles.info}>מזהה מנהל: {item.ownerUserId}</Text> : null}
+              </>
+            ) : (
+              <Text style={styles.info}>מזהה מנהל: {item.ownerUserId || 'לא צוין'}</Text>
+            )}
+          </View>
+        )}
+      </View>
+    );
+  };
 
   return (
     <Screen>
       <View style={styles.container}>
-        {loading ? (
+        {loading && weddings.length === 0 ? (
           <ActivityIndicator size="large" color={theme.colors.primary} />
         ) : (
           <FlatList
@@ -119,6 +157,36 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginBottom: 2,
     textAlign: 'right',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: theme.colors.border,
+    marginVertical: theme.spacing.s,
+  },
+  ownerActionContainer: {
+    paddingVertical: theme.spacing.s,
+    paddingHorizontal: theme.spacing.s,
+    backgroundColor: theme.colors.primary + '08', // light primary tint
+    borderRadius: theme.borderRadius.s,
+  },
+  ownerStaticContainer: {
+    paddingVertical: theme.spacing.s,
+  },
+  ownerHeaderRow: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  ownerLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: theme.colors.text,
+  },
+  ownerLinkText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
   },
   emptyText: {
     textAlign: 'center',

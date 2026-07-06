@@ -28,10 +28,12 @@ public class ProductFeedbackService {
 
     private final ProductFeedbackRepository feedbackRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
-    public ProductFeedbackService(ProductFeedbackRepository feedbackRepository, UserRepository userRepository) {
+    public ProductFeedbackService(ProductFeedbackRepository feedbackRepository, UserRepository userRepository, NotificationService notificationService) {
         this.feedbackRepository = feedbackRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -152,14 +154,25 @@ public class ProductFeedbackService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status cannot be null");
         }
 
-        feedback.setStatus(newStatus);
+        if (feedback.getStatus() != newStatus) {
+            feedback.setStatus(newStatus);
 
-        if (newStatus == FeedbackStatus.RESOLVED) {
-            feedback.setResolvedAt(LocalDateTime.now());
-        } else {
-            feedback.setResolvedAt(null);
+            if (newStatus == FeedbackStatus.RESOLVED) {
+                feedback.setResolvedAt(LocalDateTime.now());
+            } else {
+                feedback.setResolvedAt(null);
+            }
+
+            feedbackRepository.save(feedback);
+
+            notificationService.createSingleRecipientTransition(
+                feedback.getSenderUserId(),
+                com.shiduchim.backend.enums.NotificationType.PRODUCT_FEEDBACK_STATUS_CHANGED,
+                currentUser.getId(),
+                feedback.getId(),
+                newStatus.name(),
+                "TO_" + newStatus.name()
+            );
         }
-
-        feedbackRepository.save(feedback);
     }
 }

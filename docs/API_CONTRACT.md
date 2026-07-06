@@ -391,6 +391,30 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 - `backgroundImageUrl`
 
 
+`AdminEventManagerDetailsResponse`
+- `id` (Long)
+- `fullName` (String)
+- `email` (String)
+- `role` (UserRole)
+- `createdAt` (DateTime)
+- `adminBlocked` (Boolean)
+- `eventManagerActive` (Boolean)
+- `weddings` (List<ManagedWeddingSummaryResponse>)
+
+`ManagedWeddingSummaryResponse`
+- `id` (Long)
+- `name` (String)
+- `city` (String)
+- `weddingDate` (Date)
+- `status` (WeddingStatus)
+- `accessCode` (String)
+- `participantsCount` (long)
+- `matchesCount` (long)
+
+`ReassignManagedWeddingsRequest`
+- `weddingIds` (List<Long>)
+
+
 `AdminDashboardResponse`
 - `totalUsers`
 - `totalEventManagers`
@@ -450,6 +474,30 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 - `createdAt` (DateTime)
 - `updatedAt` (DateTime, optional)
 - `resolvedAt` (DateTime, optional)
+
+---
+
+### Persistent Notifications
+
+`NotificationResponse`
+- `id` (Long)
+- `type` (Enum: `NotificationType` - `LIKE_RECEIVED`, `MATCH_CREATED`, `OPENING_RECEIVED`, `PRODUCT_FEEDBACK_STATUS_CHANGED`, `USER_REPORT_STATUS_CHANGED`)
+- `actorUserId` (Long)
+- `referenceId` (Long)
+- `statusValue` (String, optional)
+- `readAt` (DateTime, optional)
+- `createdAt` (DateTime)
+
+`NotificationPageResponse`
+- `items` (List<NotificationResponse>)
+- `page` (Integer)
+- `size` (Integer)
+- `totalElements` (Long)
+- `totalPages` (Integer)
+- `hasNext` (Boolean)
+
+`NotificationUnreadCountResponse`
+- `unreadCount` (Long)
 
 ---
 
@@ -604,11 +652,29 @@ No WebSocket. No realtime. No attachments. (Note: internal unread count per conv
 
 ---
 
+### Persistent Notifications
+
+| Method | Path | Role | Request | Response | Rules | Errors |
+|---|---|---|---|---|---|---|
+| GET | `/api/notifications` | USER | query (`page`, `size`) | `NotificationPageResponse` | Paginated notifications list | 400, 401, 403 |
+| GET | `/api/notifications/unread-count` | USER | — | `NotificationUnreadCountResponse` | Returns total unread notifications count | 401, 403 |
+| PATCH | `/api/notifications/{id}/read` | USER | — | `NotificationResponse` | Marks a single notification as read | 401, 403, 404 |
+| PATCH | `/api/notifications/read-all` | USER | — | `NotificationUnreadCountResponse` | Marks all user notifications as read | 401, 403 |
+
+---
+
 ### Admin
 
 | Method | Path | Role | Request | Response | Rules | Errors |
 |---|---|---|---|---|---|---|
 | POST | `/api/admin/event-managers` | ADMIN | `CreateEventManagerRequest` | `AdminUserResponse` | Admin creates only EVENT_MANAGER; not regular USER | 400, 401, 403, 409 |
+| GET | `/api/admin/event-managers` | ADMIN | — | `List<AdminUserResponse>` | Lists all Event Managers | 401, 403 |
+| GET | `/api/admin/event-managers/{managerId}` | ADMIN | — | `AdminEventManagerDetailsResponse` | Returns detailed profile of an Event Manager and their owned weddings | 401, 403, 404 |
+| PATCH | `/api/admin/event-managers/{managerId}/weddings/reassign-to-current-admin` | ADMIN | `ReassignManagedWeddingsRequest` | `AdminEventManagerDetailsResponse` | Reassigns a batch of weddings owned by the Event Manager to the currently authenticated Admin | 400, 401, 403, 404 |
+| PATCH | `/api/admin/event-managers/{id}/block` | ADMIN | — | `AdminUserResponse` | Blocks an Event Manager | 401, 403, 404 |
+| PATCH | `/api/admin/event-managers/{id}/unblock` | ADMIN | — | `AdminUserResponse` | Unblocks an Event Manager | 401, 403, 404 |
+| PATCH | `/api/admin/event-managers/{id}/deactivate` | ADMIN | — | `AdminUserResponse` | Deactivates an Event Manager | 401, 403, 404 |
+| PATCH | `/api/admin/event-managers/{id}/activate` | ADMIN | — | `AdminUserResponse` | Activates an Event Manager | 401, 403, 404 |
 | GET | `/api/admin/users` | ADMIN | — | `List<AdminUserResponse>` | Basic users list; no reports/logs | 401, 403 |
 | PATCH | `/api/admin/users/{userId}/block` | ADMIN | — | `AdminUserResponse` | Sets `adminBlocked=true` | 401, 403, 404 |
 | PATCH | `/api/admin/users/{userId}/unblock` | ADMIN | — | `AdminUserResponse` | Sets `adminBlocked=false` | 401, 403, 404 |

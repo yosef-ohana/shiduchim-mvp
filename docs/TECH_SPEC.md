@@ -1034,3 +1034,92 @@ This section contains the focused Cycle 5 QA checklist. Note: Manual QA has not 
     - `NONE` → `onboarding_full`.
     - `BASIC` → `complete_full`.
     - `FULL_INCOMPLETE_BLOCKED` → `repair_full`.
+
+---
+
+## 37. Cycle 9: Persistent Notifications & Event Manager Reassignment
+
+### 37.1 Match and Chats UI Polish
+- **Match continuity**: MatchDetailsScreen displays a Hebrew banner (`נוצרה התאמה — אפשר להמשיך את השיחה בצ׳אט`) below the profile summary.
+- **Chats Layout**: ChatsScreen implements WhatsApp-style compact list rows containing:
+  - User profile photo and full name.
+  - Last message preview, send timestamp.
+  - Active unread badge indicators.
+- **Touch Routing**:
+  - Tapping the row body triggers navigation to `Chat` screen.
+  - Tapping the profile photo or name (in lists and header) navigates to `CandidateProfile` view.
+  - Tapping the Chat header navigates to the `CandidateProfile` view.
+- **Client Polling**: ChatScreen utilizes client-side interval polling (cleared on focus loss/unmount).
+
+### 37.2 Persistent Notifications Backend Engine
+- **Entity model `UserNotification`**:
+  - `id: Long` (PK, auto-increment)
+  - `userId: Long` (Recipient USER identifier)
+  - `actorUserId: Long` (Initiator user identifier, e.g. sender of Like)
+  - `type: NotificationType`
+  - `referenceId: Long` (ID of associated entity, e.g. Match ID, Feedback ID)
+  - `statusValue: String` (Value of updated status, if applicable)
+  - `readAt: LocalDateTime` (Nullable)
+  - `createdAt: LocalDateTime`
+- **Scalar Reference Strategy**: Uses scalar IDs rather than JPA mapping cascades to prevent DB locks or relational deletion side-effects.
+- **Notification Types**:
+  - `LIKE_RECEIVED`: Triggered transactionally when a Like is recorded.
+  - `MATCH_CREATED`: Triggered transactionally for both approved Match creation paths.
+  - `OPENING_RECEIVED`: Triggered transactionally when the first pre-match Opening Message is received.
+  - `PRODUCT_FEEDBACK_STATUS_CHANGED`: Triggered when an admin transitions a feedback's status.
+  - `USER_REPORT_STATUS_CHANGED`: Triggered when an admin resolves a user report.
+- **Invariants**:
+  - Deduplication: Handled in the service layer using an event-key based transition schema to prevent duplicate notifications.
+  - Transactional write: Notifications are committed transactionally with their parent business events.
+  - No background push/WebSocket, SMS, email, or chat-message notifications.
+  - Persistent timeline: Read items remain in history. No deletion endpoint.
+  - No backfill: Timeline starts post-deployment.
+  - Pagination: Uses `NotificationPageResponse` containing paginated lists (default size 30).
+
+### 37.3 Notification Mobile Integration
+- **Unified Timeline**: Client replaces the in-memory timeline aggregation with a paginated fetch from `/api/notifications`.
+- **Badging & Refresh**: MeScreen unread badge count retrieves `/api/notifications/unread-count` and refreshes on focus.
+- **Deep Navigations**:
+  - Likes received -> Actor Candidate Profile.
+  - Matches created -> MatchDetailsScreen.
+  - Opening message received -> OpeningConversationDetailsScreen.
+  - Status updates -> MyProductFeedback requests timeline (focusing the item).
+  - Handles unavailable targets gracefully by displaying a friendly toast error message while keeping the notification entry in history.
+
+### 37.4 Event Manager Lifecycle & Access Control
+- **Independent State Fields**:
+  - `adminBlocked` (Boolean) - Admin-controlled account ban.
+  - `eventManagerActive` (Boolean) - Manager active state. Newly created managers are active by default. Legacy `null` values are treated as active.
+- **Access Gate**: Access requires BOTH active (`eventManagerActive=true`) and not blocked (`adminBlocked=false`).
+- **Staff Login Guard**: Authenticated staff login checks both flags. If deactivation or blocking occurs, subsequent requests reject existing active tokens.
+- **Wedding Transfer Exclusions**: Changing blocking or activation status does not trigger automatic wedding transfer. Inactive managers are audited by Admin but cannot be assigned as wedding owners.
+
+### 37.5 Admin Event Manager Reassignment
+- **Endpoint Operations**:
+  - `GET /api/admin/event-managers/{managerId}`: Returns Event Manager profile details alongside their owned `ManagedWeddingSummaryResponse` list.
+  - `PATCH /api/admin/event-managers/{managerId}/weddings/reassign-to-current-admin`: Reassigns a batch of weddings owned by the Event Manager.
+- **Service Logic**:
+  - Validates ownership and status before mutation.
+  - Reassignment is atomic (all-or-nothing transactional boundary).
+  - Assigns the currently authenticated Admin as the owner.
+  - Transfer is allowed for ACTIVE, CLOSED, and CANCELLED weddings; DELETED wedding tombstones are strictly excluded.
+  - The wedding's status, accessCode, participants, invitations, matches, and chats are preserved.
+  - The owner never becomes null, maintaining the single-owner model (no many-to-many manager model).
+
+### 37.6 Event Manager Mobile Hub Navigation
+- **Hub Dashboard**: Centralizes six entry navigation points:
+  1. Event Manager list.
+  2. Admin Users list for Event Managers.
+  3. Wedding list manager/owner section.
+  4. Wedding details manager/owner section.
+  5. Create Wedding manager picker.
+  6. Wedding details manager picker.
+- **UX Controls**:
+  - Separate touch zones are used for selecting Event Managers in the picker vs tapping their name to open manager details.
+  - Clicking wedding details and owner details utilize separate touch zones.
+  - Unavailable managers remain visible but disabled.
+  - Reassignment success clears selections; failure preserves selections.
+  - Create Wedding form state is preserved when jumping to the Hub and back.
+
+### 37.7 QA and Release Status
+- Unified manual QA is pending post-checkpoint. Do not describe the features as Production-verified or Runtime-passed. Any regression found during deferred manual QA will be resolved in a subsequent focused fix.

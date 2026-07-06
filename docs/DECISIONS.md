@@ -822,3 +822,38 @@ These are collected future improvements and are NOT implemented at this stage. T
 
 ### 37.4 Compatibility Preservation
 - **Legacy Endpoints Retained**: The existing endpoints `GET /api/profile/me`, `PUT /api/profile/basic`, and `PUT /api/profile/full` are retained for backward compatibility with external/legacy flows.
+
+---
+
+## 38. Batch 9A Decisions: Notifications, Event Manager Lifecycle, and Reassignment
+
+### 38.1 Match & Chats UI Polish
+- **Hebrew Banner**: A Match details screen banner (`נוצרה התאמה — אפשר להמשיך את השיחה בצ׳אט`) was chosen to indicate match continuity. The existing Chat CTA remains the primary interaction point.
+- **Compact Chat Rows**: WhatsApp-style compact list rows displaying candidate photo, name, last-message preview, timestamp, and unread state were adopted.
+- **Split Touch Targets**: In the Chats list and header, clicking the user photo/name or the chat header navigates to the Candidate Profile, while clicking the row body opens the Chat screen.
+
+### 38.2 Persistent Notifications Architecture
+- **UserNotification Entity**: A dedicated database entity `UserNotification` was introduced.
+- **No Cascades**: The entity uses scalar IDs (`userId`, `actorUserId`, `referenceId`) instead of JPA cascades to source entities (such as Matches, reports, etc.) to ensure database decoupling and prevent cascade deletion anomalies.
+- **Deduplication**: Key-based transition semantics ensure duplicate events (e.g. rapid feedback transitions) are deduplicated.
+- **Notification Types**: Supported type enums are `LIKE_RECEIVED`, `MATCH_CREATED`, `OPENING_RECEIVED`, `PRODUCT_FEEDBACK_STATUS_CHANGED`, and `USER_REPORT_STATUS_CHANGED`.
+- **Invariants**: No push notifications, email, WebSocket, background jobs, or standard chat message notifications. Persistent history is read-only (no deletion). No historical Backfill; notifications start post-deployment.
+
+### 38.3 Event Manager State & Access Rules
+- **Independent State Values**: `adminBlocked` and `eventManagerActive` are independent attributes. Access requires `!adminBlocked && eventManagerActive`.
+- **Active-by-Default Policy**: Newly created Event Managers have `eventManagerActive` set to true. Null/legacy values are treated as active.
+- **Token Invalidation**: Deactivation or blocking rejects active authentication tokens on subsequent requests.
+- **No Automatic Transfer**: Block or Deactivate does not trigger automatic wedding ownership transfer. Inactive managers are visible for admin auditing but cannot be assigned to new weddings.
+
+### 38.4 Event Manager Admin Reassignment
+- **Endpoint Structure**: Endpoints `/api/admin/event-managers/{managerId}` (details) and `/api/admin/event-managers/{managerId}/weddings/reassign-to-current-admin` (reassign) were implemented.
+- **Request Format**: The reassignment accepts a flat `{ weddingIds: number[] }` shape.
+- **Safety**: Checked and validated before mutation. Executed transactionally (all-or-nothing). Only `ACTIVE`, `CLOSED`, and `CANCELLED` weddings can be reassigned; `DELETED` tombstones are excluded. Reassignment preserves participants, invitations, matches, codes, status, and history. The wedding remains single-owner (no many-to-many manager model).
+
+### 38.5 Event Manager Mobile Hub Design
+- **Entry Points**: The Event Manager Mobile Hub serves as a central dashboard with six clear entry points: Event Manager list, Admin Users list (EVENT_MANAGER), Wedding list owner section, Wedding details owner section, Create Wedding manager picker, and Wedding details manager picker.
+- **Touch Zone Separation**: Separated picker selection card touch zones from manager details touch zones to prevent accidental activations.
+- **Form State Preservation**: Navigating to the Hub and back preserves the create/edit wedding form inputs.
+
+### 38.6 QA Release Decisions
+- **Manual QA Deferred**: Manual verification of the runtime environment is explicitly deferred to post-checkpoint. Release status remains "Manual QA Pending". Do not claim production-readiness or runtime-verified status. Any regression found during deferred manual QA will be resolved in a subsequent focused fix.

@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Alert, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
 import { adminApi } from '../../api/adminApi';
 import { AdminUserResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+import { MainStackParamList } from '../../navigation/MainStack';
+
+type NavigationProp = NativeStackNavigationProp<MainStackParamList, 'AdminEventManagers'>;
 
 export const AdminEventManagersScreen = () => {
+  const navigation = useNavigation<NavigationProp>();
   const [managers, setManagers] = useState<AdminUserResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,57 +31,40 @@ export const AdminEventManagersScreen = () => {
   };
 
   useEffect(() => {
-    fetchManagers();
-  }, []);
-
-  const handleBlock = async (id: number) => {
-    try {
-      await adminApi.blockEventManager(id);
+    const unsubscribe = navigation.addListener('focus', () => {
       fetchManagers();
-    } catch (error) {
-      console.error(error);
-      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'חסימת מנהל האירועים נכשלה.'));
-    }
-  };
+    });
+    return unsubscribe;
+  }, [navigation]);
 
-  const handleUnblock = async (id: number) => {
-    try {
-      await adminApi.unblockEventManager(id);
-      fetchManagers();
-    } catch (error) {
-      console.error(error);
-      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'ביטול חסימת מנהל האירועים נכשל.'));
-    }
-  };
+  const renderItem = ({ item }: { item: AdminUserResponse }) => {
+    const isBlocked = item.adminBlocked;
+    const isActive = item.eventManagerActive !== false;
 
-  const handleDeactivate = async (id: number) => {
-    try {
-      await adminApi.deactivateEventManager(id);
-      fetchManagers();
-    } catch (error) {
-      console.error(error);
-      Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'השבתת מנהל האירועים נכשלה.'));
-    }
-  };
+    return (
+      <View style={styles.card}>
+        <Text style={styles.name}>{item.fullName}</Text>
+        <Text style={styles.email}>{item.email}</Text>
+        <View style={styles.statusRow}>
+          <Text style={styles.statusText}>
+            חסימה: {isBlocked ? 'חסום' : 'לא חסום'}
+          </Text>
+          <Text style={styles.statusSeparator}>|</Text>
+          <Text style={styles.statusText}>
+            פעילות: {isActive ? 'פעיל' : 'מושבת'}
+          </Text>
+        </View>
 
-  const renderItem = ({ item }: { item: AdminUserResponse }) => (
-    <View style={styles.card}>
-      <Text style={styles.name}>{item.fullName}</Text>
-      <Text style={styles.email}>{item.email}</Text>
-      <Text style={styles.status}>סטטוס: {item.adminBlocked ? 'חסום/מושבת' : 'פעיל'}</Text>
-      
-      <View style={styles.actions}>
-        {item.adminBlocked ? (
-          <AppButton title="שחרור חסימה" onPress={() => handleUnblock(item.id)} style={styles.button} />
-        ) : (
-          <>
-            <AppButton title="חסימה" onPress={() => handleBlock(item.id)} style={[styles.button, styles.dangerButton]} />
-            <AppButton title="השבתה" onPress={() => handleDeactivate(item.id)} style={[styles.button, styles.dangerButton]} />
-          </>
-        )}
+        <View style={styles.actions}>
+          <AppButton
+            title="פרטים וניהול"
+            onPress={() => navigation.navigate('AdminEventManagerDetails', { managerId: item.id })}
+            style={styles.button}
+          />
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <Screen>
@@ -125,12 +114,18 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.s,
     textAlign: 'right',
   },
-  status: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.primary,
+  statusRow: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
     marginBottom: theme.spacing.m,
-    textAlign: 'right',
+  },
+  statusText: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+  },
+  statusSeparator: {
+    marginHorizontal: 8,
+    color: theme.colors.border,
   },
   actions: {
     flexDirection: 'row',
@@ -139,10 +134,6 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    minWidth: 100,
-  },
-  dangerButton: {
-    backgroundColor: theme.colors.error,
   },
   empty: {
     textAlign: 'center',

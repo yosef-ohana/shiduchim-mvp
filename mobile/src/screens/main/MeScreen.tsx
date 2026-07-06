@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { theme } from '../../theme/theme';
 import { adminApi } from '../../api/adminApi';
 import { getUnreadCount } from '../../api/chatsApi';
+import { notificationsApi } from '../../api/notificationsApi';
 import { AdminDashboardResponse } from '../../types/api';
 import { getYesNoLabel, getUserRoleLabel } from '../../utils/displayLabels';
 
@@ -26,6 +27,7 @@ export const MeScreen = ({ navigation }: any) => {
   const [dashboardData, setDashboardData] = useState<AdminDashboardResponse | null>(null);
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
   const [totalUnreadCount, setTotalUnreadCount] = useState<number>(0);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
 
   const fetchDashboard = async () => {
     setIsLoadingDashboard(true);
@@ -48,6 +50,15 @@ export const MeScreen = ({ navigation }: any) => {
     }
   };
 
+  const fetchUnreadNotificationsCount = async () => {
+    try {
+      const data = await notificationsApi.getUnreadNotificationCount();
+      setUnreadNotificationsCount(data.unreadCount);
+    } catch (error) {
+      console.error('Error fetching unread notifications count:', error);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
       if (user && user.role === 'ADMIN') {
@@ -55,6 +66,7 @@ export const MeScreen = ({ navigation }: any) => {
       }
       if (user && user.role === 'USER') {
         fetchTotalUnreadCount();
+        fetchUnreadNotificationsCount();
       }
     }, [user])
   );
@@ -68,7 +80,10 @@ export const MeScreen = ({ navigation }: any) => {
         setDashboardData(data);
       }
       if (user && user.role === 'USER') {
-        await fetchTotalUnreadCount();
+        await Promise.all([
+          fetchTotalUnreadCount(),
+          fetchUnreadNotificationsCount(),
+        ]);
       }
     } catch (error) {
       console.error('Error refreshing data:', error);
@@ -117,11 +132,18 @@ export const MeScreen = ({ navigation }: any) => {
 
         {user.role === 'USER' && (
           <>
-            <AppButton
-              title="ההתראות שלי"
-              onPress={() => navigation.navigate('Notifications')}
-              style={styles.button}
-            />
+            <View style={styles.buttonContainer}>
+              <AppButton
+                title="ההתראות שלי"
+                onPress={() => navigation.navigate('Notifications')}
+                style={[styles.button, { marginBottom: 0 }]}
+              />
+              {unreadNotificationsCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{unreadNotificationsCount}</Text>
+                </View>
+              )}
+            </View>
 
             <AppButton
               title="פרטי הפרופיל שלי" 
@@ -228,7 +250,7 @@ export const MeScreen = ({ navigation }: any) => {
 
             <AppButton
               title="הפניות שלי"
-              onPress={() => navigation.navigate('MyProductFeedback')}
+              onPress={() => navigation.navigate('MyProductFeedback', { focusKind: undefined, focusId: undefined })}
               style={styles.button}
             />
 
@@ -476,6 +498,32 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
   },
   boldText: {
+    fontWeight: 'bold',
+  },
+  buttonContainer: {
+    position: 'relative',
+    marginBottom: theme.spacing.m,
+  },
+  badge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: theme.colors.error,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 5,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+  },
+  badgeText: {
+    color: theme.colors.surface,
+    fontSize: 11,
     fontWeight: 'bold',
   },
 });

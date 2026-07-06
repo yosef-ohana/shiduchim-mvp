@@ -16,6 +16,8 @@ public interface WeddingParticipantRepository extends JpaRepository<WeddingParti
 
     Optional<WeddingParticipant> findByWeddingIdAndUserId(Long weddingId, Long userId);
 
+    long countByWeddingId(Long weddingId);
+
     long countByWeddingIdAndStatus(Long weddingId, com.shiduchim.backend.enums.ParticipantStatus status);
 
     @org.springframework.data.jpa.repository.Query("SELECT COUNT(wp1) > 0 FROM WeddingParticipant wp1 " +

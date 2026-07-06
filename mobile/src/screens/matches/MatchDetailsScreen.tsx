@@ -171,6 +171,11 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
           </Text>
         </View>
 
+        {/* Informational Match Banner */}
+        <View style={styles.infoBanner}>
+          <Text style={styles.infoBannerText}>נוצרה התאמה — אפשר להמשיך את השיחה בצ׳אט</Text>
+        </View>
+
         {/* Button Actions Section */}
         <View style={styles.actionsSection}>
           <AppButton
@@ -389,5 +394,20 @@ const styles = StyleSheet.create({
   blockButton: {
     marginTop: theme.spacing.s,
     backgroundColor: '#8B0000',
+  },
+  infoBanner: {
+    backgroundColor: '#FFF9E6',
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+    borderWidth: 1,
+    borderRadius: theme.borderRadius.m,
+    padding: theme.spacing.m,
+    marginBottom: theme.spacing.m,
+    alignItems: 'center',
+  },
+  infoBannerText: {
+    color: theme.colors.text,
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });

@@ -93,6 +93,7 @@ export const AdminUsersScreen = () => {
 
   const renderItem = ({ item }: { item: AdminUserResponse }) => {
     const isFocused = item.id === focusUserId;
+    const isEventManager = item.role === 'EVENT_MANAGER';
     return (
       <View style={[styles.card, isFocused && styles.focusedCard]}>
         <TouchableOpacity
@@ -105,6 +106,14 @@ export const AdminUsersScreen = () => {
           <Text style={styles.info}>סטטוס פרופיל: {getProfileStatusLabel(item.profileStatus)}</Text>
           <Text style={styles.info}>סטטוס: {item.adminBlocked ? 'חסום' : 'פעיל'}</Text>
         </TouchableOpacity>
+
+        {isEventManager && (
+          <AppButton
+            title="פרטים וניהול"
+            onPress={() => navigation.navigate('AdminEventManagerDetails', { managerId: item.id })}
+            style={[styles.button, styles.detailsButton]}
+          />
+        )}
 
         {isFocused ? (
           <View style={styles.buttonRow}>
@@ -253,5 +262,9 @@ const styles = StyleSheet.create({
   focusedCard: {
     borderColor: '#1890ff',
     borderWidth: 2,
+  },
+  detailsButton: {
+    backgroundColor: theme.colors.primary,
+    marginTop: theme.spacing.s,
   },
 });

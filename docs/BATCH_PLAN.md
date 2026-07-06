@@ -1485,3 +1485,49 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
 ### Batch 8.3 — Final Validation, Cleanup, Minimal Docs, Commit and Push
 - **Goal**: Clean up generated target files, update tracking documentation to reflect the profile unification, perform Git checks, and commit/push changes.
 - **DoD**: Focused automated verification passed; manual runtime QA was not performed in this finalization cycle. Repository clean, docs updated, and single commit pushed to upstream.
+
+---
+
+## Cycle 9 MVP+ — Persistent Notifications & Event Manager Reassignment (Batch 9A)
+
+### Batch 9.1 — Match and Chats Polish
+- **Goal**: Implement visual match continuity banner and compact chats layout.
+- **Scope**: Add Hebrew banner to MatchDetailsScreen, integrate compact whatsapp-style rows in ChatsScreen with last-message preview, timestamp, photo, and unread state. Route touch targets so that tapping name/photo or header opens Candidate Profile, and tapping row body opens chat.
+- **DoD**: UI polish and navigations verified.
+- **Status**: IMPLEMENTED / CODE COMPLETE
+
+### Batch 9.2 — Persistent Notifications Backend Foundation
+- **Goal**: Implement UserNotification entity, enums, repository, service, and controller endpoints.
+- **Scope**: Expose list, unread count, mark read, and mark all read endpoints. Enforce scalar IDs (no cascade JPA relations), 5 types, transactional transactional writes, page-size limit pagination, deduplication, and no historical backfill.
+- **DoD**: Compilation successful, tests pass.
+- **Status**: IMPLEMENTED / CODE COMPLETE
+
+### Batch 9.3 — Persistent Notifications Mobile
+- **Goal**: Integrate mobile client and screen timeline for notifications.
+- **Scope**: Implement notificationsApi.ts. Render notifications timeline list on NotificationsScreen, add focus-refresh unread badge to MeScreen, and wire deep navigations (likes to CandidateProfile, matches to MatchDetails, openings to OpeningConversationDetails, feedback/reports to requests list).
+- **DoD**: TypeScript compilation checks pass.
+- **Status**: IMPLEMENTED / CODE COMPLETE
+
+### Batch 9.4 — Event Manager Access Control
+- **Goal**: Implement independent block and active states for Event Managers.
+- **Scope**: Enforce that access requires both eventManagerActive=true and adminBlocked=false. Reject deactivated event managers on staff login. Invalidate existing auth tokens on subsequent requests. Treat null as active, and default new managers to active. Block assigning inactive owners.
+- **DoD**: Security logic compiles and tests pass.
+- **Status**: IMPLEMENTED / CODE COMPLETE
+
+### Batch 9.5 — Event Manager Details & Reassignment API
+- **Goal**: Expose Admin endpoints to fetch Event Manager details and reassign owned weddings.
+- **Scope**: Implement details and reassignment endpoints. Reassignment accepts `{ weddingIds: number[] }` and assigns them to the currently authenticated Admin. Enforce transactional all-or-nothing reassignment, exclude DELETED tombstones, and preserve other wedding attributes.
+- **DoD**: Reassignment logic compiles and tests pass.
+- **Status**: IMPLEMENTED / CODE COMPLETE
+
+### Batch 9.6 — Event Manager Mobile Hub & UX
+- **Goal**: Build Event Manager Mobile Hub and picker integrations.
+- **Scope**: Create AdminEventManagersScreen details view. Integrate 6 entry points to the Hub. Split touch targets in picking, preserve create wedding form state.
+- **DoD**: TypeScript compilation checks pass.
+- **Status**: IMPLEMENTED / CODE COMPLETE
+
+### Batch 9.7 — Pre-publishing QA Checklist Preparation & Cleanup (Batch 9A)
+- **Goal**: Remove generated target files, compile/TypeScript check, and synchronize documentation.
+- **Scope**: Clean target/ and .expo/ directories. Sync DECISIONS, BATCH_PLAN, TECH_SPEC, API_CONTRACT, and PROJECT_RULES documents. Clearly record that manual QA is pending.
+- **DoD**: Clean git status, diff check passes, and documentation matches code.
+- **Status**: IN PROGRESS (Batch 9A goal)
