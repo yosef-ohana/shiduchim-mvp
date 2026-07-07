@@ -158,6 +158,10 @@ export const ChatScreen = ({ route, navigation }: any) => {
                 if (matchDetails.otherUserProfile.userId) {
                   navigation.navigate('CandidateProfile', {
                     userId: matchDetails.otherUserProfile.userId,
+                    sourceType: 'MATCH',
+                    sourceId: matchDetails.matchId,
+                    poolType: matchDetails.poolType,
+                    weddingId: matchDetails.weddingId ?? undefined,
                   });
                 }
               }}

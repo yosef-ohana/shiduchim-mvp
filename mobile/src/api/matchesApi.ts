@@ -10,3 +10,7 @@ export const getMatchDetails = async (matchId: number): Promise<MatchDetailsResp
   const response = await apiClient.get<MatchDetailsResponse>(`/matches/${matchId}`);
   return response.data;
 };
+
+export const cancelMatch = async (matchId: number): Promise<void> => {
+  await apiClient.patch(`/matches/${matchId}/cancel`);
+};

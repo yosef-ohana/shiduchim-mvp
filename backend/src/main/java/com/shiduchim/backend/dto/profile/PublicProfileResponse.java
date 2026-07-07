@@ -18,11 +18,15 @@ public class PublicProfileResponse {
     private String lookingFor;
     private String headCovering;
     private Boolean hasDrivingLicense;
+    private CandidateRelationshipResponse relationship;
 
     public PublicProfileResponse() {
     }
 
     // Getters and setters
+
+    public CandidateRelationshipResponse getRelationship() { return relationship; }
+    public void setRelationship(CandidateRelationshipResponse relationship) { this.relationship = relationship; }
 
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }

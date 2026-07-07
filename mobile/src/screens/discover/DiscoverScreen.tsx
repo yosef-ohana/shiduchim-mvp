@@ -56,7 +56,12 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
   };
 
   const handleViewProfile = (userId: number) => {
-    navigation.navigate('CandidateProfile', { userId });
+    navigation.navigate('CandidateProfile', {
+      userId,
+      sourceType: 'DISCOVER',
+      poolType: pool,
+      weddingId: pool === 'WEDDING' ? weddingId : undefined,
+    });
   };
 
   if (loading) {

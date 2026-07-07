@@ -3,30 +3,48 @@ import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, Alert } f
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
 import { theme } from '../../theme/theme';
-import { PublicProfileResponse } from '../../types/api';
+import { PublicProfileResponse, AllowedCandidateAction, PoolType } from '../../types/api';
 import { getImageUrl } from '../../utils/imageUrl';
 import { getYesNoLabel, getEmptyLabel } from '../../utils/displayLabels';
 import { blockUser } from '../../api/blocksApi';
 import { getPublicProfile } from '../../api/profileApi';
+import { likeUser, dislikeUser, freezeUser, unfreezeUser, removeAction } from '../../api/actionsApi';
+import { sendOpeningMessage } from '../../api/openingMessagesApi';
+import { CandidateProfileActions } from '../../components/profile/CandidateProfileActions';
+import { OpeningMessageComposer } from '../../components/OpeningMessageComposer';
 
 export const CandidateProfileScreen = ({ route, navigation }: any) => {
-  const { userId, contextLabel } = route.params || {};
+  const { userId, contextLabel, sourceType, sourceId, poolType, weddingId } = route.params || {};
   const [profile, setProfile] = useState<PublicProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [loadingAction, setLoadingAction] = useState<AllowedCandidateAction | null>(null);
+  const [composerVisible, setComposerVisible] = useState(false);
 
   const fetchProfile = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getPublicProfile(userId);
+      const sourceDescriptor = {
+        sourceType,
+        sourceId,
+        poolType,
+        weddingId,
+      };
+      const data = await getPublicProfile(userId, sourceDescriptor);
       setProfile(data);
     } catch (err: any) {
-      setError(
-        err.response?.data?.message ||
-          err.message ||
-          'טעינת פרופיל המועמד נכשלה. אנא נסו שוב.'
-      );
+      if (err.response?.status === 403) {
+        setError('אין לך הרשאה לצפות בפרופיל זה.');
+      } else if (err.response?.status === 404) {
+        setError('הפרופיל המבוקש אינו קיים עוד.');
+      } else {
+        setError(
+          err.response?.data?.message ||
+            err.message ||
+            'טעינת פרופיל המועמד נכשלה. אנא נסו שוב.'
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -35,6 +53,236 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
   useEffect(() => {
     fetchProfile();
   }, [userId]);
+
+  const getEffectiveContextParams = (): { poolType: PoolType; weddingId?: number } | null => {
+    const rel = profile?.relationship;
+    if (!rel) return null;
+    const ctx = rel.effectiveContext;
+    if (!ctx || !ctx.validForActions || !ctx.poolType) {
+      return null;
+    }
+    if (ctx.poolType === 'WEDDING' && (ctx.weddingId === null || ctx.weddingId === undefined)) {
+      return null;
+    }
+    return {
+      poolType: ctx.poolType,
+      weddingId: ctx.weddingId ?? undefined,
+    };
+  };
+
+  const handleMutationError = (err: any) => {
+    const status = err.response?.status;
+    let message = 'ביצוע הפעולה נכשל. אנא נסו שוב.';
+    if (status === 403) {
+      message = 'אין לך הרשאה לבצע פעולה זו, או שהפעולה כבר אינה מורשית.';
+    } else if (status === 404) {
+      message = 'המועמד או הפעולה אינם זמינים עוד.';
+    } else if (status === 409) {
+      message = 'מצב הקשר השתנה בשרת. הפרופיל יתרענן.';
+    } else if (err.response?.data?.message) {
+      message = err.response.data.message;
+    } else if (err.message) {
+      message = err.message;
+    }
+
+    Alert.alert('שגיאה', message, [
+      { text: 'אישור', onPress: fetchProfile }
+    ]);
+  };
+
+  const executeActionMutation = async (action: AllowedCandidateAction, apiFn: () => Promise<any>) => {
+    setLoadingAction(action);
+    try {
+      await apiFn();
+      await fetchProfile();
+    } catch (err: any) {
+      handleMutationError(err);
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const handleLike = () => {
+    const params = getEffectiveContextParams();
+    if (!params) {
+      Alert.alert('שגיאה', 'שגיאת מערכת: נתוני ההקשר חסרים. הפרופיל יתרענן.', [
+        { text: 'אישור', onPress: fetchProfile }
+      ]);
+      return;
+    }
+    Alert.alert(
+      'סימון לייק',
+      'אם גם הצד השני יסמן לייק, ייווצר שידוך ותוכלו להתכתב.',
+      [
+        { text: 'ביטול', style: 'cancel' },
+        {
+          text: 'לייק',
+          onPress: () => executeActionMutation('LIKE', () => likeUser(userId, params))
+        },
+      ]
+    );
+  };
+
+  const handleDislike = () => {
+    const params = getEffectiveContextParams();
+    if (!params) {
+      Alert.alert('שגיאה', 'שגיאת מערכת: נתוני ההקשר חסרים. הפרופיל יתרענן.', [
+        { text: 'אישור', onPress: fetchProfile }
+      ]);
+      return;
+    }
+    Alert.alert(
+      'לא מתאים',
+      'משתמש זה יועבר לרשימת הלא מתאימים ולא יופיע שוב בפיד שלך.',
+      [
+        { text: 'ביטול', style: 'cancel' },
+        {
+          text: 'לא מתאים',
+          style: 'destructive',
+          onPress: () => executeActionMutation('DISLIKE', () => dislikeUser(userId, params))
+        },
+      ]
+    );
+  };
+
+  const handleFreeze = () => {
+    const params = getEffectiveContextParams();
+    if (!params) {
+      Alert.alert('שגיאה', 'שגיאת מערכת: נתוני ההקשר חסרים. הפרופיל יתרענן.', [
+        { text: 'אישור', onPress: fetchProfile }
+      ]);
+      return;
+    }
+    Alert.alert(
+      'שמור בצד',
+      'משתמש זה יישמר בצד ולא יופיע בפיד שלך עד שתסיר אותו מרשימת השמורים בצד.',
+      [
+        { text: 'ביטול', style: 'cancel' },
+        {
+          text: 'שמור בצד',
+          onPress: () => executeActionMutation('FREEZE', () => freezeUser(userId, params))
+        },
+      ]
+    );
+  };
+
+  const handleUnfreeze = () => {
+    const params = getEffectiveContextParams();
+    if (!params) {
+      Alert.alert('שגיאה', 'שגיאת מערכת: נתוני ההקשר חסרים. הפרופיל יתרענן.', [
+        { text: 'אישור', onPress: fetchProfile }
+      ]);
+      return;
+    }
+    executeActionMutation('UNFREEZE', () => unfreezeUser(userId, params));
+  };
+
+  const handleRemoveAction = () => {
+    const params = getEffectiveContextParams();
+    if (!params) {
+      Alert.alert('שגיאה', 'שגיאת מערכת: נתוני ההקשר חסרים. הפרופיל יתרענן.', [
+        { text: 'אישור', onPress: fetchProfile }
+      ]);
+      return;
+    }
+    executeActionMutation('REMOVE_ACTION', () => removeAction(userId, params));
+  };
+
+  const handleSendOpening = async (content: string) => {
+    const params = getEffectiveContextParams();
+    if (!params) {
+      Alert.alert('שגיאה', 'שגיאת מערכת: נתוני ההקשר חסרים. הפרופיל יתרענן.', [
+        { text: 'אישור', onPress: fetchProfile }
+      ]);
+      return;
+    }
+    setLoadingAction('OPENING_CREATE');
+    try {
+      await sendOpeningMessage(userId, {
+        content,
+        poolType: params.poolType,
+        weddingId: params.weddingId,
+      });
+      await fetchProfile();
+    } catch (err: any) {
+      handleMutationError(err);
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const handleOpeningOpen = () => {
+    const convId = profile?.relationship?.opening?.conversationId;
+    if (!convId) {
+      Alert.alert('שגיאה', 'שגיאת מערכת: מזהה שיחה חסר. הפרופיל יתרענן.', [
+        { text: 'אישור', onPress: fetchProfile }
+      ]);
+      return;
+    }
+    navigation.navigate('OpeningConversationDetails', {
+      conversationId: convId,
+      otherUserName: profile.fullName,
+    });
+  };
+
+  const handleChatOpen = () => {
+    const matchId = profile?.relationship?.match?.matchId;
+    if (!matchId) {
+      Alert.alert('שגיאה', 'שגיאת מערכת: מזהה התאמה חסר. הפרופיל יתרענן.', [
+        { text: 'אישור', onPress: fetchProfile }
+      ]);
+      return;
+    }
+    navigation.navigate('Chat', { matchId });
+  };
+
+  const handleMatchDetailsOpen = () => {
+    const matchId = profile?.relationship?.match?.matchId;
+    if (!matchId) {
+      Alert.alert('שגיאה', 'שגיאת מערכת: מזהה התאמה חסר. הפרופיל יתרענן.', [
+        { text: 'אישור', onPress: fetchProfile }
+      ]);
+      return;
+    }
+    navigation.navigate('MatchDetails', { matchId });
+  };
+
+  const getRelationshipStatusText = (): string => {
+    const rel = profile?.relationship;
+    if (!rel) return '';
+
+    if (rel.match && rel.match.status === 'ACTIVE') {
+      return 'יש ביניכם התאמה פעילה';
+    }
+
+    if (rel.match && rel.match.status === 'BLOCKED') {
+      return 'ההתאמה ביניכם בוטלה';
+    }
+
+    if (rel.opening) {
+      if (rel.opening.direction === 'SENT') {
+        return 'שלחת הודעת פתיחה';
+      } else if (rel.opening.direction === 'RECEIVED') {
+        return 'קיבלת הודעת פתיחה';
+      }
+    }
+
+    if (rel.outgoingAction && rel.outgoingAction !== 'NONE') {
+      if (rel.outgoingAction === 'LIKE') {
+        return 'סימנת לייק';
+      } else if (rel.outgoingAction === 'DISLIKE') {
+        return 'העברת לרשימת לא מתאים';
+      } else if (rel.outgoingAction === 'FREEZE') {
+        return 'הקפאת את המועמד';
+      }
+    }
+
+    if (rel.incomingLike) {
+      return 'המועמד סימן לך לייק';
+    }
+
+    return 'עדיין לא בוצעה פעולה';
+  };
 
   const handleBlockUser = () => {
     Alert.alert(
@@ -74,6 +322,12 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
       <Screen style={styles.centerContainer}>
         <Text style={styles.errorText}>{error || 'לא ניתן היה לטעון את הפרופיל'}</Text>
         <AppButton title="נסה שוב" onPress={fetchProfile} style={styles.retryButton} />
+        <AppButton
+          title="חזור"
+          onPress={() => navigation.goBack()}
+          variant="secondary"
+          style={[styles.retryButton, { marginTop: theme.spacing.s }]}
+        />
       </Screen>
     );
   }
@@ -131,6 +385,33 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
           </Text>
         </View>
 
+        {/* Relationship Status Section */}
+        {profile.relationship && (
+          <View style={styles.statusSection}>
+            <Text style={styles.statusText}>{getRelationshipStatusText()}</Text>
+          </View>
+        )}
+
+        {/* Dynamic Actions Section */}
+        {profile.relationship && (
+          <View style={styles.actionsSection}>
+            <CandidateProfileActions
+              allowedActions={profile.relationship.allowedActions}
+              loadingAction={loadingAction}
+              disabled={loading}
+              onLike={handleLike}
+              onDislike={handleDislike}
+              onFreeze={handleFreeze}
+              onRemoveAction={handleRemoveAction}
+              onUnfreeze={handleUnfreeze}
+              onOpeningCreate={() => setComposerVisible(true)}
+              onOpeningOpen={handleOpeningOpen}
+              onChatOpen={handleChatOpen}
+              onMatchDetailsOpen={handleMatchDetailsOpen}
+            />
+          </View>
+        )}
+
         {/* Basic Info Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>פרטי פרופיל</Text>
@@ -162,21 +443,34 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <AppButton
-            title="דווח על משתמש"
-            onPress={() => navigation.navigate('ReportUser', { userId })}
-            style={styles.reportButton}
-          />
-          <AppButton
-            title="חסום משתמש"
-            onPress={handleBlockUser}
-            style={styles.blockButton}
-          />
-        </View>
+        {((profile.relationship?.allowedActions.includes('BLOCK')) ||
+          (profile.relationship?.allowedActions.includes('REPORT'))) && (
+          <View style={styles.section}>
+            {profile.relationship?.allowedActions.includes('REPORT') && (
+              <AppButton
+                title="דווח על משתמש"
+                onPress={() => navigation.navigate('ReportUser', { userId })}
+                style={styles.reportButton}
+              />
+            )}
+            {profile.relationship?.allowedActions.includes('BLOCK') && (
+              <AppButton
+                title="חסום משתמש"
+                onPress={handleBlockUser}
+                style={styles.blockButton}
+              />
+            )}
+          </View>
+        )}
 
         <View style={styles.spacing} />
       </ScrollView>
+
+      <OpeningMessageComposer
+        visible={composerVisible}
+        onClose={() => setComposerVisible(false)}
+        onSend={handleSendOpening}
+      />
     </Screen>
   );
 };
@@ -318,6 +612,23 @@ const styles = StyleSheet.create({
   blockButton: {
     marginTop: theme.spacing.s,
     backgroundColor: '#8B0000',
+  },
+  statusSection: {
+    backgroundColor: '#F5F5F5',
+    paddingVertical: theme.spacing.s,
+    paddingHorizontal: theme.spacing.m,
+    borderRadius: theme.borderRadius.s,
+    marginBottom: theme.spacing.m,
+    alignItems: 'center',
+  },
+  statusText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+  },
+  actionsSection: {
+    marginBottom: theme.spacing.l,
   },
   contextBanner: {
     backgroundColor: 'rgba(212, 175, 55, 0.08)',

@@ -1123,3 +1123,41 @@ This section contains the focused Cycle 5 QA checklist. Note: Manual QA has not 
 
 ### 37.7 QA and Release Status
 - Unified manual QA is pending post-checkpoint. Do not describe the features as Production-verified or Runtime-passed. Any regression found during deferred manual QA will be resolved in a subsequent focused fix.
+
+---
+
+## 38. Cycle 10 MVP+ — Candidate Relationship Snapshot, Match Cancellation, and Navigation Unification
+
+### 38.1 Like Notification Lifecycle Consistency
+- **Like Notification Identity**: A `LIKE_RECEIVED` notification is linked to the active Like action ID. If the Like action is deleted (via Dislike, Freeze, or None), all matching read and unread Like notifications are deleted from the database.
+- **Transactional Cleanup**: The removal of Like actions and deletion of matching Like notifications are executed within the same database transaction.
+- **Badge Derivation**: No separate badge count storage is maintained. The unread count is computed dynamically via database queries.
+
+### 38.2 Match Lifecycle and Cancellation
+- **Explicit Cancellation Endpoint**: A match is cancelled via `PATCH /api/matches/{matchId}/cancel`, which is separate from the Dislike action.
+- **State Transition**: Upon cancellation, the Match status transitions from `ACTIVE` to `BLOCKED`, and the `blockedAt` timestamp is recorded.
+- **Blocked Match Guards**: Active and blocked matches prevent the creation of new openings, actions, or chats. Blocked matches are terminal and cannot be reactivated.
+- **Data Preservation**: Cancellation does not delete historical data. `UserActions`, `Notifications`, `Opening` history, and `ChatMessages` remain stored in the database for auditing.
+
+### 38.3 Candidate Relationship and Source Validation
+- **CandidateRelationshipService**: A read-only service that computes the relationship snapshot for a target candidate user. It returns:
+  - `outgoingAction` (enum)
+  - `incomingLike` (boolean)
+  - `opening` (summary showing conversationId, direction, status)
+  - `match` (summary showing matchId, status)
+  - `effectiveContext` (showing poolType, weddingId, validForActions)
+  - `allowedActions` (list of permitted actions based on business rules)
+- **Precedence Logic**: Access capability and allowed actions are computed based on priority: Block/adminBlocked, Match status, Opening status, active Actions, and live context.
+- **Source Context Validation**:
+  - `DISCOVER` source uses the live pool context.
+  - `ACTION_LIST` source uses a real outgoing Action or incoming LIKE.
+  - `NOTIFICATION` source uses the notification record ID.
+  - `OPENING` source uses the opening conversation ID.
+  - `MATCH` source uses the match ID.
+  - No `CHAT` source context exists.
+  - Foreign, stale, or target-mismatched source descriptors are rejected. No fallback from Wedding pool to Global pool is permitted if the wedding context is stale.
+
+### 38.4 Mobile Client Integration
+- **Server-driven Capabilities**: The Candidate Profile screen renders buttons and executes mutations strictly based on the backend-provided `allowedActions` array.
+- **Mutation Lifecycle**: Upon successful action mutation, the client reloads the entire profile data. Mutation errors (403, 404, 409) prompt Hebrew alert dialogs and trigger a reload.
+- **Unified Navigation**: All user-facing screens use the unified `CandidateProfile` screen parameter interface, passing correct source contexts. Avatars, names, and headers navigate to the Candidate Profile, while row bodies open chats, matches, or openings.

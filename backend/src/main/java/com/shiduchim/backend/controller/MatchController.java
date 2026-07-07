@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PatchMapping;
 
 import java.util.List;
 
@@ -35,5 +36,13 @@ public class MatchController {
             @PathVariable Long matchId) {
         MatchDetailsResponse details = matchService.getMatchDetails(currentUser, matchId);
         return ResponseEntity.ok(details);
+    }
+
+    @PatchMapping("/{matchId}/cancel")
+    public ResponseEntity<Void> cancelMatch(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Long matchId) {
+        matchService.cancelMatch(currentUser, matchId);
+        return ResponseEntity.noContent().build();
     }
 }

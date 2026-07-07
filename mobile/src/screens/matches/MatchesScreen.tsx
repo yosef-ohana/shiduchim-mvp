@@ -55,36 +55,60 @@ export const MatchesScreen = ({ navigation }: any) => {
 
   const renderItem = ({ item }: { item: MatchResponse }) => {
     return (
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => navigation.navigate('MatchDetails', { matchId: item.matchId })}
-        activeOpacity={0.8}
-      >
-        {getImageUrl(item.otherUserPrimaryPhotoUrl) ? (
-          <Image source={{ uri: getImageUrl(item.otherUserPrimaryPhotoUrl) }} style={styles.avatar} />
-        ) : (
-          <View style={styles.placeholderAvatar}>
-            <Text style={styles.placeholderText}>אין תמונה</Text>
-          </View>
-        )}
+      <View style={styles.card}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('CandidateProfile', {
+            userId: item.otherUserId,
+            sourceType: 'MATCH',
+            sourceId: item.matchId,
+            poolType: item.poolType,
+            weddingId: item.weddingId ?? undefined
+          })}
+          activeOpacity={0.7}
+        >
+          {getImageUrl(item.otherUserPrimaryPhotoUrl) ? (
+            <Image source={{ uri: getImageUrl(item.otherUserPrimaryPhotoUrl) }} style={styles.avatar} />
+          ) : (
+            <View style={styles.placeholderAvatar}>
+              <Text style={styles.placeholderText}>אין תמונה</Text>
+            </View>
+          )}
+        </TouchableOpacity>
 
         <View style={styles.cardContent}>
           <View style={styles.headerRow}>
-            <Text style={styles.name} numberOfLines={1}>
-              {item.otherUserFullName}
-            </Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('CandidateProfile', {
+                userId: item.otherUserId,
+                sourceType: 'MATCH',
+                sourceId: item.matchId,
+                poolType: item.poolType,
+                weddingId: item.weddingId ?? undefined
+              })}
+              activeOpacity={0.7}
+              style={{ flex: 1 }}
+            >
+              <Text style={styles.name} numberOfLines={1}>
+                {item.otherUserFullName}
+              </Text>
+            </TouchableOpacity>
             <Text style={styles.poolTag}>
               {getPoolTypeLabel(item.poolType)}
             </Text>
           </View>
           
-          <Text style={styles.dateText}>
-            נוצרה התאמה ב-{formatDisplayDate(item.createdAt)}
-          </Text>
-          
-          <Text style={styles.actionText}>לחץ לצפייה בפרטים וצ׳אט ←</Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('MatchDetails', { matchId: item.matchId })}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.dateText}>
+              נוצרה התאמה ב-{formatDisplayDate(item.createdAt)}
+            </Text>
+
+            <Text style={styles.actionText}>לחץ לצפייה בפרטים וצ׳אט ←</Text>
+          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+      </View>
     );
   };
 

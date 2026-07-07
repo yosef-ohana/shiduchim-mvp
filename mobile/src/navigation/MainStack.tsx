@@ -39,7 +39,7 @@ import { AdminProductFeedbackDetailsScreen } from '../screens/admin/AdminProduct
 import { WeddingParticipantsScreen } from '../screens/weddings/WeddingParticipantsScreen';
 import { StaffParticipantDetailsScreen } from '../screens/weddings/StaffParticipantDetailsScreen';
 import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
-import { DiscoverPool, UserWeddingResponse } from '../types/api';
+import { DiscoverPool, UserWeddingResponse, CandidateProfileSourceType, PoolType } from '../types/api';
 
 export type MainStackParamList = {
   Me: undefined;
@@ -82,6 +82,10 @@ export type MainStackParamList = {
     userId: number;
     sourceContext?: 'OPENING_LIST' | 'OPENING_DETAILS';
     contextLabel?: string;
+    sourceType?: CandidateProfileSourceType;
+    sourceId?: number;
+    poolType?: PoolType;
+    weddingId?: number;
   };
   Lists: undefined;
   Matches: undefined;

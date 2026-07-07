@@ -76,10 +76,11 @@ public class ListsService {
 
         List<ActionListItemResponse> responseList = new ArrayList<>();
         
-        Set<Long> activeMatchPartnerIds = null;
+        Set<Long> matchPartnerIds = null;
         if (actionType == ActionType.LIKE) {
             List<Match> activeMatches = matchRepository.findByUserIdAndStatus(currentUser.getId(), MatchStatus.ACTIVE);
-            activeMatchPartnerIds = activeMatches.stream()
+            List<Match> blockedMatches = matchRepository.findByUserIdAndStatus(currentUser.getId(), MatchStatus.BLOCKED);
+            matchPartnerIds = java.util.stream.Stream.concat(activeMatches.stream(), blockedMatches.stream())
                     .map(m -> m.getUser1Id().equals(currentUser.getId()) ? m.getUser2Id() : m.getUser1Id())
                     .collect(Collectors.toSet());
         }
@@ -103,8 +104,8 @@ public class ListsService {
                 continue;
             }
 
-            if (actionType == ActionType.LIKE && activeMatchPartnerIds != null) {
-                if (activeMatchPartnerIds.contains(targetUser.getId())) {
+            if (actionType == ActionType.LIKE && matchPartnerIds != null) {
+                if (matchPartnerIds.contains(targetUser.getId())) {
                     continue;
                 }
             }
@@ -166,9 +167,10 @@ public class ListsService {
             }
         }
 
-        // Fetch active matches for current user to filter out active matches across all contexts
+        // Fetch matches for current user to filter out matches across all contexts
         List<Match> activeMatches = matchRepository.findByUserIdAndStatus(currentUser.getId(), MatchStatus.ACTIVE);
-        Set<Long> activeMatchPartnerIds = activeMatches.stream()
+        List<Match> blockedMatches = matchRepository.findByUserIdAndStatus(currentUser.getId(), MatchStatus.BLOCKED);
+        Set<Long> matchPartnerIds = java.util.stream.Stream.concat(activeMatches.stream(), blockedMatches.stream())
                 .map(m -> m.getUser1Id().equals(currentUser.getId()) ? m.getUser2Id() : m.getUser1Id())
                 .collect(Collectors.toSet());
 
@@ -192,8 +194,8 @@ public class ListsService {
                 continue;
             }
 
-            // Check if there is an active match in any context
-            if (activeMatchPartnerIds.contains(liker.getId())) {
+            // Check if there is an active or blocked match in any context
+            if (matchPartnerIds.contains(liker.getId())) {
                 continue;
             }
 

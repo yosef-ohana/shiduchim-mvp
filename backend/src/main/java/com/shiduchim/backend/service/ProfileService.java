@@ -21,14 +21,17 @@ public class ProfileService {
     private final UserPhotoRepository userPhotoRepository;
     private final com.shiduchim.backend.repository.WeddingParticipantRepository weddingParticipantRepository;
     private final UserBlockService userBlockService;
+    private final CandidateRelationshipService candidateRelationshipService;
 
     public ProfileService(UserRepository userRepository, UserPhotoRepository userPhotoRepository,
                           com.shiduchim.backend.repository.WeddingParticipantRepository weddingParticipantRepository,
-                          UserBlockService userBlockService) {
+                          UserBlockService userBlockService,
+                          CandidateRelationshipService candidateRelationshipService) {
         this.userRepository = userRepository;
         this.userPhotoRepository = userPhotoRepository;
         this.weddingParticipantRepository = weddingParticipantRepository;
         this.userBlockService = userBlockService;
+        this.candidateRelationshipService = candidateRelationshipService;
     }
 
     // ─── GET /api/profile/me ──────────────────────────────────────────────────
@@ -206,7 +209,7 @@ public class ProfileService {
 
     // ─── GET /api/profiles/{userId} ───────────────────────────────────────────
 
-    public PublicProfileResponse getPublicProfile(User currentUser, Long targetUserId) {
+    public PublicProfileResponse getPublicProfile(User currentUser, Long targetUserId, com.shiduchim.backend.enums.CandidateProfileSourceType sourceType, Long sourceId, com.shiduchim.backend.enums.PoolType poolType, Long weddingId) {
         requireUserRole(currentUser);
 
         if (currentUser.getId().equals(targetUserId)) {
@@ -253,11 +256,13 @@ public class ProfileService {
             eligibleWedding = weddingParticipantRepository.existsSharedActiveWedding(currentUser.getId(), targetUserId);
         }
 
-        if (!eligibleGlobal && !eligibleWedding) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Target user is not eligible in any shared context");
-        }
+        boolean hasExistingPublicAccess = eligibleGlobal || eligibleWedding;
+
+        CandidateRelationshipResponse relationship = candidateRelationshipService.getRelationship(
+                currentUser, targetUser, sourceType, sourceId, poolType, weddingId, hasExistingPublicAccess);
 
         PublicProfileResponse response = new PublicProfileResponse();
+        response.setRelationship(relationship);
         response.setUserId(targetUser.getId());
         response.setPrimaryPhotoUrl(primaryPhotoUrl);
         response.setAdditionalPhotoUrl(additionalPhotoUrl);

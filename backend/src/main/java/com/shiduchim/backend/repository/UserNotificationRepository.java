@@ -26,4 +26,12 @@ public interface UserNotificationRepository extends JpaRepository<UserNotificati
     int markAllAsRead(@Param("recipientUserId") Long recipientUserId, @Param("readAt") LocalDateTime readAt);
 
     long countByRecipientUserIdAndTypeAndReferenceId(Long recipientUserId, com.shiduchim.backend.enums.NotificationType type, Long referenceId);
+
+    @Modifying
+    @Query("DELETE FROM UserNotification n WHERE n.recipientUserId = :recipientUserId AND n.actorUserId = :actorUserId AND n.type = :type AND n.referenceId IN :referenceIds")
+    int deleteByRecipientAndActorAndTypeAndReferenceIds(
+            @Param("recipientUserId") Long recipientUserId,
+            @Param("actorUserId") Long actorUserId,
+            @Param("type") com.shiduchim.backend.enums.NotificationType type,
+            @Param("referenceIds") java.util.Collection<Long> referenceIds);
 }

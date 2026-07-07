@@ -68,6 +68,10 @@ export const OpeningMessagesScreen = ({ navigation }: any) => {
             style={styles.headerTouchable}
             onPress={() => navigation.navigate('CandidateProfile', {
               userId: item.otherUserId,
+              sourceType: 'OPENING',
+              sourceId: item.conversationId,
+              poolType: item.poolType,
+              weddingId: item.weddingId ?? undefined,
               sourceContext: 'OPENING_LIST',
               contextLabel: 'הגעת מרשימת הודעות פתיחה'
             })}

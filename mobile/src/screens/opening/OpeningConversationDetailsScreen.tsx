@@ -156,6 +156,10 @@ export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => 
           style={styles.userHeader}
           onPress={() => navigation.navigate('CandidateProfile', {
             userId: details.otherUserId,
+            sourceType: 'OPENING',
+            sourceId: details.conversationId,
+            poolType: details.poolType,
+            weddingId: details.weddingId ?? undefined,
             sourceContext: 'OPENING_DETAILS',
             contextLabel: 'הגעת מפרטי הודעת פתיחה'
           })}

@@ -15,6 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -145,5 +147,33 @@ public class MatchService {
         response.setCreatedAt(match.getCreatedAt());
 
         return response;
+    }
+
+    @Transactional
+    public void cancelMatch(User currentUser, Long matchId) {
+        if (currentUser == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User must be authenticated");
+        }
+        if (currentUser.getRole() != UserRole.USER) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User must have USER role");
+        }
+        if (Boolean.TRUE.equals(currentUser.getAdminBlocked())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is blocked");
+        }
+
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Match not found"));
+
+        if (!match.getUser1Id().equals(currentUser.getId()) && !match.getUser2Id().equals(currentUser.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not a party to this match");
+        }
+
+        if (match.getStatus() != MatchStatus.ACTIVE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Match is not active");
+        }
+
+        match.setStatus(MatchStatus.BLOCKED);
+        match.setBlockedAt(java.time.LocalDateTime.now());
+        matchRepository.save(match);
     }
 }

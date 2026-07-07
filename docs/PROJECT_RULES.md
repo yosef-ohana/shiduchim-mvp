@@ -221,17 +221,25 @@ To preserve the architectural boundaries and business rules, enforce the followi
 - **No Automatic Wedding Transfer**: Blocking or deactivating an Event Manager does not automatically transfer their owned weddings.
 - **Product Feedback & User Report Separation**: Product Feedback and User Reports remain strictly separate entities, services, and workflows.
 - **Wedding Tombstone Behavior Remains**: Deleted weddings remain invisible in normal lists, but their matches and chats remain accessible in history.
+- **Like Notification Parity**: A Like notification may exist only while its referenced Like action remains current. Both matching read and unread Like notifications are removed when the Like ends (e.g. replaced by Dislike, Freeze, or removed).
+- **Explicit Match Cancellation**: Match cancellation is explicit (using the dedicated endpoint) and never represented as a Dislike. A cancelled Match status becomes BLOCKED and cannot reactivate or rematch in the same lifecycle.
+- **Authoritative allowedActions**: Candidate Profile capabilities come only from Backend `allowedActions`.
+- **Source Context is Not Authorization**: Source route/query context parameters are verified but do not grant permission by themselves. Stale or target-mismatched sources yield no action capability.
+- **No Wedding-to-Global Fallback**: If a validated wedding context becomes stale, it does not fallback to the Global context.
+- **No Mobile Source-less Retry**: Mobile must not retry fetching profiles without source parameters after a validated source fetch fails.
+- **Private Actions Privacy**: Incoming Dislikes and Freezes remain private and are not exposed.
+- **Chat Requires Active Match**: Active chat messages require an ACTIVE Match status between users.
 
 ---
 
 ## 14. QA and Current Release Status
 
-- **Automated Technical Gate**: PASSED
-  - Backend: 65 tests passed, 0 failures, 0 errors.
-  - Mobile TypeScript: Compilation successful.
-  - Repository Integrity: `git diff --check` passed, no tracking conflicts.
-  - API/Type parity: Fully aligned.
+- **Automated Technical Gate**: FOCUSED & STATIC PASSED (DB LIMITATION)
+  - Backend: 70 Candidate Relationship/Profile tests passed after the final Backend change. Focused regression suites (Like Notification Lifecycle, Match Cancellation) could not complete because Docker/MySQL was unavailable (0 assertion failures, 13 ApplicationContext errors).
+  - Mobile TypeScript: Compilation (`npx tsc --noEmit`) is current and passing.
+  - Repository Integrity: `git diff --check` passed, zero conflict/whitespace markers.
 - **Manual QA Status**: PENDING
-  - Unified manual QA has been explicitly deferred and will be performed after the GitHub checkpoint.
+  - Unified manual QA remains pending and will be performed after the final Git closure and push.
+- **Git Closure Status**: COMPLETED (by this final cycle commit)
   - Do not describe features as manually QA-approved or Production-verified in any release documentation.
   - Any issues discovered during the deferred manual QA will require a focused follow-up fix and a subsequent commit.

@@ -155,8 +155,33 @@ Standard errors:
 - `lookingFor`
 - `headCovering`
 - `hasDrivingLicense`
+- `relationship` (CandidateRelationshipResponse, additive)
+
+`CandidateRelationshipResponse`
+- `outgoingAction` (CandidateOutgoingAction: `NONE`, `LIKE`, `DISLIKE`, `FREEZE`)
+- `incomingLike` (Boolean)
+- `opening` (CandidateOpeningSummaryResponse, optional)
+- `match` (CandidateMatchSummaryResponse, optional)
+- `effectiveContext` (CandidateEffectiveContextResponse, optional)
+- `allowedActions` (List of AllowedCandidateAction: `LIKE`, `DISLIKE`, `FREEZE`, `UNFREEZE`, `REMOVE_ACTION`, `OPENING_CREATE`, `OPENING_OPEN`, `CHAT_OPEN`, `MATCH_DETAILS_OPEN`, `BLOCK`, `REPORT`)
+
+`CandidateOpeningSummaryResponse`
+- `conversationId` (Long)
+- `direction` (CandidateOpeningDirection: `SENT`, `RECEIVED`)
+- `status` (String)
+
+`CandidateMatchSummaryResponse`
+- `matchId` (Long)
+- `status` (String)
+
+`CandidateEffectiveContextResponse`
+- `poolType` (PoolType: `GLOBAL`, `WEDDING`)
+- `weddingId` (Long, optional)
+- `validForActions` (Boolean)
+- `sourceType` (CandidateProfileSourceType: `DISCOVER`, `ACTION_LIST`, `NOTIFICATION`, `OPENING`, `MATCH`)
 
 Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBlocked`, action history.
+
 
 ---
 
@@ -523,7 +548,7 @@ Public profile/card never includes: `email`, `phone`, `passwordHash`, `adminBloc
 | PUT | `/api/profile/me` | USER | `UnifiedProfileUpdateRequest` | `ProfileMeResponse` | Atomic unified profile update; updates BASIC/FULL targets; validation before mutation; method-level `@Transactional`; photo not required; legacy endpoints preserved | 400, 401, 403 |
 | PUT | `/api/profile/basic` | USER | `BasicProfileRequest` | `BasicProfileResponse` | Completes BASIC; fullName locked after confirmation; gender not changed here | 400, 401, 403 |
 | PUT | `/api/profile/full` | USER | `FullProfileRequest` | `FullProfileResponse` | Completes FULL; opens global; missing required fields handled | 400, 401, 403 |
-| GET | `/api/profiles/{userId}` | USER | — | `PublicProfileResponse` | Candidate must be eligible/opposite gender; no email/phone | 401, 403, 404 |
+| GET | `/api/profiles/{userId}` | USER | Query parameters: `sourceType`, `sourceId`, `poolType`, `weddingId` (all optional) | `PublicProfileResponse` | Candidate must be eligible/opposite gender; returns relationship snapshot based on source context | 401, 403, 404 |
 
 ---
 
@@ -631,10 +656,12 @@ Never expose who Disliked/Froze current user.
 
 ### Matches
 
-| Method | Path | Role | Response | Rules | Errors |
-|---|---|---|---|---|---|
-| GET | `/api/matches` | USER | `List<MatchResponse>` | ACTIVE Matches only | 401, 403 |
-| GET | `/api/matches/{matchId}` | USER | `MatchDetailsResponse` | Current user must be one side | 401, 403, 404 |
+| Method | Path | Role | Request | Response | Rules | Errors |
+|---|---|---|---|---|---|---|
+| GET | `/api/matches` | USER | — | `List<MatchResponse>` | ACTIVE Matches only | 401, 403 |
+| GET | `/api/matches/{matchId}` | USER | — | `MatchDetailsResponse` | Current user must be one side | 401, 403, 404 |
+| PATCH | `/api/matches/{matchId}/cancel` | USER | — | — | Cancel ACTIVE match; authenticated user must be a party; transitions to BLOCKED; sets blockedAt; no reactivation; no actions/chats deleted | 400, 401, 403, 404 |
+
 
 ---
 
@@ -660,6 +687,9 @@ No WebSocket. No realtime. No attachments. (Note: internal unread count per conv
 | GET | `/api/notifications/unread-count` | USER | — | `NotificationUnreadCountResponse` | Returns total unread notifications count | 401, 403 |
 | PATCH | `/api/notifications/{id}/read` | USER | — | `NotificationResponse` | Marks a single notification as read | 401, 403, 404 |
 | PATCH | `/api/notifications/read-all` | USER | — | `NotificationUnreadCountResponse` | Marks all user notifications as read | 401, 403 |
+
+Note: Like notifications are transactionally cleaned up by the backend when Like actions are removed. No new public endpoint was added for this lifecycle cleanup.
+
 
 ---
 

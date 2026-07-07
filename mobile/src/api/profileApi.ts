@@ -7,6 +7,8 @@ import {
   FullProfileResponse,
   PublicProfileResponse,
   UnifiedProfileUpdateRequest,
+  CandidateProfileSourceType,
+  PoolType,
 } from '../types/api';
 
 export const getMyProfile = async (): Promise<ProfileMeResponse> => {
@@ -35,8 +37,35 @@ export const updateFullProfile = async (
   return response.data;
 };
 
-export const getPublicProfile = async (userId: number): Promise<PublicProfileResponse> => {
-  const response = await apiClient.get<PublicProfileResponse>(`/profiles/${userId}`);
+export interface ProfileSourceDescriptor {
+  sourceType?: CandidateProfileSourceType;
+  sourceId?: number;
+  poolType?: PoolType;
+  weddingId?: number;
+}
+
+export const getPublicProfile = async (
+  userId: number,
+  source?: ProfileSourceDescriptor
+): Promise<PublicProfileResponse> => {
+  const queryParams: Record<string, any> = {};
+  if (source) {
+    if (source.sourceType !== undefined && source.sourceType !== null) {
+      queryParams.sourceType = source.sourceType;
+    }
+    if (source.sourceId !== undefined && source.sourceId !== null) {
+      queryParams.sourceId = source.sourceId;
+    }
+    if (source.poolType !== undefined && source.poolType !== null) {
+      queryParams.poolType = source.poolType;
+    }
+    if (source.weddingId !== undefined && source.weddingId !== null) {
+      queryParams.weddingId = source.weddingId;
+    }
+  }
+  const response = await apiClient.get<PublicProfileResponse>(`/profiles/${userId}`, {
+    params: queryParams,
+  });
   return response.data;
 };
 

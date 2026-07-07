@@ -168,8 +168,13 @@ export const ListsScreen = ({ navigation }: any) => {
     }
   };
 
-  const handleViewProfile = (userId: number) => {
-    navigation.navigate('CandidateProfile', { userId });
+  const handleViewProfile = (userId: number, poolType?: PoolType, weddingId?: number) => {
+    navigation.navigate('CandidateProfile', {
+      userId,
+      sourceType: 'ACTION_LIST',
+      poolType,
+      weddingId: poolType === 'WEDDING' ? weddingId : undefined,
+    });
   };
 
   const renderOpeningMessageButton = (item: any) => {
@@ -249,7 +254,7 @@ export const ListsScreen = ({ navigation }: any) => {
                 education: item.education,
                 lookingForShort: item.lookingForShort,
               }}
-              onViewProfile={() => handleViewProfile(item.userId)}
+              onViewProfile={() => handleViewProfile(item.userId, item.poolType, item.weddingId)}
               actionButtons={
                 <View style={styles.actionsContainer}>
                   {activeTab === 'likes' && (

@@ -196,6 +196,7 @@ export interface PublicProfileResponse {
   lookingFor: string;
   headCovering: string | null;
   hasDrivingLicense: boolean | null;
+  relationship?: CandidateRelationship | null;
 }
 
 export type ActionType = 'LIKE' | 'DISLIKE' | 'FREEZE';
@@ -670,4 +671,55 @@ export interface NotificationPageResponse {
 
 export interface UnreadNotificationCountResponse {
   unreadCount: number;
+}
+
+export type AllowedCandidateAction =
+  | 'LIKE'
+  | 'DISLIKE'
+  | 'FREEZE'
+  | 'REMOVE_ACTION'
+  | 'UNFREEZE'
+  | 'OPENING_CREATE'
+  | 'OPENING_OPEN'
+  | 'CHAT_OPEN'
+  | 'MATCH_DETAILS_OPEN'
+  | 'BLOCK'
+  | 'REPORT';
+
+export type CandidateProfileSourceType =
+  | 'DISCOVER'
+  | 'ACTION_LIST'
+  | 'NOTIFICATION'
+  | 'OPENING'
+  | 'MATCH';
+
+export type CandidateOutgoingAction = 'NONE' | 'LIKE' | 'DISLIKE' | 'FREEZE';
+
+export type CandidateOpeningDirection = 'SENT' | 'RECEIVED';
+
+export interface CandidateOpeningSummary {
+  conversationId: number;
+  direction: CandidateOpeningDirection;
+  status: string;
+}
+
+export interface CandidateMatchSummary {
+  matchId: number;
+  status: string;
+}
+
+export interface CandidateEffectiveContext {
+  poolType: PoolType | null;
+  weddingId: number | null;
+  validForActions: boolean;
+  sourceType: CandidateProfileSourceType | null;
+}
+
+export interface CandidateRelationship {
+  outgoingAction: CandidateOutgoingAction;
+  incomingLike: boolean;
+  opening: CandidateOpeningSummary | null;
+  match: CandidateMatchSummary | null;
+  effectiveContext: CandidateEffectiveContext | null;
+  allowedActions: AllowedCandidateAction[];
 }

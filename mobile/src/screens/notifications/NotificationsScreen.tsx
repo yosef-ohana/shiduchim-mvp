@@ -159,7 +159,11 @@ export const NotificationsScreen = () => {
       }
       try {
         await getPublicProfile(actorUserId);
-        navigation.navigate('CandidateProfile', { userId: actorUserId });
+        navigation.navigate('CandidateProfile', {
+          userId: actorUserId,
+          sourceType: 'NOTIFICATION',
+          sourceId: notification.id,
+        });
       } catch (err) {
         Alert.alert('שגיאה', 'פרופיל המשתמש אינו נגיש או שנחסם.');
       }
@@ -235,7 +239,11 @@ export const NotificationsScreen = () => {
 
       try {
         await getPublicProfile(updatedNotification.actorUserId);
-        navigation.navigate('CandidateProfile', { userId: updatedNotification.actorUserId });
+        navigation.navigate('CandidateProfile', {
+          userId: updatedNotification.actorUserId,
+          sourceType: 'NOTIFICATION',
+          sourceId: updatedNotification.id,
+        });
       } catch (err) {
         Alert.alert('שגיאה', 'פרופיל המשתמש אינו נגיש או שנחסם.');
       }

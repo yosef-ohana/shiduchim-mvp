@@ -96,7 +96,13 @@ export const ChatsScreen = ({ navigation }: any) => {
         />
         <View style={styles.cardHeader} pointerEvents="box-none">
           <TouchableOpacity
-            onPress={() => navigation.navigate('CandidateProfile', { userId: item.otherUserId })}
+            onPress={() => navigation.navigate('CandidateProfile', {
+              userId: item.otherUserId,
+              sourceType: 'MATCH',
+              sourceId: item.matchId,
+              poolType: item.poolType,
+              weddingId: item.weddingId ?? undefined,
+            })}
             activeOpacity={0.7}
           >
             {avatarUrl ? (
@@ -111,7 +117,13 @@ export const ChatsScreen = ({ navigation }: any) => {
           <View style={styles.headerInfo} pointerEvents="box-none">
             <View style={styles.nameTimeRow} pointerEvents="box-none">
               <TouchableOpacity
-                onPress={() => navigation.navigate('CandidateProfile', { userId: item.otherUserId })}
+                onPress={() => navigation.navigate('CandidateProfile', {
+                  userId: item.otherUserId,
+                  sourceType: 'MATCH',
+                  sourceId: item.matchId,
+                  poolType: item.poolType,
+                  weddingId: item.weddingId ?? undefined,
+                })}
                 activeOpacity={0.7}
               >
                 <Text style={styles.name} numberOfLines={1}>

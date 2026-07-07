@@ -68,12 +68,21 @@ public class ActionService {
     public ActionResponse handleAction(User actor, Long targetUserId, ActionType actionType, PoolType poolType, Long weddingId) {
         validateAction(actor, targetUserId, poolType, weddingId);
 
-        if (matchRepository.existsActiveMatchBetweenUsers(actor.getId(), targetUserId)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "An active match already exists between these users.");
+        List<Match> existingMatchesCheck = matchRepository.findMatchesBetweenUsers(actor.getId(), targetUserId);
+        if (!existingMatchesCheck.isEmpty()) {
+            MatchStatus status = existingMatchesCheck.get(0).getStatus();
+            if (status == MatchStatus.ACTIVE || status == MatchStatus.BLOCKED) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "An active or blocked match already exists between these users.");
+            }
         }
 
         List<UserAction> existingActions = userActionRepository.findByActorUserIdAndTargetUserIdOrderByUpdatedAtDesc(
                 actor.getId(), targetUserId);
+
+        java.util.List<Long> existingLikeActionIds = existingActions.stream()
+                .filter(a -> a.getActionType() == ActionType.LIKE)
+                .map(UserAction::getId)
+                .collect(java.util.stream.Collectors.toList());
 
         boolean isNewRealLike = false;
         UserAction primaryAction;
@@ -91,6 +100,11 @@ public class ActionService {
             // Clean up duplicates for this exact actor+target pair
             for (int i = 1; i < existingActions.size(); i++) {
                 userActionRepository.delete(existingActions.get(i));
+            }
+
+            if (actionType != ActionType.LIKE && !existingLikeActionIds.isEmpty()) {
+                notificationService.deleteLikeNotificationsForInvalidatedActions(
+                        targetUserId, actor.getId(), existingLikeActionIds);
             }
         } else {
             primaryAction = new UserAction();
@@ -123,7 +137,7 @@ public class ActionService {
         Long user1Id = Math.min(actor.getId(), targetUserId);
         Long user2Id = Math.max(actor.getId(), targetUserId);
 
-        List<Match> matches = matchRepository.findByUser1IdAndUser2Id(user1Id, user2Id);
+        List<Match> matches = matchRepository.findMatchesBetweenUsers(actor.getId(), targetUserId);
         Optional<Match> existingMatchOpt = matches.isEmpty() ? Optional.empty() : Optional.of(matches.get(0));
 
         if (actionType == ActionType.LIKE) {
@@ -206,21 +220,32 @@ public class ActionService {
         Long user1Id = Math.min(actor.getId(), targetUserId);
         Long user2Id = Math.max(actor.getId(), targetUserId);
 
-        Optional<Match> existingMatchOpt = matchRepository.findByUser1IdAndUser2IdAndPoolTypeAndWeddingId(
-                user1Id, user2Id, poolType, weddingId);
-
-        if (existingMatchOpt.isPresent() && existingMatchOpt.get().getStatus() == MatchStatus.ACTIVE) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot remove action when an ACTIVE Match exists.");
+        List<Match> existingMatchesCheck = matchRepository.findMatchesBetweenUsers(actor.getId(), targetUserId);
+        if (!existingMatchesCheck.isEmpty()) {
+            MatchStatus status = existingMatchesCheck.get(0).getStatus();
+            if (status == MatchStatus.ACTIVE || status == MatchStatus.BLOCKED) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot remove action when an active or blocked Match exists.");
+            }
         }
 
         List<UserAction> existingActions = userActionRepository.findByActorUserIdAndTargetUserIdOrderByUpdatedAtDesc(
                 actor.getId(), targetUserId);
+
+        java.util.List<Long> existingLikeActionIds = existingActions.stream()
+                .filter(a -> a.getActionType() == ActionType.LIKE)
+                .map(UserAction::getId)
+                .collect(java.util.stream.Collectors.toList());
 
         ActionType removedType = null;
         if (!existingActions.isEmpty()) {
             removedType = existingActions.get(0).getActionType();
             for (UserAction action : existingActions) {
                 userActionRepository.delete(action);
+            }
+
+            if (!existingLikeActionIds.isEmpty()) {
+                notificationService.deleteLikeNotificationsForInvalidatedActions(
+                        targetUserId, actor.getId(), existingLikeActionIds);
             }
         }
 

@@ -137,4 +137,17 @@ public class NotificationService {
         notification2.setEventKey(eventKey2);
         userNotificationRepository.save(notification2);
     }
+
+    @Transactional
+    public void deleteLikeNotificationsForInvalidatedActions(Long recipientUserId, Long actorUserId, java.util.Collection<Long> invalidatedActionIds) {
+        if (invalidatedActionIds == null || invalidatedActionIds.isEmpty()) {
+            return;
+        }
+        userNotificationRepository.deleteByRecipientAndActorAndTypeAndReferenceIds(
+                recipientUserId,
+                actorUserId,
+                com.shiduchim.backend.enums.NotificationType.LIKE_RECEIVED,
+                invalidatedActionIds
+        );
+    }
 }

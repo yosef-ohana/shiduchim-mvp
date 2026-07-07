@@ -857,3 +857,29 @@ These are collected future improvements and are NOT implemented at this stage. T
 
 ### 38.6 QA Release Decisions
 - **Manual QA Deferred**: Manual verification of the runtime environment is explicitly deferred to post-checkpoint. Release status remains "Manual QA Pending". Do not claim production-readiness or runtime-verified status. Any regression found during deferred manual QA will be resolved in a subsequent focused fix.
+
+---
+
+## 39. Cycle 10 MVP+ Decisions: Candidate Relationship Snapshot, Match Cancellation, and Navigation Unification
+
+### 39.1 Like Notification Lifecycle Consistency
+- **Like Relationship Definition**: `LIKE_RECEIVED` represents a currently active Like action from another user.
+- **Targeted Notification Deletion**: When an actor removes their Like action (by selecting Dislike, Freeze, or None/No Action), only the notifications of type `LIKE_RECEIVED` matching that actor, recipient, and the exact collection of `UserAction` reference IDs are deleted.
+- **Status Independence**: Both read and unread matching Like notifications are removed to maintain absolute UI state parity.
+- **No Deletion Notifications**: No separate cancellation or removal notifications are created.
+- **Transactional Consistency**: Database action mutations and matching notification cleanups are executed together within the same transactional boundary to ensure atomicity.
+
+### 39.2 Explicit Match Cancellation
+- **Dedicated Endpoint**: Cancellation of an active match is initiated via `PATCH /api/matches/{matchId}/cancel`.
+- **Cancellation Separation**: Cancellation is treated as a unique state change and is distinct from a Dislike action.
+- **Blocked State Transition**: An `ACTIVE` match transitions to the `BLOCKED` status and receives a `blockedAt` timestamp.
+- **Data Preservation**: User actions, notification histories, opening messages, and chat messages are fully preserved for auditing and are not deleted.
+- **No Reactivation / Rematch**: Blocked matches are terminal and cannot be reactivated or rematched in this cycle.
+
+### 39.3 Candidate Profile Relationship Snapshot
+- **Additive Relationship Schema**: Exposing candidate relationship state is achieved through an additive `relationship` object on `PublicProfileResponse`.
+- **Backend Authority**: The backend `allowedActions` list is the single source of truth for action authorization.
+- **No Frontend Permission Logic**: The mobile frontend does not perform local permission or state checks for actions; it displays buttons strictly based on the server-provided `allowedActions`.
+- **Validated Source Descriptors**: The sourceType and sourceId query parameters are validated as context hints, not credentials. Stale or mismatched sources provide no action capability.
+- **Strict Context Isolation**: A stale Wedding context never falls back to the Global context; pool and wedding matches must align precisely.
+- **ACTION_LIST Scope**: The `ACTION_LIST` context type supports outgoing actions and incoming `LIKE` actions only. Incoming Dislikes and Freezes remain private.

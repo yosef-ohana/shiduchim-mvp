@@ -1531,3 +1531,50 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
 - **Scope**: Clean target/ and .expo/ directories. Sync DECISIONS, BATCH_PLAN, TECH_SPEC, API_CONTRACT, and PROJECT_RULES documents. Clearly record that manual QA is pending.
 - **DoD**: Clean git status, diff check passes, and documentation matches code.
 - **Status**: IN PROGRESS (Batch 9A goal)
+
+---
+
+## Cycle 10 MVP+ — Candidate Relationship Snapshot, Match Cancellation, and Navigation Unification
+
+### Batch 1 — Like Notification Lifecycle Consistency
+- **Goal**: Implement transactional deletion of Like notifications upon Like action removal.
+- **Status**: IMPLEMENTED / CODE COMPLETE
+
+### Batch 2 — Approved Match Cancellation Alignment
+- **Goal**: Implement explicit Match cancellation and status `BLOCKED` transitions with action guards.
+- **Status**: IMPLEMENTED / CODE COMPLETE
+
+### Batch 3 — Candidate Relationship Snapshot and Capabilities
+- **Goal**: Expose candidate relationship snapshot and backend-calculated allowed actions in PublicProfileResponse.
+- **Status**: IMPLEMENTED / CODE COMPLETE
+
+### ACTION_LIST incoming-like prerequisite correction
+- **Goal**: Support ACTION_LIST query parameters and pool/wedding context checks.
+- **Status**: IMPLEMENTED / CODE COMPLETE
+
+### Batch 4 — Dynamic Candidate Profile Mobile
+- **Goal**: Render mobile profile action buttons based purely on backend allowedActions.
+- **Status**: IMPLEMENTED / CODE COMPLETE
+
+### Batch 5 — Unified Candidate Profile Navigation
+- **Goal**: Wire all mobile deep-linking screens to use the unified CandidateProfile screen with correct sourceType/sourceId.
+- **Status**: IMPLEMENTED / CODE COMPLETE
+
+### Batch 6A — Technical/Diff Audit
+- **Goal**: Perform focused technical audit and regression testing.
+- **Verification Status**:
+  - 70 Candidate Relationship/Profile tests passed after the final Backend change.
+  - Final Mobile TypeScript (`npx tsc --noEmit`) passed after Batch 5.
+  - `git diff --check` passed successfully.
+  - Focused Spring-context regression command could not complete because MySQL was unavailable (reported 0 assertion failures and 13 context-load errors). No full DB-backed success may be claimed.
+  - Final Manual QA: PENDING.
+- **Status**: IMPLEMENTED / CODE COMPLETE
+
+### Batch 6B — Safe Cleanup and Documentation Delta
+- **Goal**: Remove generated target directories and update project tracking documentation.
+- **Status**: IMPLEMENTED / CODE COMPLETE
+
+### Batch 6C — Final Git Closure
+- **Goal**: Final Git checks, staging, commit, and push.
+- **Scope**: Perform final Git reviews, stage all verified modifications, and execute the single final cycle commit and push. Final manual QA remains pending.
+- **Status**: IMPLEMENTED / CODE COMPLETE

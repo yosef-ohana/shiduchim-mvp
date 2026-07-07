@@ -23,8 +23,12 @@ public class PublicProfileController {
     @GetMapping("/{userId}")
     public ResponseEntity<PublicProfileResponse> getPublicProfile(
             @AuthenticationPrincipal User user,
-            @PathVariable Long userId) {
-        PublicProfileResponse response = profileService.getPublicProfile(user, userId);
+            @PathVariable Long userId,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) com.shiduchim.backend.enums.CandidateProfileSourceType sourceType,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) Long sourceId,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) com.shiduchim.backend.enums.PoolType poolType,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) Long weddingId) {
+        PublicProfileResponse response = profileService.getPublicProfile(user, userId, sourceType, sourceId, poolType, weddingId);
         return ResponseEntity.ok(response);
     }
 }

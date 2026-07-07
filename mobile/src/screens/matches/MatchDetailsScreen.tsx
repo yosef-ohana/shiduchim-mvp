@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
 import { theme } from '../../theme/theme';
-import { getMatchDetails } from '../../api/matchesApi';
-import { dislikeUser } from '../../api/actionsApi';
+import { getMatchDetails, cancelMatch } from '../../api/matchesApi';
 import { MatchDetailsResponse } from '../../types/api';
 import { getImageUrl } from '../../utils/imageUrl';
 import { getYesNoLabel, getEmptyLabel } from '../../utils/displayLabels';
@@ -38,14 +37,11 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
   }, [matchId]);
 
   const handleCancelMatch = async () => {
-    if (!details || !details.otherUserProfile?.userId) return;
+    if (!details || !details.matchId) return;
 
     setDislikeLoading(true);
     try {
-      await dislikeUser(details.otherUserProfile.userId, {
-        poolType: details.poolType,
-        weddingId: details.weddingId ?? undefined,
-      });
+      await cancelMatch(details.matchId);
 
       Alert.alert(
         'ההתאמה בוטלה',
@@ -72,7 +68,7 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
   const handleCancelMatchPress = () => {
     Alert.alert(
       'ביטול התאמה',
-      'התאמה זו והצ׳אט יבוטלו, והמשתמש יועבר לרשימת הלא מתאימים.',
+      'התאמה זו והצ׳אט יבוטלו.',
       [
         { text: 'ביטול', style: 'cancel' },
         { text: 'כן, ביטול התאמה', style: 'destructive', onPress: handleCancelMatch },
@@ -152,7 +148,17 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
       <ScrollView contentContainerStyle={styles.container}>
         {/* Photo Section */}
         <View style={styles.photoSection}>
-          <View style={styles.photoContainer}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('CandidateProfile', {
+              userId: profile.userId,
+              sourceType: 'MATCH',
+              sourceId: details.matchId,
+              poolType: details.poolType,
+              weddingId: details.weddingId ?? undefined,
+            })}
+            activeOpacity={0.7}
+            style={styles.photoContainer}
+          >
             {getImageUrl(profile.primaryPhotoUrl) ? (
               <Image source={{ uri: getImageUrl(profile.primaryPhotoUrl) }} style={styles.mainImage} />
             ) : (
@@ -160,16 +166,26 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
                 <Text style={styles.placeholderText}>אין תמונה</Text>
               </View>
             )}
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* Header Info */}
-        <View style={styles.headerInfo}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('CandidateProfile', {
+            userId: profile.userId,
+            sourceType: 'MATCH',
+            sourceId: details.matchId,
+            poolType: details.poolType,
+            weddingId: details.weddingId ?? undefined,
+          })}
+          activeOpacity={0.7}
+          style={styles.headerInfo}
+        >
           <Text style={styles.name}>{profile.fullName}</Text>
           <Text style={styles.subtitle}>
             {profile.age} שנים • {profile.heightCm} ס״מ
           </Text>
-        </View>
+        </TouchableOpacity>
 
         {/* Informational Match Banner */}
         <View style={styles.infoBanner}>
@@ -186,7 +202,13 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
           {profile.userId ? (
             <AppButton
               title="👤 צפייה בפרופיל מועמד מלא"
-              onPress={() => navigation.navigate('CandidateProfile', { userId: profile.userId })}
+              onPress={() => navigation.navigate('CandidateProfile', {
+                userId: profile.userId,
+                sourceType: 'MATCH',
+                sourceId: details.matchId,
+                poolType: details.poolType,
+                weddingId: details.weddingId ?? undefined,
+              })}
               style={styles.profileButton}
             />
           ) : null}
