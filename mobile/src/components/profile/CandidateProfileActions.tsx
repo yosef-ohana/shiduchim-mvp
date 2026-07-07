@@ -106,7 +106,7 @@ export const CandidateProfileActions: React.FC<CandidateProfileActionsProps> = (
 
       {showOpeningCreate && (
         <AppButton
-          title="שליחת הודעת פתיחה"
+          title="שלח/י הודעת פתיחה"
           onPress={onOpeningCreate}
           loading={loadingAction === 'OPENING_CREATE'}
           disabled={isBtnDisabled('OPENING_CREATE')}

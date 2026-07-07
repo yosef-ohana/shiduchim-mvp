@@ -46,7 +46,7 @@ const getNotificationVisuals = (notification: NotificationResponse) => {
     case 'OPENING_RECEIVED':
       return {
         title: 'הודעת פתיחה חדשה',
-        explanation: 'קיבלת הודעת פתיחה חדשה. לחץ/י למעבר לשיחה',
+        explanation: 'נשלחה אליך הודעת פתיחה לצורך היכרות. לחץ/י לצפייה.',
       };
     case 'MATCH_CREATED':
       return {

@@ -39,6 +39,12 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
 
         if (action === 'LIKE') {
           response = await likeUser(targetUserId, params);
+          if (response.matchCreated === false) {
+            Alert.alert(
+              'הלייק נשלח',
+              'כעת ממתינים ללייק מהצד השני כדי ליצור התאמה.'
+            );
+          }
         } else if (action === 'DISLIKE') {
           response = await dislikeUser(targetUserId, params);
         } else {
@@ -112,7 +118,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
       </View>
       {onOpeningMessagePress && !hasOpenOpeningConversation && (
         <AppButton
-          title="הודעת פתיחה"
+          title="שלח/י הודעת פתיחה"
           onPress={onOpeningMessagePress}
           disabled={isAnyLoading}
           style={styles.openingMessageButton}

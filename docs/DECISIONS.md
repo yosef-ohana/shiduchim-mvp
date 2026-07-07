@@ -883,3 +883,19 @@ These are collected future improvements and are NOT implemented at this stage. T
 - **Validated Source Descriptors**: The sourceType and sourceId query parameters are validated as context hints, not credentials. Stale or mismatched sources provide no action capability.
 - **Strict Context Isolation**: A stale Wedding context never falls back to the Global context; pool and wedding matches must align precisely.
 - **ACTION_LIST Scope**: The `ACTION_LIST` context type supports outgoing actions and incoming `LIKE` actions only. Incoming Dislikes and Freezes remain private.
+
+---
+
+## 40. Cycle 11 MVP+ Decisions: Focused Mobile-Only UX, Like Guidance, and State-Aware Opening Messages
+
+### 40.1 One-Sided Like Success Guidance
+- **Clear Feedback**: When a user likes another user and it is one-sided (i.e. `matchCreated` is false), the mobile app shows a clear feedback message ("הלייק נשלח. כעת ממתינים ללייק מהצד השני כדי ליצור התאמה.").
+- **Match Priority**: If a Match is created during the Like action (`matchCreated` is true), the match-created feedback and navigation flow take absolute precedence, and no one-sided Like feedback is shown.
+
+### 40.2 State-Aware Opening Message Guidance
+- **Hebrew UI Copy**: The Opening Message flow provides concise, state-aware guidance based on server-provided data.
+- **Opener Guidance**: Before the recipient replies, the opener is guided that the message was sent and they are waiting for a reply. After the recipient replies, the opener is guided that a reply was received and that if the recipient sends another message, a Match will be created.
+- **Recipient Guidance**: Before the first reply, the recipient is informed that they can reply once without creating a Match. After the first reply, they are informed that a subsequent message will create a Match.
+- **First Reply No Match**: The recipient's first reply does not create a Match and calls the standard reply path.
+- **Later Reply Match Confirmation**: Any subsequent replies by the recipient require explicit match confirmation (`confirmCreateMatch=true`) and will trigger a Match.
+- **Historical Notification Copy**: The notification copy for `OPENING_RECEIVED` is updated to "נשלחה אליך הודעת פתיחה לצורך היכרות. לחץ/י לצפייה." to describe the historical event accurately without falsely claiming that an action still exists.

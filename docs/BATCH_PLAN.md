@@ -1567,7 +1567,7 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
   - Final Mobile TypeScript (`npx tsc --noEmit`) passed after Batch 5.
   - `git diff --check` passed successfully.
   - Focused Spring-context regression command could not complete because MySQL was unavailable (reported 0 assertion failures and 13 context-load errors). No full DB-backed success may be claimed.
-  - Final Manual QA: PENDING.
+  - Final Manual QA: PASSED.
 - **Status**: IMPLEMENTED / CODE COMPLETE
 
 ### Batch 6B — Safe Cleanup and Documentation Delta
@@ -1578,3 +1578,23 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
 - **Goal**: Final Git checks, staging, commit, and push.
 - **Scope**: Perform final Git reviews, stage all verified modifications, and execute the single final cycle commit and push. Final manual QA remains pending.
 - **Status**: IMPLEMENTED / CODE COMPLETE
+
+---
+
+## Cycle 11 MVP+ — Focused Mobile-Only UX, Like Guidance, and State-Aware Opening Messages
+
+### Batch 1 — Mobile UX Improvements
+- **Goal**: Implement mobile-only UX improvements including success guidance for one-sided Likes, state-aware guidance for Opening Message flows, and notification copy adjustments.
+- **Status**: IMPLEMENTED / CODE COMPLETE
+
+### Batch 2A — Technical Gate, Safe Cleanup and Documentation Delta
+- **Goal**: Focused post-implementation verification, safe artifact cleanup, and documentation delta.
+- **Status**: IMPLEMENTED / CODE COMPLETE
+
+### Batch 2B — Final Git Closure
+- **Goal**: Perform final Git checks, staging, commit, and push.
+- **Status**: IMPLEMENTED / CODE COMPLETE
+
+### Cycle 11 Manual QA
+- **Goal**: Execute manual runtime verification of Like and Opening Message improvements.
+- **Status**: PENDING (scheduled after the final Git push)

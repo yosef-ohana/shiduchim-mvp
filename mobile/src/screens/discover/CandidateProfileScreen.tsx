@@ -93,8 +93,9 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
   const executeActionMutation = async (action: AllowedCandidateAction, apiFn: () => Promise<any>) => {
     setLoadingAction(action);
     try {
-      await apiFn();
+      const response = await apiFn();
       await fetchProfile();
+      return response;
     } catch (err: any) {
       handleMutationError(err);
     } finally {
@@ -117,7 +118,15 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
         { text: 'ביטול', style: 'cancel' },
         {
           text: 'לייק',
-          onPress: () => executeActionMutation('LIKE', () => likeUser(userId, params))
+          onPress: async () => {
+            const res = await executeActionMutation('LIKE', () => likeUser(userId, params));
+            if (res && res.matchCreated === false) {
+              Alert.alert(
+                'הלייק נשלח',
+                'כעת ממתינים ללייק מהצד השני כדי ליצור התאמה.'
+              );
+            }
+          }
         },
       ]
     );
@@ -204,6 +213,10 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
         weddingId: params.weddingId,
       });
       await fetchProfile();
+      Alert.alert(
+        'הודעת הפתיחה נשלחה',
+        'כעת ממתינים לתגובה מהצד השני.'
+      );
     } catch (err: any) {
       handleMutationError(err);
     } finally {

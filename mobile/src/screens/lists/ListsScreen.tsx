@@ -80,6 +80,11 @@ export const ListsScreen = ({ navigation }: any) => {
           } else {
             Alert.alert('נוצרה התאמה!', 'עכשיו אתם יכולים להתכתב.');
           }
+        } else {
+          Alert.alert(
+            'הלייק נשלח',
+            'כעת ממתינים ללייק מהצד השני כדי ליצור התאמה.'
+          );
         }
       } catch (err: any) {
         setError(getFriendlyErrorMessage(err, 'סימון הלייק נכשל. אנא נסה שוב.'));
@@ -196,7 +201,7 @@ export const ListsScreen = ({ navigation }: any) => {
 
     return (
       <AppButton
-        title="הודעת פתיחה"
+        title="שלח/י הודעת פתיחה"
         onPress={() =>
           setComposerTarget({
             userId: item.userId,
@@ -314,7 +319,10 @@ export const ListsScreen = ({ navigation }: any) => {
                 poolType: composerTarget.poolType,
                 weddingId: composerTarget.weddingId,
               });
-              Alert.alert('הצלחה', 'הודעת הפתיחה נשלחה בהצלחה.');
+              Alert.alert(
+                'הודעת הפתיחה נשלחה',
+                'כעת ממתינים לתגובה מהצד השני.'
+              );
               fetchList(activeTab);
             } catch (err: any) {
               const isStaleMatch = err.response?.status === 409 && (

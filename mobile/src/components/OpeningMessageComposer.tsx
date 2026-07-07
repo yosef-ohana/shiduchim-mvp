@@ -16,8 +16,8 @@ export const OpeningMessageComposer: React.FC<OpeningMessageComposerProps> = ({
   visible,
   onClose,
   onSend,
-  title = 'שליחת הודעת פתיחה',
-  subtitle = 'כתוב/י הודעה קצרה ומכבדת',
+  title = 'הודעת פתיחה אחת',
+  subtitle = 'זו הזדמנות להציע היכרות ערכית ומכובדת. אפשר לשלוח הודעת פתיחה אחת בלבד — נסח/י אותה בקצרה ובכבוד.',
 }) => {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);

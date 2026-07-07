@@ -153,7 +153,7 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
                 poolType: pool,
                 weddingId: weddingId,
               });
-              setMatchMessage('ההודעה נשלחה בהצלחה');
+              setMatchMessage('הודעת הפתיחה נשלחה. כעת ממתינים לתגובה מהצד השני.');
               setCandidates((prev) =>
                 prev.map((c) =>
                   c.userId === composerTargetId

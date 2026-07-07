@@ -61,7 +61,7 @@ export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => 
       if (response.matchCreated && response.matchId) {
         Alert.alert(
           'נוצרה התאמה!',
-          'נוצרה התאמה! אפשר להמשיך לצ׳אט.',
+          'נוצרה התאמה. כעת אפשר להמשיך בצ׳אט.',
           [
             { 
               text: 'אישור', 
@@ -81,7 +81,7 @@ export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => 
       if (serverMessage.includes('requiresMatchConfirmation') || err.response?.data?.requiresMatchConfirmation) {
         Alert.alert(
           'יצירת התאמה',
-          'התגובה הבאה תיצור התאמה ותפתח צ׳אט רגיל. להמשיך?',
+          'שליחת הודעה נוספת תיחשב להסכמה להמשך ההיכרות, תיצור התאמה ותפתח אפשרות לצ׳אט. להמשיך?',
           [
             { text: 'ביטול', style: 'cancel' },
             { text: 'המשך', onPress: () => sendReply(true) }
@@ -99,7 +99,7 @@ export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => 
     if (details?.requiresMatchConfirmation) {
       Alert.alert(
         'יצירת התאמה',
-        'התגובה הבאה תיצור התאמה ותפתח צ׳אט רגיל. להמשיך?',
+        'שליחת הודעה נוספת תיחשב להסכמה להמשך ההיכרות, תיצור התאמה ותפתח אפשרות לצ׳אט. להמשיך?',
         [
           { text: 'ביטול', style: 'cancel' },
           { text: 'המשך', onPress: () => sendReply(true) }
@@ -148,6 +148,7 @@ export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => 
 
   const isOpener = user?.id === details?.openerUserId;
   const isMatchCreated = details?.status === 'MATCH_CREATED' || details?.matchCreated === true;
+  const hasRecipientReplied = details ? details.messages.some(m => m.senderUserId === details.recipientUserId) : false;
 
   return (
     <Screen>
@@ -198,6 +199,16 @@ export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => 
         />
 
         {!isOpener && !isMatchCreated && details?.status === 'OPEN' && (
+          <View style={styles.infoBanner}>
+            <Text style={styles.infoText}>
+              {hasRecipientReplied
+                ? 'התגובה נשלחה. הודעה נוספת תיחשב להסכמה להמשך ההיכרות ותיצור התאמה.'
+                : `נשלחה אליך הודעת פתיחה מ־${otherProfile?.fullName || otherUserName || 'פרופיל המשתמש'} לצורך היכרות. אפשר להשיב פעם אחת ללא יצירת התאמה.`}
+            </Text>
+          </View>
+        )}
+
+        {!isOpener && !isMatchCreated && details?.status === 'OPEN' && (
           <View style={styles.inputContainer}>
             <AppInput
               value={replyContent}
@@ -208,7 +219,7 @@ export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => 
               maxLength={1000}
             />
             <AppButton
-              title="שליחה"
+              title={hasRecipientReplied ? 'שליחה ויצירת התאמה' : 'שליחת תגובה'}
               onPress={handleSendPress}
               disabled={!replyContent.trim() || sending}
               loading={sending}
@@ -220,7 +231,9 @@ export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => 
         {isOpener && !isMatchCreated && details?.status === 'OPEN' && (
           <View style={styles.infoBanner}>
             <Text style={styles.infoText}>
-              ההודעה נשלחה בהצלחה. יש להמתין לתשובה מהצד השני.
+              {hasRecipientReplied
+                ? 'התקבלה תגובה. אם הצד השני יבחר להמשיך בהודעה נוספת, תיווצר התאמה.'
+                : 'הודעת הפתיחה נשלחה. כעת ממתינים לתגובה מהצד השני.'}
             </Text>
           </View>
         )}
@@ -228,7 +241,7 @@ export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => 
         {isMatchCreated && (
           <View style={styles.matchedBanner}>
             <Text style={styles.matchedText}>
-              כבר נוצרה התאמה עם משתמש זה. אפשר להמשיך בצ׳אט.
+              נוצרה התאמה. כעת אפשר להמשיך בצ׳אט.
             </Text>
             {details?.matchId ? (
               <AppButton
