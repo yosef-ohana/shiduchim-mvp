@@ -229,6 +229,10 @@ To preserve the architectural boundaries and business rules, enforce the followi
 - **No Mobile Source-less Retry**: Mobile must not retry fetching profiles without source parameters after a validated source fetch fails.
 - **Private Actions Privacy**: Incoming Dislikes and Freezes remain private and are not exposed.
 - **Chat Requires Active Match**: Active chat messages require an ACTIVE Match status between users.
+- **ACTIVE Match blocks new candidate actions**: Direct candidate actions (LIKE, DISLIKE, and FREEZE) remain rejected before UserAction persistence while an ACTIVE or BLOCKED Match exists.
+- **Explicit Match cancellation is separate from Dislike**: Match cancellation is a unique state change and does not create a Dislike UserAction.
+- **Mobile renders Candidate Profile actions from server-provided allowedActions**: Mobile displays action buttons strictly based on the server-provided `allowedActions` array.
+- **Candidate Profile refreshes relationship state on focus**: Candidate Profile fetches the profile and relationship snapshot utilizing `useFocusEffect` exactly once per focus activation.
 
 ---
 
@@ -238,3 +242,8 @@ To preserve the architectural boundaries and business rules, enforce the followi
 - **Cycle 11 Implementation**: CODE COMPLETE
 - **Cycle 11 Manual QA**: PENDING (scheduled after the final Git push)
 - **Cycle 11 Git Closure Status**: COMPLETED
+- **Cycle 11 Corrective Batch**:
+  - implementation: CODE COMPLETE
+  - technical review/docs/cleanup: COMPLETED
+  - final Git closure: COMPLETED
+  - manual QA: PENDING — after final Git push

@@ -163,7 +163,7 @@ Standard errors:
 - `opening` (CandidateOpeningSummaryResponse, optional)
 - `match` (CandidateMatchSummaryResponse, optional)
 - `effectiveContext` (CandidateEffectiveContextResponse, optional)
-- `allowedActions` (List of AllowedCandidateAction: `LIKE`, `DISLIKE`, `FREEZE`, `UNFREEZE`, `REMOVE_ACTION`, `OPENING_CREATE`, `OPENING_OPEN`, `CHAT_OPEN`, `MATCH_DETAILS_OPEN`, `BLOCK`, `REPORT`)
+- `allowedActions` (List of AllowedCandidateAction: `LIKE`, `DISLIKE`, `FREEZE`, `UNFREEZE`, `REMOVE_ACTION`, `OPENING_CREATE`, `OPENING_OPEN`, `CHAT_OPEN`, `MATCH_DETAILS_OPEN`, `MATCH_CANCEL`, `BLOCK`, `REPORT`)
 
 `CandidateOpeningSummaryResponse`
 - `conversationId` (Long)
@@ -638,6 +638,8 @@ Rules:
 - Self target rejected.
 - Actor/target blocked rejected.
 - Do not reveal Dislike/Freeze to target.
+- LIKE, DISLIKE, and FREEZE candidate-action requests are not valid during an ACTIVE Match and will be rejected (HTTP 409 Conflict).
+
 
 ---
 
@@ -660,7 +662,7 @@ Never expose who Disliked/Froze current user.
 |---|---|---|---|---|---|---|
 | GET | `/api/matches` | USER | — | `List<MatchResponse>` | ACTIVE Matches only | 401, 403 |
 | GET | `/api/matches/{matchId}` | USER | — | `MatchDetailsResponse` | Current user must be one side | 401, 403, 404 |
-| PATCH | `/api/matches/{matchId}/cancel` | USER | — | — | Cancel ACTIVE match; authenticated user must be a party; transitions to BLOCKED; sets blockedAt; no reactivation; no actions/chats deleted | 400, 401, 403, 404 |
+| PATCH | `/api/matches/{matchId}/cancel` | USER | — | — | Cancel ACTIVE match; authenticated user must be a party; transitions to BLOCKED; sets blockedAt; no reactivation; no actions/chats deleted; does not create a Dislike UserAction | 400, 401, 403, 404 |
 
 
 ---

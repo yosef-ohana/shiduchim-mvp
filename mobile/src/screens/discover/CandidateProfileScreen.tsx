@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, Alert } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
 import { theme } from '../../theme/theme';
@@ -9,6 +10,7 @@ import { getYesNoLabel, getEmptyLabel } from '../../utils/displayLabels';
 import { blockUser } from '../../api/blocksApi';
 import { getPublicProfile } from '../../api/profileApi';
 import { likeUser, dislikeUser, freezeUser, unfreezeUser, removeAction } from '../../api/actionsApi';
+import { cancelMatch } from '../../api/matchesApi';
 import { sendOpeningMessage } from '../../api/openingMessagesApi';
 import { CandidateProfileActions } from '../../components/profile/CandidateProfileActions';
 import { OpeningMessageComposer } from '../../components/OpeningMessageComposer';
@@ -21,8 +23,18 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
   const [loadingAction, setLoadingAction] = useState<AllowedCandidateAction | null>(null);
   const [composerVisible, setComposerVisible] = useState(false);
 
-  const fetchProfile = async () => {
-    setLoading(true);
+  const profileRef = useRef<PublicProfileResponse | null>(null);
+  const isFocusedRef = useRef(false);
+
+  useEffect(() => {
+    profileRef.current = profile;
+  }, [profile]);
+
+  const fetchProfile = useCallback(async () => {
+    const hasLoadedProfile = profileRef.current && profileRef.current.userId === userId;
+    if (!hasLoadedProfile) {
+      setLoading(true);
+    }
     setError(null);
     try {
       const sourceDescriptor = {
@@ -32,27 +44,39 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
         weddingId,
       };
       const data = await getPublicProfile(userId, sourceDescriptor);
-      setProfile(data);
+      if (isFocusedRef.current) {
+        setProfile(data);
+      }
     } catch (err: any) {
-      if (err.response?.status === 403) {
-        setError('אין לך הרשאה לצפות בפרופיל זה.');
-      } else if (err.response?.status === 404) {
-        setError('הפרופיל המבוקש אינו קיים עוד.');
-      } else {
-        setError(
-          err.response?.data?.message ||
-            err.message ||
-            'טעינת פרופיל המועמד נכשלה. אנא נסו שוב.'
-        );
+      if (isFocusedRef.current) {
+        if (err.response?.status === 403) {
+          setError('אין לך הרשאה לצפות בפרופיל זה.');
+        } else if (err.response?.status === 404) {
+          setError('הפרופיל המבוקש אינו קיים עוד.');
+        } else {
+          setError(
+            err.response?.data?.message ||
+              err.message ||
+              'טעינת פרופיל המועמד נכשלה. אנא נסו שוב.'
+          );
+        }
       }
     } finally {
-      setLoading(false);
+      if (isFocusedRef.current) {
+        setLoading(false);
+      }
     }
-  };
+  }, [userId, sourceType, sourceId, poolType, weddingId]);
 
-  useEffect(() => {
-    fetchProfile();
-  }, [userId]);
+  useFocusEffect(
+    useCallback(() => {
+      isFocusedRef.current = true;
+      fetchProfile();
+      return () => {
+        isFocusedRef.current = false;
+      };
+    }, [fetchProfile])
+  );
 
   const getEffectiveContextParams = (): { poolType: PoolType; weddingId?: number } | null => {
     const rel = profile?.relationship;
@@ -260,6 +284,50 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
     navigation.navigate('MatchDetails', { matchId });
   };
 
+  const handleMatchCancel = () => {
+    const matchId = profile?.relationship?.match?.matchId;
+    if (!matchId) {
+      Alert.alert('שגיאה', 'שגיאת מערכת: מזהה התאמה חסר. הפרופיל יתרענן.', [
+        { text: 'אישור', onPress: fetchProfile }
+      ]);
+      return;
+    }
+
+    Alert.alert(
+      'ביטול התאמה',
+      'התאמה זו והגישה לצ׳אט יבוטלו. ההודעות הקיימות יישמרו. להמשיך?',
+      [
+        { text: 'ביטול', style: 'cancel' },
+        {
+          text: 'כן, ביטול התאמה',
+          style: 'destructive',
+          onPress: async () => {
+            setLoadingAction('MATCH_CANCEL');
+            try {
+              await cancelMatch(matchId);
+              Alert.alert(
+                'ההתאמה בוטלה',
+                'ההתאמה בוטלה בהצלחה.',
+                [
+                  {
+                    text: 'אישור',
+                    onPress: () => {
+                      navigation.navigate('Matches');
+                    }
+                  }
+                ]
+              );
+            } catch (err: any) {
+              handleMutationError(err);
+            } finally {
+              setLoadingAction(null);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const getRelationshipStatusText = (): string => {
     const rel = profile?.relationship;
     if (!rel) return '';
@@ -421,6 +489,7 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
               onOpeningOpen={handleOpeningOpen}
               onChatOpen={handleChatOpen}
               onMatchDetailsOpen={handleMatchDetailsOpen}
+              onMatchCancel={handleMatchCancel}
             />
           </View>
         )}

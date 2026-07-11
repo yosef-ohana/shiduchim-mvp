@@ -717,6 +717,7 @@ class CandidateRelationshipServiceTest {
         Set<AllowedCandidateAction> expected = Set.of(
                 AllowedCandidateAction.CHAT_OPEN,
                 AllowedCandidateAction.MATCH_DETAILS_OPEN,
+                AllowedCandidateAction.MATCH_CANCEL,
                 AllowedCandidateAction.BLOCK,
                 AllowedCandidateAction.REPORT
         );
@@ -747,6 +748,7 @@ class CandidateRelationshipServiceTest {
                 AllowedCandidateAction.REPORT
         );
         assertEquals(expected, Set.copyOf(response.getAllowedActions()));
+        assertFalse(response.getAllowedActions().contains(AllowedCandidateAction.MATCH_CANCEL));
     }
 
     @Test

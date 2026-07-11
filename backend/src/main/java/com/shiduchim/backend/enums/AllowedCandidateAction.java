@@ -11,5 +11,6 @@ public enum AllowedCandidateAction {
     CHAT_OPEN,
     MATCH_DETAILS_OPEN,
     BLOCK,
-    REPORT
+    REPORT,
+    MATCH_CANCEL
 }

@@ -1598,3 +1598,27 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
 ### Cycle 11 Manual QA
 - **Goal**: Execute manual runtime verification of Like and Opening Message improvements.
 - **Status**: PENDING (scheduled after the final Git push)
+
+---
+
+## Cycle 11 Corrective Batches
+
+### Corrective Batch 1 — Active Match Capability Contract
+- **Goal**: Add MATCH_CANCEL to AllowedCandidateAction enum. Enforce that ACTIVE Match allowed actions returns only CHAT_OPEN, MATCH_DETAILS_OPEN, MATCH_CANCEL, BLOCK, REPORT, and direct candidate actions are rejected.
+- **Status**: IMPLEMENTED / CODE COMPLETE
+
+### Corrective Batch 2 — Candidate Profile Refresh and Match Cancellation
+- **Goal**: Implement mobile focus activation refresh on Candidate Profile screen and button rendering for Match Cancellation using allowedActions.
+- **Status**: IMPLEMENTED / CODE COMPLETE
+
+### Corrective Batch 3A — Technical Review, Documentation and Cleanup
+- **Goal**: Focused technical review, align project tracking documentation, and remove known generated target/expo directories.
+- **Status**: COMPLETED
+
+### Corrective Batch 3B — Final Git Closure
+- **Goal**: Perform final Git checks, staging, commit, and push.
+- **Status**: COMPLETED
+
+### Corrective Manual QA
+- **Goal**: Execute manual runtime verification of corrective changes.
+- **Status**: PENDING — scheduled after final Git push

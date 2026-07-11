@@ -17,6 +17,7 @@ interface CandidateProfileActionsProps {
   onOpeningOpen: () => void;
   onChatOpen: () => void;
   onMatchDetailsOpen: () => void;
+  onMatchCancel: () => void;
 }
 
 export const CandidateProfileActions: React.FC<CandidateProfileActionsProps> = ({
@@ -32,6 +33,7 @@ export const CandidateProfileActions: React.FC<CandidateProfileActionsProps> = (
   onOpeningOpen,
   onChatOpen,
   onMatchDetailsOpen,
+  onMatchCancel,
 }) => {
   const isAnyLoading = loadingAction !== null;
   const isBtnDisabled = (action: AllowedCandidateAction) => disabled || isAnyLoading;
@@ -45,6 +47,7 @@ export const CandidateProfileActions: React.FC<CandidateProfileActionsProps> = (
   const showOpeningOpen = allowedActions.includes('OPENING_OPEN');
   const showChatOpen = allowedActions.includes('CHAT_OPEN');
   const showMatchDetailsOpen = allowedActions.includes('MATCH_DETAILS_OPEN');
+  const showMatchCancel = allowedActions.includes('MATCH_CANCEL');
 
   const hasRowActions = showLike || showDislike || showFreeze;
 
@@ -147,6 +150,16 @@ export const CandidateProfileActions: React.FC<CandidateProfileActionsProps> = (
           variant="secondary"
         />
       )}
+
+      {showMatchCancel && (
+        <AppButton
+          title="💔 ביטול התאמה"
+          onPress={onMatchCancel}
+          loading={loadingAction === 'MATCH_CANCEL'}
+          disabled={isBtnDisabled('MATCH_CANCEL')}
+          style={[styles.fullWidthButton, styles.cancelMatchButton]}
+        />
+      )}
     </View>
   );
 };
@@ -180,5 +193,8 @@ const styles = StyleSheet.create({
   },
   fullWidthButton: {
     width: '100%',
+  },
+  cancelMatchButton: {
+    backgroundColor: theme.colors.error,
   },
 });

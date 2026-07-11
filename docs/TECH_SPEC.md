@@ -253,7 +253,7 @@ Constraints:
 - Unique `(user1Id, user2Id, poolType, weddingId)`.
 - Match created only by mutual Like.
 - Starts as ACTIVE.
-- Dislike/Freeze after Match changes it to BLOCKED.
+- Direct candidate actions (LIKE, DISLIKE, FREEZE) are rejected while a Match exists (ACTIVE or BLOCKED). Match cancellation is initiated only via the explicit cancellation endpoint which sets the status to BLOCKED.
 - BLOCKED Match is not shown as active.
 - Chat is allowed only on ACTIVE Match.
 - If BLOCKED Match later becomes mutual Like again, prefer reactivating existing Match instead of creating duplicate.
@@ -396,7 +396,7 @@ No global approval. FULL profile opens global automatically.
 - Unfreeze removes Freeze.
 - Discover excludes targets with active UserAction in the same context.
 - After Unfreeze, target may return to Discover if still eligible.
-- If there is ACTIVE Match, Dislike/Freeze blocks it.
+- Direct candidate actions (LIKE, DISLIKE, FREEZE) remain rejected while an ACTIVE or BLOCKED Match exists. Explicit Match cancellation is handled separately.
 - Target is not told whether the user chose Dislike or Freeze.
 - **Cross-Context Actions**: Like, Dislike, and Freeze decisions are treated as user-to-user decisions across contexts. For example, if a user Likes/Dislikes/Freezes someone in a Wedding Discover pool context, that target user is excluded from the viewer's Global Discover pool, and vice versa. Return to Feed removes the user-to-user action and allows the candidate to return to discover feeds according to eligibility.
 
@@ -411,7 +411,7 @@ No global approval. FULL profile opens global automatically.
 - No duplicate Match in same context.
 - ACTIVE Match opens Chat.
 - BLOCKED Match is hidden from active Matches.
-- Dislike/Freeze after Match blocks Match and Chat.
+- Explicit Match cancellation (using PATCH /api/matches/{matchId}/cancel) transitions the Match to BLOCKED and blocks Match and Chat. Direct candidate actions (LIKE, DISLIKE, FREEZE) are rejected.
 - liked-me hides users who already became ACTIVE Match.
 - **Cross-Context Matches**: An active Match in any context hides both users from each other in both Discover Wedding and Discover Global. It also prevents another Like or Opening Message initiation against the same user. Liked Me does not show a relationship after it has converted into a Match. No duplicate Match can be created.
 
@@ -1161,3 +1161,25 @@ This section contains the focused Cycle 5 QA checklist. Note: Manual QA has not 
 - **Server-driven Capabilities**: The Candidate Profile screen renders buttons and executes mutations strictly based on the backend-provided `allowedActions` array.
 - **Mutation Lifecycle**: Upon successful action mutation, the client reloads the entire profile data. Mutation errors (403, 404, 409) prompt Hebrew alert dialogs and trigger a reload.
 - **Unified Navigation**: All user-facing screens use the unified `CandidateProfile` screen parameter interface, passing correct source contexts. Avatars, names, and headers navigate to the Candidate Profile, while row bodies open chats, matches, or openings.
+
+---
+
+## 39. Cycle 11: Corrective Match Contract & Mobile focus refresh
+
+### 39.1 ACTIVE Match and BLOCKED Match Allowed Actions
+- When an ACTIVE Match exists between two users, direct candidate actions (LIKE, DISLIKE, and FREEZE) remain rejected before UserAction persistence.
+- The exact AllowedCandidateAction set returned by the backend for an ACTIVE Match is:
+  - `CHAT_OPEN`
+  - `MATCH_DETAILS_OPEN`
+  - `MATCH_CANCEL`
+  - `BLOCK`
+  - `REPORT`
+- For a BLOCKED Match, the allowed actions set is:
+  - `BLOCK`
+  - `REPORT`
+- The Candidate Profile mobile screen displays match cancellation only when the server returns `MATCH_CANCEL` in `allowedActions`.
+- Explicit Match cancellation is separate from `ActionType.DISLIKE` and is handled by the `cancelMatch(matchId)` operation.
+
+### 39.2 Mobile Focus Refresh
+- Candidate Profile Screen refreshes its profile and relationship snapshot whenever the screen gains focus utilizing `useFocusEffect` exactly once per focus activation.
+- The refocus refresh preserves already-rendered profile data instead of showing a blank screen or a loading state, while initial load and userId changes still display the loading state.

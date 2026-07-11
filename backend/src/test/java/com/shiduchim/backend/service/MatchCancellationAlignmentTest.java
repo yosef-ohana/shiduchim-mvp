@@ -284,4 +284,58 @@ public class MatchCancellationAlignmentTest {
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
         verify(chatMessageRepository, never()).save(any());
     }
+
+    @Test
+    void testActionEndpointRejectsLikeForActiveMatch() {
+        match.setStatus(MatchStatus.ACTIVE);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(user2));
+        when(userPhotoRepository.existsByUserIdAndIsPrimaryTrue(any())).thenReturn(true);
+        when(matchRepository.findMatchesBetweenUsers(1L, 2L)).thenReturn(Collections.singletonList(match));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            actionService.handleAction(user1, 2L, ActionType.LIKE, PoolType.GLOBAL, null);
+        });
+
+        assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
+        verify(userActionRepository, never()).save(any());
+        // Verify no Match cancellation side effect
+        assertEquals(MatchStatus.ACTIVE, match.getStatus());
+        verify(matchRepository, never()).save(any());
+    }
+
+    @Test
+    void testActionEndpointRejectsDislikeForActiveMatch() {
+        match.setStatus(MatchStatus.ACTIVE);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(user2));
+        when(userPhotoRepository.existsByUserIdAndIsPrimaryTrue(any())).thenReturn(true);
+        when(matchRepository.findMatchesBetweenUsers(1L, 2L)).thenReturn(Collections.singletonList(match));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            actionService.handleAction(user1, 2L, ActionType.DISLIKE, PoolType.GLOBAL, null);
+        });
+
+        assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
+        verify(userActionRepository, never()).save(any());
+        // Verify no Match cancellation side effect
+        assertEquals(MatchStatus.ACTIVE, match.getStatus());
+        verify(matchRepository, never()).save(any());
+    }
+
+    @Test
+    void testActionEndpointRejectsFreezeForActiveMatch() {
+        match.setStatus(MatchStatus.ACTIVE);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(user2));
+        when(userPhotoRepository.existsByUserIdAndIsPrimaryTrue(any())).thenReturn(true);
+        when(matchRepository.findMatchesBetweenUsers(1L, 2L)).thenReturn(Collections.singletonList(match));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            actionService.handleAction(user1, 2L, ActionType.FREEZE, PoolType.GLOBAL, null);
+        });
+
+        assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
+        verify(userActionRepository, never()).save(any());
+        // Verify no Match cancellation side effect
+        assertEquals(MatchStatus.ACTIVE, match.getStatus());
+        verify(matchRepository, never()).save(any());
+    }
 }

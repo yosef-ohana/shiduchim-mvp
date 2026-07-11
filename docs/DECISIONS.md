@@ -899,3 +899,24 @@ These are collected future improvements and are NOT implemented at this stage. T
 - **First Reply No Match**: The recipient's first reply does not create a Match and calls the standard reply path.
 - **Later Reply Match Confirmation**: Any subsequent replies by the recipient require explicit match confirmation (`confirmCreateMatch=true`) and will trigger a Match.
 - **Historical Notification Copy**: The notification copy for `OPENING_RECEIVED` is updated to "נשלחה אליך הודעת פתיחה לצורך היכרות. לחץ/י לצפייה." to describe the historical event accurately without falsely claiming that an action still exists.
+
+---
+
+## 41. Cycle 11 Corrective Decisions: Active Match Capability Contract, Candidate Profile Refresh and Match Cancellation
+
+### 41.1 Active Match and Blocked Match Capability Set
+- **Active Match Restrictions**: When an ACTIVE Match exists between two users, direct candidate actions (LIKE, DISLIKE, and FREEZE) remain rejected before UserAction persistence. The exact allowed actions returned by the backend for an ACTIVE Match are:
+  - `CHAT_OPEN`
+  - `MATCH_DETAILS_OPEN`
+  - `MATCH_CANCEL`
+  - `BLOCK`
+  - `REPORT`
+- **Blocked Match Restrictions**: When a BLOCKED Match exists between two users, the only allowed actions returned by the backend are:
+  - `BLOCK`
+  - `REPORT`
+- **Explicit Match Cancellation**: Cancelling an existing Match is a separate explicit operation (using `cancelMatch(matchId)`) and is not treated as `ActionType.DISLIKE`. The Candidate Profile mobile screen displays match cancellation only when the server returns `MATCH_CANCEL` in `allowedActions`.
+- **Superseding Older Wording**: This decision explicitly supersedes any older contradictory wording that suggested DISLIKE or FREEZE cancels/blocks an active Match.
+
+### 41.2 Candidate Profile Mobile Focus Refresh
+- **Focus Activation Refresh**: The Candidate Profile mobile screen refreshes its profile and relationship snapshot whenever the screen gains focus utilizing `useFocusEffect` exactly once per focus activation.
+- **Loading UX Preservation**: Already-rendered profile data is preserved during focus refresh instead of blanking the screen or showing an unnecessary loading state, while initial load or userId change still displays the loading indicator.

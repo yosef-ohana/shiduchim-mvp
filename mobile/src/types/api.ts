@@ -683,6 +683,7 @@ export type AllowedCandidateAction =
   | 'OPENING_OPEN'
   | 'CHAT_OPEN'
   | 'MATCH_DETAILS_OPEN'
+  | 'MATCH_CANCEL'
   | 'BLOCK'
   | 'REPORT';
 

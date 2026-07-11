@@ -126,6 +126,7 @@ public class CandidateRelationshipService {
         if (activeMatch.isPresent()) {
             allowed.add(AllowedCandidateAction.CHAT_OPEN);
             allowed.add(AllowedCandidateAction.MATCH_DETAILS_OPEN);
+            allowed.add(AllowedCandidateAction.MATCH_CANCEL);
         } else if (!blockedMatch.isPresent()) {
             boolean canAction = Boolean.TRUE.equals(contextResp.getValidForActions());
             if (relevantOpening != null) {
