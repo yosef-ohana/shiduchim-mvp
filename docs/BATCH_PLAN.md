@@ -1597,7 +1597,15 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
 
 ### Cycle 11 Manual QA
 - **Goal**: Execute manual runtime verification of Like and Opening Message improvements.
-- **Status**: PENDING (scheduled after the final Git push)
+- **Status**: PASSED
+- **Outcomes**:
+  - one-sided Like guidance;
+  - complete Opening → Match → Chat flow;
+  - ACTIVE Match action restrictions;
+  - focus refresh;
+  - explicit Match cancellation;
+  - Chat blocked after cancellation;
+  - no Dislike side effect.
 
 ---
 
@@ -1621,4 +1629,12 @@ A focused series of QA fixes to stabilize features 1–16 across both the backen
 
 ### Corrective Manual QA
 - **Goal**: Execute manual runtime verification of corrective changes.
-- **Status**: PENDING — scheduled after final Git push
+- **Status**: PASSED
+- **Outcomes**:
+  - one-sided Like guidance;
+  - complete Opening → Match → Chat flow;
+  - ACTIVE Match action restrictions;
+  - focus refresh;
+  - explicit Match cancellation;
+  - Chat blocked after cancellation;
+  - no Dislike side effect.
