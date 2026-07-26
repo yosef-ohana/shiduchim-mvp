@@ -1,23 +1,21 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet, ViewStyle } from 'react-native';
-import { theme } from '../theme/theme';
+import { StyleProp, ViewStyle } from 'react-native';
+import { ScreenContainer } from './foundation/ScreenContainer';
 
-interface ScreenProps {
+export interface ScreenProps {
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const Screen: React.FC<ScreenProps> = ({ children, style }) => {
   return (
-    <SafeAreaView style={[styles.container, style]}>
+    <ScreenContainer
+      scroll={false}
+      keyboardAware={false}
+      contentStyle={style}
+      safeEdges={['top', 'bottom', 'left', 'right']}
+    >
       {children}
-    </SafeAreaView>
+    </ScreenContainer>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-});

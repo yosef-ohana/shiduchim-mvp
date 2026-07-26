@@ -1,24 +1,39 @@
-import { StyleSheet } from 'react-native';
+/**
+ * Theme Compatibility Facade — Batch F0 Foundation
+ * Wraps semantic tokens for backward compatibility with existing screen consumers.
+ */
+import { tokens } from './tokens';
 
 export const theme = {
+  // Direct reference to semantic tokens
+  tokens,
+
+  // Backward compatibility facade for existing consumers
   colors: {
-    primary: '#D4AF37', // Gold
-    background: '#FDFBF7', // Cream
-    surface: '#FFFFFF',
-    text: '#1C1C1C', // Black/Dark Gray
-    textSecondary: '#666666',
-    error: '#D32F2F',
-    border: '#E0E0E0',
+    primary: '#D4AF37', // Legacy gold accent compatibility alias
+    background: tokens.colors.background,
+    surface: tokens.colors.surface,
+    text: tokens.colors.textPrimary,
+    textSecondary: tokens.colors.textSecondary,
+    error: tokens.colors.statusError,
+    border: tokens.colors.border,
+    // Extended aliases mapping to tokens
+    accent: tokens.colors.accent,
+    success: tokens.colors.statusSuccess,
+    warning: tokens.colors.statusWarning,
+    info: tokens.colors.statusInfo,
   },
   spacing: {
-    s: 8,
-    m: 16,
-    l: 24,
-    xl: 32,
+    s: tokens.spacing.sm,    // 8
+    m: tokens.spacing.lg,    // 16
+    l: tokens.spacing.xxl,   // 24
+    xl: tokens.spacing.xxxl, // 32
   },
   borderRadius: {
-    s: 4,
-    m: 8,
-    l: 12,
+    s: tokens.radii.sm, // 4
+    m: tokens.radii.md, // 8
+    l: tokens.radii.lg, // 12
   },
 };
+
+export type Theme = typeof theme;

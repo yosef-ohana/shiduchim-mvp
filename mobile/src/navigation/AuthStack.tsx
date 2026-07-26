@@ -7,8 +7,9 @@ import { StaffLoginChoiceScreen } from '../screens/auth/StaffLoginChoiceScreen';
 import { StaffLoginScreen } from '../screens/auth/StaffLoginScreen';
 import { WeddingCodeEntryScreen } from '../screens/weddings/WeddingCodeEntryScreen';
 import { theme } from '../theme/theme';
+import { AuthStackParamList } from '../types/navigation';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export const AuthStack = () => {
   return (

@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { MeScreen } from '../screens/main/MeScreen';
@@ -135,13 +136,23 @@ export type MainStackParamList = {
 const Stack = createNativeStackNavigator<MainStackParamList>();
 
 export const MainStack = () => {
-  const { user, justRegistered, consumeJustRegistered } = useAuth();
+  const { user, justRegistered, consumeJustRegistered, claimPendingWeddingCode } = useAuth();
+  const navigation = useNavigation<any>();
 
   useEffect(() => {
     if (justRegistered && user?.role === 'USER') {
       consumeJustRegistered();
     }
   }, [justRegistered, user, consumeJustRegistered]);
+
+  useEffect(() => {
+    if (user?.role === 'USER') {
+      const pendingCode = claimPendingWeddingCode();
+      if (pendingCode) {
+        navigation.navigate('JoinWedding', { accessCode: pendingCode });
+      }
+    }
+  }, [user, claimPendingWeddingCode, navigation]);
 
   const initialRoute = (justRegistered && user?.role === 'USER') ? 'Profile' : 'Me';
 

@@ -1,157 +1,359 @@
 import React from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
-import { Screen } from '../../components/Screen';
-import { theme } from '../../theme/theme';
+import { View, Text, StyleSheet, ImageBackground, Image } from 'react-native';
+import { ScreenContainer } from '../../components/foundation/ScreenContainer';
+import { Card } from '../../components/foundation/Card';
+import { Button } from '../../components/foundation/Button';
+import { AppIcon } from '../../components/foundation/AppIcon';
+import { colors, spacing, radii } from '../../theme/tokens';
+import { typography } from '../../theme/typography';
+
+const welcomeBgSource = require('../../../assets/welcome-bg.png');
 
 export const WelcomeScreen = ({ navigation }: any) => {
+  const handleLogin = () => {
+    navigation.navigate('Login');
+  };
+
+  const handleRegister = () => {
+    navigation.navigate('Register');
+  };
+
   const handleWeddingCode = () => {
     navigation.navigate('WeddingCodeEntry');
   };
 
+  const handleStaffLogin = () => {
+    navigation.navigate('StaffLoginChoice');
+  };
+
   return (
-    <Screen style={styles.container}>
-      <View style={styles.content}>
-        {/* Stylized premium logo design */}
-        <View style={styles.logoContainer}>
-          <View style={styles.logoRing1} />
-          <View style={styles.logoRing2} />
-          <Text style={styles.logoText}>ש</Text>
-        </View>
+    <View style={styles.outerWrapper}>
+      <ImageBackground
+        source={welcomeBgSource}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        <ScreenContainer scroll containerStyle={styles.containerStyle} contentStyle={styles.contentStyle}>
+          {/* Top Logo / Brand Title Section */}
+          <View style={styles.brandHeader}>
+            <View style={styles.brandEmblemContainer}>
+              <View style={styles.brandDividerLine} />
+              <View style={styles.brandIconRing}>
+                <AppIcon name="star" size={16} color={colors.accentBorder} />
+              </View>
+              <View style={styles.brandDividerLine} />
+            </View>
+            <Text style={[typography.display, styles.brandTitle]} accessibilityRole="header">
+              שידוכים
+            </Text>
+            <View style={styles.brandRingsRow}>
+              <View style={styles.smallRingLeft} />
+              <View style={styles.smallRingRight} />
+            </View>
+          </View>
 
-        <Text style={styles.title}>שידוכים</Text>
-        <Text style={styles.tagline}>חיבור לבבות, בניית משפחות</Text>
+          {/* Central Main Ivory Card */}
+          <Card style={styles.mainCard}>
+            {/* Overlapping Top Badge Icon */}
+            <View style={styles.badgeWrapper}>
+              <View style={styles.badgeCircle}>
+                <AppIcon name="user" size={24} color={colors.accent} />
+              </View>
+            </View>
 
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => navigation.navigate('Login')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.primaryButtonText}>אני רוצה להכיר</Text>
-          </TouchableOpacity>
+            <View style={styles.cardContent}>
+              <Text style={[typography.titleLarge, styles.welcomeHeading]}>
+                ברוכים הבאים
+              </Text>
 
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={handleWeddingCode}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.secondaryButtonText}>יש לי קוד חתונה</Text>
-          </TouchableOpacity>
+              <View style={styles.goldDivider}>
+                <View style={styles.goldLine} />
+                <AppIcon name="star" size={12} color={colors.accentBorder} />
+                <View style={styles.goldLine} />
+              </View>
 
-          <TouchableOpacity
-            style={styles.linkButton}
-            onPress={() => navigation.navigate('StaffLoginChoice')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.linkButtonText}>כניסת מנהל מערכת / מנהל אירוע</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Screen>
+              <Text style={[typography.bodyMedium, styles.taglineText]}>
+                המרחב המכבד והבטוח{'\n'}להיכרות רצינית לקראת חתונה.
+              </Text>
+
+              {/* Action Buttons Stack */}
+              <View style={styles.actionStack}>
+                <Button
+                  label="התחברות"
+                  onPress={handleLogin}
+                  variant="primary"
+                  iconEnd="chevron-left"
+                  fullWidth
+                  style={styles.goldButton}
+                  labelStyle={styles.goldButtonText}
+                  testID="welcome-login-button"
+                />
+
+                <Button
+                  label="הרשמה"
+                  onPress={handleRegister}
+                  variant="secondary"
+                  iconEnd="chevron-left"
+                  fullWidth
+                  style={styles.registerButton}
+                  labelStyle={styles.registerButtonText}
+                  testID="welcome-register-button"
+                />
+
+                <Button
+                  label="יש לי קוד חתונה"
+                  onPress={handleWeddingCode}
+                  variant="tertiary"
+                  iconStart="link"
+                  style={styles.codeButton}
+                  labelStyle={styles.codeButtonText}
+                  testID="welcome-wedding-code-button"
+                />
+              </View>
+            </View>
+          </Card>
+
+          {/* Separated Staff Entry Surface */}
+          <View style={styles.staffCardWrapper}>
+            <Card
+              pressable
+              onPress={handleStaffLogin}
+              style={styles.staffCard}
+              testID="welcome-staff-button"
+            >
+              <View style={styles.staffRow}>
+                <View style={styles.staffLeadingGroup}>
+                  <View style={styles.staffIconBadge}>
+                    <AppIcon name="shield" size={18} color={colors.accentBorder} />
+                  </View>
+                  <Text style={[typography.heading, styles.staffText]}>
+                    כניסת צוות וניהול
+                  </Text>
+                </View>
+                <AppIcon name="chevron-left" size={20} color={colors.textSecondary} />
+              </View>
+            </Card>
+          </View>
+        </ScreenContainer>
+      </ImageBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  outerWrapper: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#0F0E0D', // Safe dark semantic fallback if image is loading
   },
-  content: {
+  backgroundImage: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.xl,
-  },
-  logoContainer: {
-    width: 100,
-    height: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: theme.spacing.l,
-    position: 'relative',
-  },
-  logoRing1: {
-    position: 'absolute',
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    borderWidth: 3,
-    borderColor: theme.colors.primary,
-    opacity: 0.8,
-    transform: [{ translateX: -12 }],
-  },
-  logoRing2: {
-    position: 'absolute',
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    borderWidth: 3,
-    borderColor: theme.colors.primary,
-    opacity: 0.8,
-    transform: [{ translateX: 12 }],
-  },
-  logoText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    zIndex: 1,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: theme.colors.primary,
-    letterSpacing: 1.5,
-    marginBottom: theme.spacing.s,
-  },
-  tagline: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: theme.spacing.xl * 1.5,
-    fontStyle: 'italic',
-  },
-  buttonContainer: {
     width: '100%',
-    gap: theme.spacing.m,
+    height: '100%',
   },
-  primaryButton: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: theme.spacing.m,
-    borderRadius: theme.borderRadius.m,
+  containerStyle: {
+    backgroundColor: 'transparent',
+  },
+  contentStyle: {
+    justifyContent: 'space-between',
+    paddingVertical: spacing.xl,
+    minHeight: '100%',
+  },
+  brandHeader: {
     alignItems: 'center',
-    shadowColor: theme.colors.primary,
+    marginTop: spacing.xl,
+    marginBottom: spacing.lg,
+  },
+  brandEmblemContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 140,
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  brandDividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.accentBorder,
+    opacity: 0.6,
+  },
+  brandIconRing: {
+    padding: spacing.xxs,
+  },
+  brandTitle: {
+    fontSize: 40,
+    lineHeight: 48,
+    color: colors.accentMuted, // Warm ivory title
+    letterSpacing: 2,
+    textAlign: 'center',
+  },
+  brandRingsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: spacing.xxs,
+    gap: -4,
+  },
+  smallRingLeft: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: colors.accentBorder,
+    opacity: 0.8,
+  },
+  smallRingRight: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: colors.accentBorder,
+    opacity: 0.8,
+  },
+
+  // Main Card
+  mainCard: {
+    backgroundColor: '#FAF6F0', // Quiet ivory card surface
+    borderColor: '#E6D7C3',
+    borderRadius: radii.xxl,
+    marginTop: spacing.xl,
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xxxl,
+    paddingBottom: spacing.xxl,
+    position: 'relative',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  badgeWrapper: {
+    position: 'absolute',
+    top: -28,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  badgeCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FAF6F0',
+    borderWidth: 2,
+    borderColor: colors.accentBorder,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 4,
   },
-  primaryButtonText: {
-    color: theme.colors.surface,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  secondaryButton: {
-    backgroundColor: 'transparent',
-    paddingVertical: theme.spacing.m,
-    borderRadius: theme.borderRadius.m,
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
+  cardContent: {
     alignItems: 'center',
   },
-  secondaryButtonText: {
-    color: theme.colors.primary,
-    fontSize: 16,
-    fontWeight: 'bold',
+  welcomeHeading: {
+    fontSize: 28,
+    lineHeight: 36,
+    color: colors.textPrimary,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: spacing.xs,
   },
-  linkButton: {
-    paddingVertical: theme.spacing.s,
+  goldDivider: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: theme.spacing.m,
+    width: 120,
+    gap: spacing.xs,
+    marginVertical: spacing.sm,
   },
-  linkButtonText: {
-    color: theme.colors.textSecondary,
+  goldLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.accentBorder,
+  },
+  taglineText: {
+    color: '#6B5E55',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: spacing.xxl,
+  },
+  actionStack: {
+    width: '100%',
+    gap: spacing.md,
+    alignItems: 'center',
+  },
+  goldButton: {
+    backgroundColor: '#C69255', // Restrained warm gold pill
+    borderColor: '#B37F43',
+    borderRadius: radii.full,
+    paddingVertical: spacing.md,
+  },
+  goldButtonText: {
+    color: colors.textInverse,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  registerButton: {
+    backgroundColor: '#FAF6F0',
+    borderColor: '#C69255',
+    borderWidth: 1.5,
+    borderRadius: radii.full,
+    paddingVertical: spacing.md,
+  },
+  registerButtonText: {
+    color: '#2C221E',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  codeButton: {
+    marginTop: spacing.xs,
+  },
+  codeButtonText: {
+    color: '#7A5A3A',
     fontSize: 14,
     fontWeight: '600',
     textDecorationLine: 'underline',
+  },
+
+  // Staff Entry Card
+  staffCardWrapper: {
+    width: '100%',
+    marginBottom: spacing.lg,
+  },
+  staffCard: {
+    backgroundColor: 'rgba(24, 22, 20, 0.85)', // Dark quiet ceremony bar
+    borderColor: '#423932',
+    borderWidth: 1,
+    borderRadius: radii.xl,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  staffRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  staffLeadingGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  staffIconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#2A241F',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#423932',
+  },
+  staffText: {
+    color: '#E8DFD5',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

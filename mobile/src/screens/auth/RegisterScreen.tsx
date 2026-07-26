@@ -89,7 +89,7 @@ export const RegisterScreen = ({ route, navigation }: any) => {
           style={styles.button}
         />
 
-        <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.linkContainer}>
+        <TouchableOpacity onPress={() => navigation.navigate('Login', { pendingWeddingCode })} style={styles.linkContainer}>
           <Text style={styles.linkText}>כבר יש לך חשבון? להתחברות</Text>
         </TouchableOpacity>
       </ScrollView>

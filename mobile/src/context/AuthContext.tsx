@@ -1,8 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { MeResponse } from '../types/api';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { MeResponse, LoginRequest, RegisterRequest, StaffLoginRequest } from '../types/api';
 import { getMe, loginUser, registerUser, loginStaff } from '../api/authApi';
-import { joinWedding } from '../api/weddingsApi';
-import { LoginRequest, RegisterRequest, StaffLoginRequest } from '../types/api';
 import { saveAccessToken, clearAccessToken, getAccessToken } from '../storage/authStorage';
 
 interface AuthContextData {
@@ -16,6 +14,9 @@ interface AuthContextData {
   refreshMe: () => Promise<void>;
   justRegistered: boolean;
   consumeJustRegistered: () => void;
+  pendingWeddingCode: string | null;
+  setPendingWeddingCode: (code: string | null) => void;
+  claimPendingWeddingCode: () => string | null;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -26,8 +27,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null);
   const [justRegistered, setJustRegistered] = useState(false);
 
+  const pendingWeddingCodeRef = useRef<string | null>(null);
+  const [pendingWeddingCode, setPendingWeddingCodeState] = useState<string | null>(null);
+
   const consumeJustRegistered = React.useCallback(() => {
     setJustRegistered(false);
+  }, []);
+
+  const setPendingWeddingCode = React.useCallback((code: string | null) => {
+    pendingWeddingCodeRef.current = code;
+    setPendingWeddingCodeState(code);
+  }, []);
+
+  const claimPendingWeddingCode = React.useCallback((): string | null => {
+    const code = pendingWeddingCodeRef.current;
+    if (!code) return null;
+    pendingWeddingCodeRef.current = null;
+    setPendingWeddingCodeState(null);
+    return code;
   }, []);
 
   useEffect(() => {
@@ -49,50 +66,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const login = async (data: LoginRequest, pendingWeddingCode?: string) => {
+  const login = async (data: LoginRequest, pendingCode?: string) => {
     try {
+      if (pendingCode) {
+        setPendingWeddingCode(pendingCode);
+      }
+
       const response = await loginUser(data);
       await saveAccessToken(response.accessToken);
       
-      if (pendingWeddingCode) {
-        try {
-          await joinWedding({ accessCode: pendingWeddingCode });
-        } catch (e: any) {
-          console.log('Auto-join wedding failed or already joined:', e);
-        }
+      const me = await getMe();
+      if (me.role !== 'USER' && me.role !== 'ADMIN' && me.role !== 'EVENT_MANAGER') {
+        await logout();
+        throw new Error('Invalid account role.');
       }
-      
-      await refreshMe();
+
+      if (me.role !== 'USER') {
+        setPendingWeddingCode(null);
+      }
+
+      setUser(me);
     } catch (e: any) {
-      throw new Error(e.response?.data?.message || 'Login failed');
+      throw new Error(e.response?.data?.message || e.message || 'Login failed');
     }
   };
 
-  const register = async (data: RegisterRequest, pendingWeddingCode?: string) => {
+  const register = async (data: RegisterRequest, pendingCode?: string) => {
     try {
+      if (pendingCode) {
+        setPendingWeddingCode(pendingCode);
+      }
+
       const response = await registerUser(data);
       await saveAccessToken(response.accessToken);
-      
-      if (pendingWeddingCode) {
-        try {
-          await joinWedding({ accessCode: pendingWeddingCode });
-        } catch (e: any) {
-          console.log('Auto-join wedding failed or already joined:', e);
-        }
-      }
-      
       setJustRegistered(true);
-      await refreshMe();
+
+      const me = await getMe();
+      if (me.role !== 'USER' && me.role !== 'ADMIN' && me.role !== 'EVENT_MANAGER') {
+        await logout();
+        throw new Error('Invalid account role.');
+      }
+
+      if (me.role !== 'USER') {
+        setPendingWeddingCode(null);
+      }
+
+      setUser(me);
     } catch (e: any) {
-      throw new Error(e.response?.data?.message || 'Registration failed');
+      throw new Error(e.response?.data?.message || e.message || 'Registration failed');
     }
   };
 
   const staffLogin = async (data: StaffLoginRequest) => {
     try {
+      setPendingWeddingCode(null);
       const response = await loginStaff(data);
       
-      // Safety and UX check on role
       if (response.role === 'USER') {
         throw new Error('This account is not allowed to access the staff portal.');
       }
@@ -104,7 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await saveAccessToken(response.accessToken);
       await refreshMe();
     } catch (e: any) {
-      await logout(); // Ensure no partially saved token or session remains
+      await logout();
       
       if (e.response?.status === 403) {
         const backendMessage = e.response?.data?.message || '';
@@ -123,12 +152,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     await clearAccessToken();
+    setPendingWeddingCode(null);
     setUser(null);
   };
 
   const refreshMe = async () => {
     try {
       const me = await getMe();
+      if (me.role !== 'USER' && me.role !== 'ADMIN' && me.role !== 'EVENT_MANAGER') {
+        console.warn('Unknown role detected during session refresh:', me.role);
+        await logout();
+        return;
+      }
+      if (me.role !== 'USER') {
+        setPendingWeddingCode(null);
+      }
       setUser(me);
     } catch (e) {
       console.log('Get Me failed', e);
@@ -138,7 +176,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, register, staffLogin, logout, refreshMe, justRegistered, consumeJustRegistered }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        error,
+        login,
+        register,
+        staffLogin,
+        logout,
+        refreshMe,
+        justRegistered,
+        consumeJustRegistered,
+        pendingWeddingCode,
+        setPendingWeddingCode,
+        claimPendingWeddingCode,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
