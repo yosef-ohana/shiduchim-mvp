@@ -165,17 +165,8 @@ assert(
   'navigation.ts must export AdminStackParamList and EventManagerStackParamList'
 );
 
-// 10. Verify NO target screen files created for AdminHome or AdminOperations
-assert(
-  !fs.existsSync(path.join(SRC_DIR, 'screens/admin/AdminHomeScreen.tsx')) &&
-  !fs.existsSync(path.join(SRC_DIR, 'screens/admin/AdminHome.tsx')),
-  'AdminHomeScreen.tsx must NOT be created in N3'
-);
-assert(
-  !fs.existsSync(path.join(SRC_DIR, 'screens/admin/AdminOperationsScreen.tsx')) &&
-  !fs.existsSync(path.join(SRC_DIR, 'screens/admin/AdminOperations.tsx')),
-  'AdminOperationsScreen.tsx must NOT be created in N3'
-);
+// 10. Verify target screen files status for AdminHome and AdminOperations
+// (In N3 baseline these were adapters; in Batch A8 real screens are implemented)
 
 // 11. Verify aliases NOT registered in MainStack
 const mainStackContent = readFile('src/navigation/MainStack.tsx');

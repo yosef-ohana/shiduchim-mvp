@@ -1,10 +1,14 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { AppButton } from '../AppButton';
+import { View, StyleSheet, Text } from 'react-native';
 import { AllowedCandidateAction } from '../../types/api';
-import { theme } from '../../theme/theme';
+import { Button } from '../foundation/Button';
+import { ResponsiveActionGroup } from '../foundation/ResponsiveActionGroup';
+import { Card } from '../foundation/Card';
+import { AppIcon } from '../foundation/AppIcon';
+import { colors, spacing, radii } from '../../theme/tokens';
+import { typography } from '../../theme/typography';
 
-interface CandidateProfileActionsProps {
+export interface CandidateProfileActionsProps {
   allowedActions: AllowedCandidateAction[];
   loadingAction: AllowedCandidateAction | null;
   disabled: boolean;
@@ -17,7 +21,7 @@ interface CandidateProfileActionsProps {
   onOpeningOpen: () => void;
   onChatOpen: () => void;
   onMatchDetailsOpen: () => void;
-  onMatchCancel: () => void;
+  onMatchCancel?: () => void;
 }
 
 export const CandidateProfileActions: React.FC<CandidateProfileActionsProps> = ({
@@ -33,7 +37,6 @@ export const CandidateProfileActions: React.FC<CandidateProfileActionsProps> = (
   onOpeningOpen,
   onChatOpen,
   onMatchDetailsOpen,
-  onMatchCancel,
 }) => {
   const isAnyLoading = loadingAction !== null;
   const isBtnDisabled = (action: AllowedCandidateAction) => disabled || isAnyLoading;
@@ -47,117 +50,150 @@ export const CandidateProfileActions: React.FC<CandidateProfileActionsProps> = (
   const showOpeningOpen = allowedActions.includes('OPENING_OPEN');
   const showChatOpen = allowedActions.includes('CHAT_OPEN');
   const showMatchDetailsOpen = allowedActions.includes('MATCH_DETAILS_OPEN');
-  const showMatchCancel = allowedActions.includes('MATCH_CANCEL');
 
-  const hasRowActions = showLike || showDislike || showFreeze;
+  const hasPrimaryDecisionRow = showLike || showDislike || showFreeze;
+  const hasSecondaryActions =
+    showRemoveAction ||
+    showUnfreeze ||
+    showOpeningCreate ||
+    showOpeningOpen ||
+    showChatOpen ||
+    showMatchDetailsOpen;
+
+  const hasAnyRelationshipAction = hasPrimaryDecisionRow || hasSecondaryActions;
+
+  if (!hasAnyRelationshipAction) {
+    return (
+      <Card variant="surface" padding="md" style={styles.noActionCard}>
+        <View style={styles.noActionHeader}>
+          <AppIcon name="info" size={20} color={colors.textSecondary} />
+          <Text style={[typography.heading, styles.noActionTitle]}>כרגע אין פעולות זמינות</Text>
+        </View>
+        <Text style={[typography.bodyMedium, styles.noActionText]}>
+          לא ניתן לשלוח עניין, לפתוח הודעת פתיחה או לבצע פעולה נוספת מהפרופיל הזה כרגע.
+        </Text>
+      </Card>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      {hasRowActions && (
-        <View style={styles.row}>
-          {showDislike && (
-            <AppButton
-              title="לא מתאים"
-              onPress={onDislike}
-              loading={loadingAction === 'DISLIKE'}
-              disabled={isBtnDisabled('DISLIKE')}
-              style={[styles.button, styles.dislikeButton]}
-            />
-          )}
-          {showFreeze && (
-            <AppButton
-              title="שמור בצד"
-              onPress={onFreeze}
-              loading={loadingAction === 'FREEZE'}
-              disabled={isBtnDisabled('FREEZE')}
-              style={[styles.button, styles.freezeButton]}
-            />
-          )}
+      {hasPrimaryDecisionRow && (
+        <ResponsiveActionGroup alignment="inline" style={styles.decisionRow}>
           {showLike && (
-            <AppButton
-              title="לייק"
+            <Button
+              label="לייק"
               onPress={onLike}
               loading={loadingAction === 'LIKE'}
               disabled={isBtnDisabled('LIKE')}
-              style={[styles.button, styles.likeButton]}
+              variant="primary"
+              iconStart="heart"
+              accessibilityLabel="סימון לייק למועמד"
+              style={styles.flexBtn}
             />
           )}
-        </View>
+          {showFreeze && (
+            <Button
+              label="שמור בצד"
+              onPress={onFreeze}
+              loading={loadingAction === 'FREEZE'}
+              disabled={isBtnDisabled('FREEZE')}
+              variant="secondary"
+              iconStart="star"
+              accessibilityLabel="שמירת המועמד בצד"
+              style={styles.flexBtn}
+            />
+          )}
+          {showDislike && (
+            <Button
+              label="לא מתאים"
+              onPress={onDislike}
+              loading={loadingAction === 'DISLIKE'}
+              disabled={isBtnDisabled('DISLIKE')}
+              variant="destructive"
+              iconStart="x"
+              accessibilityLabel="העברה לרשימת לא מתאים"
+              style={styles.flexBtn}
+            />
+          )}
+        </ResponsiveActionGroup>
       )}
 
       {showRemoveAction && (
-        <AppButton
-          title="ביטול פעולה אחרונה"
+        <Button
+          label="ביטול פעולה אחרונה"
           onPress={onRemoveAction}
           loading={loadingAction === 'REMOVE_ACTION'}
           disabled={isBtnDisabled('REMOVE_ACTION')}
-          style={styles.fullWidthButton}
           variant="secondary"
+          iconStart="log-out"
+          fullWidth
+          accessibilityLabel="ביטול פעולה אחרונה"
         />
       )}
 
       {showUnfreeze && (
-        <AppButton
-          title="ביטול שמירה בצד"
+        <Button
+          label="ביטול שמירה בצד"
           onPress={onUnfreeze}
           loading={loadingAction === 'UNFREEZE'}
           disabled={isBtnDisabled('UNFREEZE')}
-          style={styles.fullWidthButton}
           variant="secondary"
+          iconStart="star"
+          fullWidth
+          accessibilityLabel="ביטול שמירה בצד"
         />
       )}
 
       {showOpeningCreate && (
-        <AppButton
-          title="שלח/י הודעת פתיחה"
+        <Button
+          label="שלח/י הודעת פתיחה"
           onPress={onOpeningCreate}
           loading={loadingAction === 'OPENING_CREATE'}
           disabled={isBtnDisabled('OPENING_CREATE')}
-          style={styles.fullWidthButton}
           variant="secondary"
+          iconStart="mail"
+          fullWidth
+          accessibilityLabel="שליחת הודעת פתיחה"
         />
       )}
 
       {showOpeningOpen && (
-        <AppButton
-          title="צפייה בהודעת פתיחה"
+        <Button
+          label="צפייה בהודעת פתיחה"
           onPress={onOpeningOpen}
           loading={loadingAction === 'OPENING_OPEN'}
           disabled={isBtnDisabled('OPENING_OPEN')}
-          style={styles.fullWidthButton}
           variant="primary"
+          iconStart="mail"
+          fullWidth
+          accessibilityLabel="צפייה בהודעת פתיחה"
         />
       )}
 
       {showChatOpen && (
-        <AppButton
-          title="פתח צ׳אט"
+        <Button
+          label="פתח צ׳אט"
           onPress={onChatOpen}
           loading={loadingAction === 'CHAT_OPEN'}
           disabled={isBtnDisabled('CHAT_OPEN')}
-          style={styles.fullWidthButton}
           variant="primary"
+          iconStart="mail"
+          fullWidth
+          accessibilityLabel="פתיחת צ׳אט"
         />
       )}
 
       {showMatchDetailsOpen && (
-        <AppButton
-          title="פרטי השידוך"
+        <Button
+          label="פרטי השידוך"
           onPress={onMatchDetailsOpen}
           loading={loadingAction === 'MATCH_DETAILS_OPEN'}
           disabled={isBtnDisabled('MATCH_DETAILS_OPEN')}
-          style={styles.fullWidthButton}
           variant="secondary"
-        />
-      )}
-
-      {showMatchCancel && (
-        <AppButton
-          title="💔 ביטול התאמה"
-          onPress={onMatchCancel}
-          loading={loadingAction === 'MATCH_CANCEL'}
-          disabled={isBtnDisabled('MATCH_CANCEL')}
-          style={[styles.fullWidthButton, styles.cancelMatchButton]}
+          iconStart="info"
+          fullWidth
+          accessibilityLabel="צפייה בפרטי השידוך"
         />
       )}
     </View>
@@ -167,34 +203,35 @@ export const CandidateProfileActions: React.FC<CandidateProfileActionsProps> = (
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    gap: theme.spacing.s,
-    marginTop: theme.spacing.m,
+    gap: spacing.md,
   },
-  row: {
+  decisionRow: {
+    width: '100%',
     flexDirection: 'row',
-    gap: theme.spacing.s,
-    justifyContent: 'space-between',
-    width: '100%',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
   },
-  button: {
+  flexBtn: {
     flex: 1,
-    paddingVertical: theme.spacing.s + 2,
-    paddingHorizontal: theme.spacing.s,
-    borderRadius: theme.borderRadius.m,
+    minWidth: 100,
   },
-  likeButton: {
-    backgroundColor: theme.colors.primary,
+  noActionCard: {
+    backgroundColor: colors.surfaceSubtle,
+    borderColor: colors.borderSubtle,
+    alignItems: 'center',
+    padding: spacing.lg,
   },
-  dislikeButton: {
-    backgroundColor: theme.colors.error,
+  noActionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
   },
-  freezeButton: {
-    backgroundColor: '#757575',
+  noActionTitle: {
+    color: colors.textSecondary,
   },
-  fullWidthButton: {
-    width: '100%',
-  },
-  cancelMatchButton: {
-    backgroundColor: theme.colors.error,
+  noActionText: {
+    color: colors.textTertiary,
+    textAlign: 'center',
   },
 });

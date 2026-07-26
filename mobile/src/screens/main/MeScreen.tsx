@@ -1,529 +1,584 @@
+/**
+ * MeScreen — Batch A2 Anchor Runtime Proof
+ * ME-01 real USER-only Account/Personal Hub.
+ * Strictly adheres to Ceremony Quiet light-only design system.
+ */
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { Screen } from '../../components/Screen';
-import { AppButton } from '../../components/AppButton';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { ScreenContainer } from '../../components/foundation/ScreenContainer';
+import { Card } from '../../components/foundation/Card';
+import { Button } from '../../components/foundation/Button';
+import { AppIcon } from '../../components/foundation/AppIcon';
+import { StateSurface } from '../../components/foundation/StateSurface';
 import { useAuth } from '../../context/AuthContext';
-import { theme } from '../../theme/theme';
-import { adminApi } from '../../api/adminApi';
-import { getUnreadCount } from '../../api/chatsApi';
-import { notificationsApi } from '../../api/notificationsApi';
-import { AdminDashboardResponse } from '../../types/api';
-import { getYesNoLabel, getUserRoleLabel } from '../../utils/displayLabels';
+import { colors, spacing, radii, sizing } from '../../theme/tokens';
+import { typography } from '../../theme/typography';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
-const getProfileStatusLabel = (status: string) => {
+const getProfileStatusLabel = (status?: string) => {
   switch (status) {
-    case 'NONE': return 'לא הוגדר';
-    case 'BASIC': return 'פרופיל בסיסי';
-    case 'FULL': return 'פרופיל מלא';
-    case 'FULL_INCOMPLETE_BLOCKED': return 'פרופיל מלא חסר (חסום)';
-    default: return status;
+    case 'NONE':
+      return 'טרם הוגדר פרופיל';
+    case 'BASIC':
+      return 'פרופיל בסיסי';
+    case 'FULL':
+      return 'פרופיל מלא';
+    case 'FULL_INCOMPLETE_BLOCKED':
+      return 'פרופיל חסר (דרוש תיקון)';
+    default:
+      return status || 'לא ידוע';
   }
 };
 
-export const MeScreen = ({ navigation }: any) => {
+export const MeScreen: React.FC = () => {
   const { user, logout, refreshMe } = useAuth();
+  const navigation = useNavigation<any>();
+
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [dashboardData, setDashboardData] = useState<AdminDashboardResponse | null>(null);
-  const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
-  const [totalUnreadCount, setTotalUnreadCount] = useState<number>(0);
-  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
-
-  const fetchDashboard = async () => {
-    setIsLoadingDashboard(true);
-    try {
-      const data = await adminApi.getDashboard();
-      setDashboardData(data);
-    } catch (error) {
-      console.error('Error fetching admin dashboard:', error);
-    } finally {
-      setIsLoadingDashboard(false);
-    }
-  };
-
-  const fetchTotalUnreadCount = async () => {
-    try {
-      const data = await getUnreadCount();
-      setTotalUnreadCount(data.unreadCount);
-    } catch (error) {
-      console.error('Error fetching total unread count:', error);
-    }
-  };
-
-  const fetchUnreadNotificationsCount = async () => {
-    try {
-      const data = await notificationsApi.getUnreadNotificationCount();
-      setUnreadNotificationsCount(data.unreadCount);
-    } catch (error) {
-      console.error('Error fetching unread notifications count:', error);
-    }
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      if (user && user.role === 'ADMIN') {
-        fetchDashboard();
-      }
-      if (user && user.role === 'USER') {
-        fetchTotalUnreadCount();
-        fetchUnreadNotificationsCount();
-      }
-    }, [user])
-  );
+  const [refreshError, setRefreshError] = useState<string | null>(null);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
+    setRefreshError(null);
     try {
       await refreshMe();
-      if (user && user.role === 'ADMIN') {
-        const data = await adminApi.getDashboard();
-        setDashboardData(data);
-      }
-      if (user && user.role === 'USER') {
-        await Promise.all([
-          fetchTotalUnreadCount(),
-          fetchUnreadNotificationsCount(),
-        ]);
-      }
-    } catch (error) {
-      console.error('Error refreshing data:', error);
+    } catch (err: any) {
+      setRefreshError(getFriendlyErrorMessage(err, 'רענון נתוני המוכנות נכשל'));
     } finally {
       setIsRefreshing(false);
     }
   };
 
-  if (!user) return null;
+  useFocusEffect(
+    useCallback(() => {
+      if (user && user.role === 'USER') {
+        handleRefresh();
+      }
+    }, [user?.id])
+  );
+
+  if (!user) {
+    return null;
+  }
+
+  // Staff shell isolation guard
+  if (user.role !== 'USER') {
+    return (
+      <ScreenContainer testID="me-screen-staff-guard">
+        <StateSurface
+          kind="denied"
+          title="אזור אישי למשתמשים"
+          message="אזור זה מיועד למשתתפים בלבד. צוות המערכת פועל דרך ממשקי הניהול המורשים."
+          primaryAction={{
+            label: 'התנתקות',
+            onPress: logout,
+            icon: 'log-out',
+          }}
+        />
+      </ScreenContainer>
+    );
+  }
+
+  const isProfileComplete = user.profileStatus === 'BASIC' || user.profileStatus === 'FULL';
+  const isFullProfile = user.profileStatus === 'FULL';
+  const hasPrimaryPhoto = !!user.hasPrimaryPhoto;
+  const isReadinessStale = !!refreshError;
 
   return (
-    <Screen>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>החשבון שלי</Text>
+    <ScreenContainer scroll testID="me-screen-user-hub">
+      {/* Page Title */}
+      <View style={styles.headerContainer}>
+        <Text style={[typography.titleLarge, styles.titleText]}>אני</Text>
+        <Text style={[typography.bodyMedium, styles.subtitleText]}>
+          ניהול חשבון אישי, תמונות והגדרות מוכנות
+        </Text>
+      </View>
 
-        <View style={styles.card}>
-          <View style={styles.row}>
-            <Text style={styles.label}>שם מלא:</Text>
-            <Text style={styles.value}>{user.fullName}</Text>
+      {/* SECTION 1: Identity & Profile Header Card */}
+      <Card variant="surface" style={styles.identityCard} testID="me-identity-card">
+        <View style={styles.identityRow}>
+          <View style={styles.avatarWrapper}>
+            <View style={styles.avatarCircle}>
+              <AppIcon name="user" size={40} color={colors.textPrimary} />
+            </View>
+            <View style={styles.cameraBadge}>
+              <AppIcon name="edit" size={sizing.iconXs} color={colors.textInverse} />
+            </View>
           </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>אימייל:</Text>
-            <Text style={styles.value}>{user.email}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>תפקיד:</Text>
-            <Text style={styles.value}>{getUserRoleLabel(user.role)}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>סטטוס:</Text>
-            <Text style={styles.value}>{getProfileStatusLabel(user.profileStatus)}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>חסום:</Text>
-            <Text style={styles.value}>{getYesNoLabel(user.adminBlocked)}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>תמונה ראשית:</Text>
-            <Text style={styles.value}>{getYesNoLabel(user.hasPrimaryPhoto)}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>כמות תמונות:</Text>
-            <Text style={styles.value}>{user.photoCount}</Text>
+
+          <View style={styles.identityInfo}>
+            <Text style={[typography.titleMedium, styles.userNameText]}>{user.fullName}</Text>
+            <Text style={[typography.caption, styles.userEmailText]}>{user.email}</Text>
+            <View style={styles.statusPill}>
+              <AppIcon name="check" size={sizing.iconXs} color={colors.textAccent} />
+              <Text style={[typography.caption, styles.statusPillText]}>
+                {getProfileStatusLabel(user.profileStatus)}
+              </Text>
+            </View>
           </View>
         </View>
+      </Card>
 
-        {user.role === 'USER' && (
-          <>
-            <View style={styles.buttonContainer}>
-              <AppButton
-                title="ההתראות שלי"
-                onPress={() => navigation.navigate('Notifications')}
-                style={[styles.button, { marginBottom: 0 }]}
-              />
-              {unreadNotificationsCount > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{unreadNotificationsCount}</Text>
-                </View>
-              )}
+      {/* SECTION 2: Readiness Summary Card ("המוכנות שלי") */}
+      <Card variant="surface" style={styles.readinessCard} testID="me-readiness-card">
+        <View style={styles.readinessHeader}>
+          <View style={styles.readinessTitleRow}>
+            <AppIcon name="shield" size={sizing.iconMd} color={colors.accent} />
+            <Text style={[typography.titleLarge, styles.readinessTitle]}>המוכנות שלי</Text>
+          </View>
+          {isRefreshing && <ActivityIndicator size="small" color={colors.primary} />}
+        </View>
+
+        {isReadinessStale ? (
+          /* Stale / Unavailable Readiness State */
+          <View style={styles.staleContainer}>
+            <Text style={[typography.bodyMedium, styles.staleText]}>
+              לא ניתן היה לרענן את נתוני המוכנות העדכניים. תוכן החשבון מוצג על סמך המידע שנשמר.
+            </Text>
+            <Button
+              label="רענן נתוני מוכנות"
+              variant="secondary"
+              onPress={handleRefresh}
+              loading={isRefreshing}
+              iconStart="info"
+              style={styles.retryButton}
+            />
+          </View>
+        ) : (
+          /* Facts-driven Readiness Summary */
+          <View style={styles.readinessFactsContainer}>
+            <View style={styles.factRow}>
+              <View style={styles.factIconCircle}>
+                <AppIcon
+                  name={isProfileComplete ? 'check' : 'info'}
+                  size={sizing.iconSm}
+                  color={isProfileComplete ? colors.statusSuccess : colors.statusWarning}
+                />
+              </View>
+              <View style={styles.factTextColumn}>
+                <Text style={[typography.titleSmall, styles.factTitle]}>
+                  {isProfileComplete ? 'פרופיל אישי הושלם' : 'חסרים פרטי פרופיל אישי'}
+                </Text>
+                <Text style={[typography.caption, styles.factSubtitle]}>
+                  {isFullProfile
+                    ? 'פרופיל מלא זמין גם למאגר הגלובלי'
+                    : isProfileComplete
+                    ? 'פרופיל בסיסי זמין למאגרי חתונה'
+                    : 'מילוי פרופיל נדרש להשתתפות במאגרים'}
+                </Text>
+              </View>
             </View>
 
-            <AppButton
-              title="פרטי הפרופיל שלי" 
-              onPress={() => navigation.navigate('Profile', { intent: 'view' })}
-              style={styles.button}
-            />
-
-            <AppButton 
-              title="חיפוש מועמדים" 
-              onPress={() => navigation.navigate('PoolSelection')}
-              style={styles.button}
-            />
-
-            <AppButton 
-              title="הרשימות שלי" 
-              onPress={() => navigation.navigate('Lists')}
-              style={styles.button}
-            />
-
-            <AppButton
-              title="ההתאמות שלי"
-              onPress={() => navigation.navigate('Matches')}
-              style={styles.button}
-            />
-
-            <AppButton
-              title="הודעות פתיחה"
-              onPress={() => navigation.navigate('OpeningMessages')}
-              style={styles.button}
-            />
-
-            <AppButton
-              title="משתמשים חסומים"
-              onPress={() => navigation.navigate('BlockedUsers')}
-              style={styles.button}
-            />
-
-            <AppButton
-              title={totalUnreadCount > 0 ? `צ׳אטים (${totalUnreadCount})` : 'צ׳אטים'}
-              onPress={() => navigation.navigate('Chats')}
-              style={styles.button}
-            />
-
-            {user.profileStatus === 'NONE' && (
-              <View style={styles.guidedCard}>
-                <Text style={styles.guidedTitle}>השלמת הפרופיל שלך</Text>
-                <Text style={styles.guidedText}>
-                  כדי להשתמש במאגרים צריך להשלים פרופיל ותמונה ראשית. תמונה ראשית היא חלק מתנאי הזכאות למאגרים.
+            <View style={styles.factRow}>
+              <View style={styles.factIconCircle}>
+                <AppIcon
+                  name={hasPrimaryPhoto ? 'check' : 'info'}
+                  size={sizing.iconSm}
+                  color={hasPrimaryPhoto ? colors.statusSuccess : colors.statusWarning}
+                />
+              </View>
+              <View style={styles.factTextColumn}>
+                <Text style={[typography.titleSmall, styles.factTitle]}>
+                  {hasPrimaryPhoto ? 'תמונה ראשית קיימת' : 'עדיין חסרה תמונה ראשית'}
                 </Text>
-                <Text style={styles.guidedBullet}>
-                  • <Text style={styles.boldText}>פרופיל בסיסי + תמונה ראשית</Text> מאפשרים שימוש במאגרי חתונה (מאגר מקומי).
+                <Text style={[typography.caption, styles.factSubtitle]}>
+                  {hasPrimaryPhoto
+                    ? `הועלו ${user.photoCount} תמונות`
+                    : 'תמונה ראשית היא תנאי חובה להצגת הפרופיל'}
                 </Text>
-                <Text style={styles.guidedBullet}>
-                  • <Text style={styles.boldText}>פרופיל מלא</Text> כולל קודם את הפרופיל הבסיסי, ויחד עם תמונה ראשית מאפשר גם את המאגר הגלובלי.
-                </Text>
+              </View>
+            </View>
 
-                <AppButton
-                  title="פרופיל בסיסי — מתאים למאגרי חתונה"
+            {/* Legal Repair Actions */}
+            <View style={styles.repairActionContainer}>
+              {!hasPrimaryPhoto && (
+                <Button
+                  label="הוספת תמונה ראשית"
+                  variant="primary"
+                  onPress={() => navigation.navigate('Photos')}
+                  iconStart="plus"
+                  style={styles.repairButton}
+                />
+              )}
+
+              {user.profileStatus === 'NONE' && (
+                <Button
+                  label="השלמת פרופיל"
+                  variant="primary"
                   onPress={() => navigation.navigate('Profile', { intent: 'onboarding_basic' })}
-                  style={styles.guidedButton}
+                  iconStart="edit"
+                  style={styles.repairButton}
                 />
+              )}
 
-                <AppButton
-                  title="פרופיל מלא — מתאים גם למאגר הגלובלי"
-                  onPress={() => navigation.navigate('Profile', { intent: 'onboarding_full' })}
-                  style={[styles.guidedButton, styles.guidedButtonPrimary]}
+              {user.profileStatus === 'BASIC' && (
+                <Button
+                  label="השלם לפרופיל מלא"
+                  variant="secondary"
+                  onPress={() => navigation.navigate('Profile', { intent: 'complete_full' })}
+                  iconStart="edit"
+                  style={styles.repairButton}
                 />
+              )}
+
+              {user.profileStatus === 'FULL_INCOMPLETE_BLOCKED' && (
+                <Button
+                  label="עריכת פרופיל"
+                  variant="primary"
+                  onPress={() => navigation.navigate('Profile', { intent: 'repair_full' })}
+                  iconStart="edit"
+                  style={styles.repairButton}
+                />
+              )}
+            </View>
+          </View>
+        )}
+      </Card>
+
+      {/* SECTION 3: Account & Personal Menu Groups */}
+      <View style={styles.groupsContainer}>
+
+        {/* Group A: Profile & Photos */}
+        <Card variant="surface" style={styles.groupCard}>
+          <Text style={[typography.titleMedium, styles.groupHeaderTitle]}>פרופיל ותמונות</Text>
+
+          <TouchableOpacity
+            style={styles.rowItem}
+            onPress={() => navigation.navigate('Profile', { intent: 'view' })}
+            accessibilityRole="button"
+            accessibilityLabel="פרופיל אישי"
+          >
+            <View style={styles.rowItemRight}>
+              <View style={styles.rowIconWrapper}>
+                <AppIcon name="user" size={sizing.iconMd} color={colors.textPrimary} />
               </View>
-            )}
-
-            {user.profileStatus === 'BASIC' && (
-              <AppButton
-                title="השלם/י לפרופיל מלא"
-                onPress={() => navigation.navigate('Profile', { intent: 'complete_full' })}
-                style={styles.button}
-              />
-            )}
-
-            {user.profileStatus === 'FULL_INCOMPLETE_BLOCKED' && (
-              <AppButton
-                title="עריכת פרופיל מלא"
-                onPress={() => navigation.navigate('Profile', { intent: 'repair_full' })}
-                style={styles.button}
-              />
-            )}
-
-            <AppButton 
-              title="החתונות שלי" 
-              onPress={() => navigation.navigate('MyWeddings')}
-              style={styles.button}
-            />
-
-            <AppButton 
-              title="הצטרפות לחתונה" 
-              onPress={() => navigation.navigate('JoinWedding')}
-              style={styles.button}
-            />
-
-            <AppButton
-              title="שליחת באג / בקשת שיפור"
-              onPress={() => navigation.navigate('SendProductFeedback')}
-              style={styles.button}
-            />
-
-            <AppButton
-              title="הפניות שלי"
-              onPress={() => navigation.navigate('MyProductFeedback', { focusKind: undefined, focusId: undefined })}
-              style={styles.button}
-            />
-
-            <AppButton 
-              title="רענון פרופיל" 
-              onPress={handleRefresh} 
-              loading={isRefreshing}
-              style={[styles.button, styles.refreshButton]}
-            />
-          </>
-        )}
-
-        {user.role === 'ADMIN' && (
-          <>
-            <Text style={styles.sectionTitle}>דף בית מנהל</Text>
-
-            {isLoadingDashboard ? (
-              <Text style={styles.dashboardStatusText}>טוען נתוני לוח בקרה...</Text>
-            ) : dashboardData ? (
-              <View style={styles.dashboardContainer}>
-                <View style={styles.dashboardCard}>
-                  <Text style={styles.dashboardNum}>{dashboardData.usersCount}</Text>
-                  <Text style={styles.dashboardLabel}>משתמשים</Text>
-                </View>
-                <View style={styles.dashboardCard}>
-                  <Text style={styles.dashboardNum}>{dashboardData.eventManagersCount}</Text>
-                  <Text style={styles.dashboardLabel}>מנהלי אירועים</Text>
-                </View>
-                <View style={styles.dashboardCard}>
-                  <Text style={styles.dashboardNum}>{dashboardData.weddingsCount}</Text>
-                  <Text style={styles.dashboardLabel}>חתונות</Text>
-                </View>
-                <View style={styles.dashboardCard}>
-                  <Text style={styles.dashboardNum}>{dashboardData.activeWeddingsCount}</Text>
-                  <Text style={styles.dashboardLabel}>חתונות פעילות</Text>
-                </View>
+              <View style={styles.rowTextColumn}>
+                <Text style={[typography.titleSmall, styles.rowTitle]}>פרופיל אישי</Text>
+                <Text style={[typography.caption, styles.rowSubtitle]}>פרטים אישיים, סטטוס והעדפות</Text>
               </View>
-            ) : (
-              <Text style={styles.dashboardErrorText}>טעינת נתוני לוח הבקרה נכשלה</Text>
-            )}
+            </View>
+            <AppIcon name="chevron-left" size={sizing.iconMd} color={colors.textSecondary} mirrorRTL />
+          </TouchableOpacity>
 
-            <AppButton 
-              title="משתמשים" 
-              onPress={() => navigation.navigate('AdminUsers')}
-              style={styles.button}
-            />
-            <AppButton 
-              title="חתונות" 
-              onPress={() => navigation.navigate('AdminWeddings')}
-              style={styles.button}
-            />
-            <AppButton 
-              title="מנהלי אירועים" 
-              onPress={() => navigation.navigate('AdminEventManagers')}
-              style={styles.button}
-            />
-            <AppButton 
-              title="יצירת מנהל אירוע" 
-              onPress={() => navigation.navigate('CreateEventManager')}
-              style={styles.button}
-            />
-            <AppButton
-              title="ניהול דיווחים"
-              onPress={() => navigation.navigate('AdminReports')}
-              style={styles.button}
-            />
-            <AppButton
-              title="פניות מערכת"
-              onPress={() => navigation.navigate('AdminProductFeedback')}
-              style={styles.button}
-            />
-          </>
-        )}
+          <View style={styles.divider} />
 
-        {user.role === 'EVENT_MANAGER' && (
-          <>
-            <Text style={styles.sectionTitle}>דף בית מנהל אירוע</Text>
-            <AppButton 
-              title="החתונות שלי" 
-              onPress={() => navigation.navigate('EventManagerWeddings')}
-              style={styles.button}
-            />
-            <AppButton 
-              title="יצירת חתונה" 
-              onPress={() => navigation.navigate('CreateWedding')}
-              style={styles.button}
-            />
-          </>
-        )}
-        
-        <AppButton 
-          title="התנתקות" 
-          onPress={logout} 
-          style={[styles.button, styles.logoutButton]}
+          <TouchableOpacity
+            style={styles.rowItem}
+            onPress={() => navigation.navigate('Photos')}
+            accessibilityRole="button"
+            accessibilityLabel="התמונות שלי"
+          >
+            <View style={styles.rowItemRight}>
+              <View style={styles.rowIconWrapper}>
+                <AppIcon name="edit" size={sizing.iconMd} color={colors.textPrimary} />
+              </View>
+              <View style={styles.rowTextColumn}>
+                <Text style={[typography.titleSmall, styles.rowTitle]}>התמונות שלי</Text>
+                <Text style={[typography.caption, styles.rowSubtitle]}>הוספה, ארגון וניהול התמונות שלך</Text>
+              </View>
+            </View>
+            <AppIcon name="chevron-left" size={sizing.iconMd} color={colors.textSecondary} mirrorRTL />
+          </TouchableOpacity>
+        </Card>
+
+        {/* Group B: Account Information */}
+        <Card variant="surface" style={styles.groupCard}>
+          <Text style={[typography.titleMedium, styles.groupHeaderTitle]}>חשבון</Text>
+
+          <TouchableOpacity
+            style={styles.rowItem}
+            onPress={() => navigation.navigate('Profile', { intent: 'view' })}
+            accessibilityRole="button"
+            accessibilityLabel="פרטי חשבון"
+          >
+            <View style={styles.rowItemRight}>
+              <View style={styles.rowIconWrapper}>
+                <AppIcon name="lock" size={sizing.iconMd} color={colors.textPrimary} />
+              </View>
+              <View style={styles.rowTextColumn}>
+                <Text style={[typography.titleSmall, styles.rowTitle]}>פרטי חשבון</Text>
+                <Text style={[typography.caption, styles.rowSubtitle]}>אבטחה, פרטיות וקוד גישה</Text>
+              </View>
+            </View>
+            <AppIcon name="chevron-left" size={sizing.iconMd} color={colors.textSecondary} mirrorRTL />
+          </TouchableOpacity>
+        </Card>
+
+        {/* Group C: Safety */}
+        <Card variant="surface" style={styles.groupCard}>
+          <Text style={[typography.titleMedium, styles.groupHeaderTitle]}>בטיחות</Text>
+
+          <TouchableOpacity
+            style={styles.rowItem}
+            onPress={() => navigation.navigate('BlockedUsers')}
+            accessibilityRole="button"
+            accessibilityLabel="משתמשים חסומים"
+          >
+            <View style={styles.rowItemRight}>
+              <View style={styles.rowIconWrapper}>
+                <AppIcon name="shield" size={sizing.iconMd} color={colors.textPrimary} />
+              </View>
+              <View style={styles.rowTextColumn}>
+                <Text style={[typography.titleSmall, styles.rowTitle]}>משתמשים חסומים</Text>
+                <Text style={[typography.caption, styles.rowSubtitle]}>ניהול רשימת חסומים</Text>
+              </View>
+            </View>
+            <AppIcon name="chevron-left" size={sizing.iconMd} color={colors.textSecondary} mirrorRTL />
+          </TouchableOpacity>
+        </Card>
+
+        {/* Group D: Support & Feedback */}
+        <Card variant="surface" style={styles.groupCard}>
+          <Text style={[typography.titleMedium, styles.groupHeaderTitle]}>תמיכה</Text>
+
+          <TouchableOpacity
+            style={styles.rowItem}
+            onPress={() => navigation.navigate('MyProductFeedback')}
+            accessibilityRole="button"
+            accessibilityLabel="הבקשות שלי"
+          >
+            <View style={styles.rowItemRight}>
+              <View style={styles.rowIconWrapper}>
+                <AppIcon name="info" size={sizing.iconMd} color={colors.textPrimary} />
+              </View>
+              <View style={styles.rowTextColumn}>
+                <Text style={[typography.titleSmall, styles.rowTitle]}>הבקשות שלי</Text>
+                <Text style={[typography.caption, styles.rowSubtitle]}>מעקב אחר פניות ובקשות</Text>
+              </View>
+            </View>
+            <AppIcon name="chevron-left" size={sizing.iconMd} color={colors.textSecondary} mirrorRTL />
+          </TouchableOpacity>
+
+          <View style={styles.divider} />
+
+          <TouchableOpacity
+            style={styles.rowItem}
+            onPress={() => navigation.navigate('SendProductFeedback')}
+            accessibilityRole="button"
+            accessibilityLabel="פנייה ותמיכה"
+          >
+            <View style={styles.rowItemRight}>
+              <View style={styles.rowIconWrapper}>
+                <AppIcon name="mail" size={sizing.iconMd} color={colors.textPrimary} />
+              </View>
+              <View style={styles.rowTextColumn}>
+                <Text style={[typography.titleSmall, styles.rowTitle]}>פנייה ותמיכה</Text>
+                <Text style={[typography.caption, styles.rowSubtitle]}>שאלות ותשובות, יצירת קשר</Text>
+              </View>
+            </View>
+            <AppIcon name="chevron-left" size={sizing.iconMd} color={colors.textSecondary} mirrorRTL />
+          </TouchableOpacity>
+        </Card>
+      </View>
+
+      {/* SECTION 4: Destructive Logout Action */}
+      <View style={styles.logoutContainer}>
+        <Button
+          label="התנתקות"
+          variant="destructive"
+          onPress={logout}
+          iconStart="log-out"
+          testID="me-logout-button"
         />
-      </ScrollView>
-    </Screen>
+      </View>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    padding: theme.spacing.l,
-    flexGrow: 1,
+  headerContainer: {
+    marginVertical: spacing.lg,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.xl,
-    textAlign: 'center',
+  titleText: {
+    color: colors.textPrimary,
+    textAlign: 'right',
+    marginBottom: spacing.xs,
   },
-  card: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.l,
-    borderRadius: theme.borderRadius.l,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    marginBottom: theme.spacing.xl,
-  },
-  row: {
-    flexDirection: 'row-reverse',
-    justifyContent: 'space-between',
-    paddingVertical: theme.spacing.s,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.border,
-  },
-  label: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
-    fontWeight: '500',
-  },
-  value: {
-    fontSize: 16,
-    color: theme.colors.text,
-    fontWeight: '600',
-  },
-  button: {
-    marginBottom: theme.spacing.m,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: theme.colors.primary,
-    marginTop: theme.spacing.m,
-    marginBottom: theme.spacing.m,
+  subtitleText: {
+    color: colors.textSecondary,
     textAlign: 'right',
   },
-  logoutButton: {
-    backgroundColor: theme.colors.error,
+  identityCard: {
+    marginBottom: spacing.lg,
+    padding: spacing.lg,
   },
-  refreshButton: {
-    backgroundColor: '#4A4A4A',
-  },
-  dashboardContainer: {
+  identityRow: {
     flexDirection: 'row-reverse',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: theme.spacing.l,
-    marginTop: theme.spacing.s,
-  },
-  dashboardCard: {
-    backgroundColor: theme.colors.surface,
-    width: '48%',
-    padding: theme.spacing.m,
-    borderRadius: theme.borderRadius.m,
     alignItems: 'center',
-    marginBottom: theme.spacing.m,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    gap: spacing.lg,
   },
-  dashboardNum: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: theme.colors.primary,
-  },
-  dashboardLabel: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginTop: 4,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  dashboardStatusText: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    fontStyle: 'italic',
-    marginBottom: theme.spacing.m,
-    textAlign: 'center',
-  },
-  dashboardErrorText: {
-    fontSize: 14,
-    color: theme.colors.error,
-    marginBottom: theme.spacing.m,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  guidedCard: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.l,
-    borderRadius: theme.borderRadius.l,
-    borderWidth: 1,
-    borderColor: theme.colors.primary,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    marginBottom: theme.spacing.xl,
-  },
-  guidedTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.m,
-    textAlign: 'right',
-  },
-  guidedText: {
-    fontSize: 15,
-    color: theme.colors.text,
-    lineHeight: 22,
-    textAlign: 'right',
-    marginBottom: theme.spacing.s,
-  },
-  guidedBullet: {
-    fontSize: 14,
-    color: theme.colors.text,
-    lineHeight: 20,
-    textAlign: 'right',
-    marginBottom: theme.spacing.s,
-    paddingRight: theme.spacing.s,
-  },
-  guidedButton: {
-    marginTop: theme.spacing.m,
-  },
-  guidedButtonPrimary: {
-    backgroundColor: theme.colors.primary,
-  },
-  boldText: {
-    fontWeight: 'bold',
-  },
-  buttonContainer: {
+  avatarWrapper: {
     position: 'relative',
-    marginBottom: theme.spacing.m,
   },
-  badge: {
-    position: 'absolute',
-    top: -6,
-    right: -6,
-    backgroundColor: theme.colors.error,
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
+  avatarCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: radii.full,
+    backgroundColor: colors.surfaceSubtle,
     alignItems: 'center',
-    paddingHorizontal: 5,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.5,
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.borderStrong,
   },
-  badgeText: {
-    color: theme.colors.surface,
-    fontSize: 11,
+  cameraBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  identityInfo: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  userNameText: {
+    color: colors.textPrimary,
+    textAlign: 'right',
+  },
+  userEmailText: {
+    color: colors.textSecondary,
+    textAlign: 'right',
+    marginTop: spacing.xxs,
+  },
+  statusPill: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    backgroundColor: colors.accentMuted,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: radii.full,
+    marginTop: spacing.xs,
+    gap: spacing.xxs,
+  },
+  statusPillText: {
+    color: colors.textAccent,
     fontWeight: 'bold',
+  },
+  readinessCard: {
+    marginBottom: spacing.lg,
+    padding: spacing.lg,
+  },
+  readinessHeader: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  readinessTitleRow: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  readinessTitle: {
+    color: colors.textPrimary,
+  },
+  staleContainer: {
+    padding: spacing.md,
+    backgroundColor: colors.surfaceSubtle,
+    borderRadius: radii.md,
+    gap: spacing.md,
+  },
+  staleText: {
+    color: colors.textSecondary,
+    textAlign: 'right',
+    lineHeight: 20,
+  },
+  retryButton: {
+    alignSelf: 'flex-start',
+  },
+  readinessFactsContainer: {
+    gap: spacing.md,
+  },
+  factRow: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  factIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: radii.full,
+    backgroundColor: colors.surfaceSubtle,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  factTextColumn: {
+    flex: 1,
+  },
+  factTitle: {
+    color: colors.textPrimary,
+    textAlign: 'right',
+  },
+  factSubtitle: {
+    color: colors.textSecondary,
+    textAlign: 'right',
+    marginTop: 2,
+  },
+  repairActionContainer: {
+    marginTop: spacing.md,
+    gap: spacing.sm,
+  },
+  repairButton: {
+    width: '100%',
+  },
+  groupsContainer: {
+    gap: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  groupCard: {
+    padding: spacing.md,
+  },
+  groupHeaderTitle: {
+    color: colors.textSecondary,
+    textAlign: 'right',
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  rowItem: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: sizing.minTouchTarget,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  rowItemRight: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: spacing.md,
+    flex: 1,
+  },
+  rowIconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: radii.md,
+    backgroundColor: colors.surfaceSubtle,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowTextColumn: {
+    flex: 1,
+  },
+  rowTitle: {
+    color: colors.textPrimary,
+    textAlign: 'right',
+  },
+  rowSubtitle: {
+    color: colors.textSecondary,
+    textAlign: 'right',
+    marginTop: 2,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.borderSubtle,
+    marginVertical: spacing.xs,
+  },
+  logoutContainer: {
+    marginBottom: spacing.massive,
   },
 });

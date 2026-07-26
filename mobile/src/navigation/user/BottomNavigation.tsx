@@ -18,6 +18,7 @@ const Tab = createBottomTabNavigator<UserTabsParamList>();
 const TAB_BAR_VISIBLE_ROUTES = new Set([
   'PoolSelection',
   'Discover',
+  'ConnectionsHub',
   'Lists',
   'Chats',
   'MyWeddings',

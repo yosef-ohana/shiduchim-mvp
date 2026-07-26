@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { ChatMessageResponse } from '../types/api';
 import { useAuth } from '../context/AuthContext';
-import { theme } from '../theme/theme';
+import { colors, spacing, radii } from '../theme/tokens';
+import { typography } from '../theme/typography';
 
 interface ChatMessageBubbleProps {
   message: ChatMessageResponse;
@@ -38,7 +39,7 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 4,
+    marginVertical: spacing.xs,
     flexDirection: 'row',
     width: '100%',
   },
@@ -50,38 +51,42 @@ const styles = StyleSheet.create({
   },
   bubble: {
     maxWidth: '75%',
-    paddingVertical: theme.spacing.s,
-    paddingHorizontal: theme.spacing.m,
-    borderRadius: theme.borderRadius.l,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.lg,
   },
   myBubble: {
-    backgroundColor: theme.colors.primary,
-    borderBottomRightRadius: theme.borderRadius.s,
+    backgroundColor: colors.primary,
+    borderBottomRightRadius: radii.xs,
   },
   otherBubble: {
-    backgroundColor: theme.colors.border,
-    borderBottomLeftRadius: theme.borderRadius.s,
+    backgroundColor: colors.surfaceSubtle,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    borderBottomLeftRadius: radii.xs,
   },
   content: {
-    fontSize: 16,
-    lineHeight: 20,
+    ...typography.bodyMedium,
+    lineHeight: 22,
     textAlign: 'right',
   },
   myText: {
-    color: theme.colors.surface,
+    color: colors.textInverse,
   },
   otherText: {
-    color: theme.colors.text,
+    color: colors.textPrimary,
   },
   time: {
+    ...typography.caption,
     fontSize: 10,
-    marginTop: 4,
+    marginTop: spacing.xxs,
     alignSelf: 'flex-end',
   },
   myTime: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: colors.textInverse,
+    opacity: 0.85,
   },
   otherTime: {
-    color: theme.colors.textSecondary,
+    color: colors.textSecondary,
   },
 });

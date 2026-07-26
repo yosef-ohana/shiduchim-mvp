@@ -1,25 +1,38 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Screen } from '../../components/Screen';
-import { AppButton } from '../../components/AppButton';
-import { theme } from '../../theme/theme';
+import { ScreenContainer } from '../../components/foundation/ScreenContainer';
+import { Card } from '../../components/foundation/Card';
+import { StateSurface } from '../../components/foundation/StateSurface';
+import { Button } from '../../components/foundation/Button';
+import { AppIcon } from '../../components/foundation/AppIcon';
+import { ResponsiveActionGroup } from '../../components/foundation/ResponsiveActionGroup';
+import { BidiText } from '../../components/foundation/BidiText';
+import { colors, spacing, radii, sizing } from '../../theme/tokens';
+import { typography } from '../../theme/typography';
 import { PublicProfileResponse, AllowedCandidateAction, PoolType } from '../../types/api';
 import { getImageUrl } from '../../utils/imageUrl';
 import { getYesNoLabel, getEmptyLabel } from '../../utils/displayLabels';
 import { blockUser } from '../../api/blocksApi';
 import { getPublicProfile } from '../../api/profileApi';
 import { likeUser, dislikeUser, freezeUser, unfreezeUser, removeAction } from '../../api/actionsApi';
-import { cancelMatch } from '../../api/matchesApi';
 import { sendOpeningMessage } from '../../api/openingMessagesApi';
 import { CandidateProfileActions } from '../../components/profile/CandidateProfileActions';
 import { OpeningMessageComposer } from '../../components/OpeningMessageComposer';
+
+type ProfileErrorKind = 'denied' | 'not_found' | 'network' | 'generic';
+
+interface ProfileErrorInfo {
+  kind: ProfileErrorKind;
+  title: string;
+  message: string;
+}
 
 export const CandidateProfileScreen = ({ route, navigation }: any) => {
   const { userId, contextLabel, sourceType, sourceId, poolType, weddingId } = route.params || {};
   const [profile, setProfile] = useState<PublicProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ProfileErrorInfo | null>(null);
   const [loadingAction, setLoadingAction] = useState<AllowedCandidateAction | null>(null);
   const [composerVisible, setComposerVisible] = useState(false);
 
@@ -49,16 +62,27 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
       }
     } catch (err: any) {
       if (isFocusedRef.current) {
-        if (err.response?.status === 403) {
-          setError('אין לך הרשאה לצפות בפרופיל זה.');
-        } else if (err.response?.status === 404) {
-          setError('הפרופיל המבוקש אינו קיים עוד.');
+        // Clear cached protected data on error / denial
+        setProfile(null);
+        const status = err.response?.status;
+        if (status === 403) {
+          setError({
+            kind: 'denied',
+            title: 'לא ניתן להציג את הפרופיל',
+            message: 'המקור שממנו נפתחה הצפייה אינו מורשה עבורך כעת.',
+          });
+        } else if (status === 404) {
+          setError({
+            kind: 'not_found',
+            title: 'פרופיל לא נמצא',
+            message: 'הפרופיל המבוקש אינו קיים עוד.',
+          });
         } else {
-          setError(
-            err.response?.data?.message ||
-              err.message ||
-              'טעינת פרופיל המועמד נכשלה. אנא נסו שוב.'
-          );
+          setError({
+            kind: 'network',
+            title: 'שגיאת תקשורת',
+            message: 'לא ניתן לטעון את הפרופיל כעת. אנא בדקו את החיבור ונסו שוב.',
+          });
         }
       }
     } finally {
@@ -284,46 +308,26 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
     navigation.navigate('MatchDetails', { matchId });
   };
 
-  const handleMatchCancel = () => {
-    const matchId = profile?.relationship?.match?.matchId;
-    if (!matchId) {
-      Alert.alert('שגיאה', 'שגיאת מערכת: מזהה התאמה חסר. הפרופיל יתרענן.', [
-        { text: 'אישור', onPress: fetchProfile }
-      ]);
-      return;
-    }
-
+  const handleBlockUser = () => {
     Alert.alert(
-      'ביטול התאמה',
-      'התאמה זו והגישה לצ׳אט יבוטלו. ההודעות הקיימות יישמרו. להמשיך?',
+      'חסום משתמש',
+      'המשתמש לא יופיע לך, ואת/ה לא תופיע/י לו, כל עוד החסימה פעילה.',
       [
         { text: 'ביטול', style: 'cancel' },
         {
-          text: 'כן, ביטול התאמה',
+          text: 'חסום',
           style: 'destructive',
           onPress: async () => {
-            setLoadingAction('MATCH_CANCEL');
             try {
-              await cancelMatch(matchId);
-              Alert.alert(
-                'ההתאמה בוטלה',
-                'ההתאמה בוטלה בהצלחה.',
-                [
-                  {
-                    text: 'אישור',
-                    onPress: () => {
-                      navigation.navigate('Matches');
-                    }
-                  }
-                ]
-              );
+              await blockUser(userId);
+              Alert.alert('חסימה בוצעה', 'המשתמש נחסם בהצלחה.', [
+                { text: 'אישור', onPress: () => navigation.goBack() }
+              ]);
             } catch (err: any) {
-              handleMutationError(err);
-            } finally {
-              setLoadingAction(null);
+              Alert.alert('שגיאה', err.response?.data?.message || 'חסימת המשתמש נכשלה.');
             }
           }
-        }
+        },
       ]
     );
   };
@@ -365,368 +369,515 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
     return 'עדיין לא בוצעה פעולה';
   };
 
-  const handleBlockUser = () => {
-    Alert.alert(
-      'חסום משתמש',
-      'המשתמש לא יופיע לך, ואת/ה לא תופיע/י לו, כל עוד החסימה פעילה.',
-      [
-        { text: 'ביטול', style: 'cancel' },
-        {
-          text: 'חסום',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await blockUser(userId);
-              Alert.alert('חסימה בוצעה', 'המשתמש נחסם בהצלחה.', [
-                { text: 'אישור', onPress: () => navigation.goBack() }
-              ]);
-            } catch (err: any) {
-              Alert.alert('שגיאה', err.response?.data?.message || 'חסימת המשתמש נכשלה.');
-            }
-          }
-        },
-      ]
-    );
-  };
-
-  if (loading) {
+  // State Surface: Loading
+  if (loading && !profile) {
     return (
-      <Screen style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.stateText}>טוען פרטי פרופיל...</Text>
-      </Screen>
+      <ScreenContainer>
+        <StateSurface kind="loading" title="טוען פרטי פרופיל..." />
+      </ScreenContainer>
     );
   }
 
-  if (error || !profile) {
+  // State Surface: Denied (S6-A04-F02)
+  if (error?.kind === 'denied') {
     return (
-      <Screen style={styles.centerContainer}>
-        <Text style={styles.errorText}>{error || 'לא ניתן היה לטעון את הפרופיל'}</Text>
-        <AppButton title="נסה שוב" onPress={fetchProfile} style={styles.retryButton} />
-        <AppButton
-          title="חזור"
-          onPress={() => navigation.goBack()}
-          variant="secondary"
-          style={[styles.retryButton, { marginTop: theme.spacing.s }]}
+      <ScreenContainer>
+        <StateSurface
+          kind="denied"
+          title={error.title}
+          message={error.message}
+          primaryAction={{
+            label: 'חזור',
+            onPress: () => navigation.goBack(),
+            icon: 'arrow-left',
+          }}
+          live
         />
-      </Screen>
+      </ScreenContainer>
     );
   }
 
-  const renderRow = (label: string, value: any, isLongText = false) => {
+  // State Surface: Not Found / Error
+  if (error || !profile) {
+    const isNotFound = error?.kind === 'not_found';
+    return (
+      <ScreenContainer>
+        <StateSurface
+          kind={isNotFound ? 'empty' : 'error'}
+          title={error?.title || 'שגיאת טעינה'}
+          message={error?.message || 'לא ניתן היה לטעון את הפרופיל המבוקש.'}
+          primaryAction={
+            isNotFound
+              ? { label: 'חזור', onPress: () => navigation.goBack(), icon: 'arrow-left' }
+              : { label: 'נסה שוב', onPress: fetchProfile, icon: 'check' }
+          }
+          secondaryAction={
+            isNotFound
+              ? undefined
+              : { label: 'חזור', onPress: () => navigation.goBack(), icon: 'arrow-left' }
+          }
+          live
+        />
+      </ScreenContainer>
+    );
+  }
+
+  const primaryPhoto = getImageUrl(profile.primaryPhotoUrl);
+  const allowedActions = profile.relationship?.allowedActions || [];
+  const isMutualMatch = profile.relationship?.match?.status === 'ACTIVE';
+  const matchId = profile.relationship?.match?.matchId;
+
+  const renderFieldRow = (label: string, value: any, isLongText = false) => {
     const displayValue = getEmptyLabel(value);
 
     if (isLongText) {
       return (
         <View style={styles.longTextContainer} key={label}>
-          <Text style={styles.rowLabel}>{label}</Text>
-          <Text style={styles.longTextValue}>{displayValue}</Text>
+          <Text style={[typography.bodyMediumBold, styles.fieldLabel]}>{label}</Text>
+          <BidiText value={displayValue} style={[typography.bodyMedium, styles.longTextValue]} />
         </View>
       );
     }
 
     return (
-      <View style={styles.row} key={label}>
-        <Text style={styles.rowLabel}>{label}:</Text>
-        <Text style={styles.rowValue}>{displayValue}</Text>
+      <View style={styles.fieldRow} key={label}>
+        <Text style={[typography.bodyMediumBold, styles.fieldLabel]}>{label}:</Text>
+        <BidiText value={displayValue} style={[typography.bodyMedium, styles.fieldValue]} />
       </View>
     );
   };
 
   return (
-    <Screen>
-      <ScrollView contentContainerStyle={styles.container}>
-        {contextLabel ? (
-          <View style={styles.contextBanner}>
-            <Text style={styles.contextBannerText}>{contextLabel}</Text>
-          </View>
-        ) : null}
+    <ScreenContainer scroll>
+      {/* Source / Context Banner (Header) */}
+      <Card variant="surface" padding="sm" style={styles.sourceBanner}>
+        <View style={styles.sourceBannerContent}>
+          <AppIcon name="search" size={16} color={colors.accent} />
+          <BidiText value={contextLabel || 'מקור: גילוי גלובלי'} style={[typography.captionBold, styles.sourceText]} />
+        </View>
+      </Card>
 
-        {/* Photo Section */}
-        <View style={styles.photoSection}>
-          <View style={styles.photoContainer}>
-            {getImageUrl(profile.primaryPhotoUrl) ? (
-              <Image source={{ uri: getImageUrl(profile.primaryPhotoUrl) }} style={styles.mainImage} />
-            ) : (
-              <View style={[styles.mainImage, styles.placeholderImage]}>
-                <Text style={styles.placeholderText}>אין תמונה</Text>
-              </View>
-            )}
-            {getImageUrl(profile.additionalPhotoUrl) ? (
-              <Image source={{ uri: getImageUrl(profile.additionalPhotoUrl) }} style={styles.sideImage} />
+      {/* Candidate Media Region (4:5 Aspect Ratio) */}
+      <View style={styles.mediaContainer}>
+        {primaryPhoto ? (
+          <Image
+            source={{ uri: primaryPhoto }}
+            style={styles.mediaImage}
+            resizeMode="cover"
+            accessibilityLabel={`תמונת ${profile.fullName}`}
+          />
+        ) : (
+          <View
+            style={styles.mediaPlaceholder}
+            accessible
+            accessibilityLabel="תמונת מועמד חסרה"
+          >
+            <AppIcon name="user" size={48} color={colors.textTertiary} />
+            <Text style={[typography.bodyMediumBold, styles.mediaPlaceholderText]}>
+              אין תמונה זמינה
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* Candidate Identity */}
+      <View style={styles.identityContainer}>
+        <Text
+          style={[typography.titleLarge, styles.candidateName]}
+          accessibilityRole="header"
+        >
+          {profile.fullName}
+        </Text>
+        <BidiText
+          value={`${profile.age} שנים • ${profile.heightCm} ס״מ • ${profile.areaOfResidence}`}
+          style={[typography.bodyMediumMedium, styles.candidateSubtitle]}
+        />
+
+        {/* Quick Attribute Chips */}
+        <View style={styles.attributeChipsRow}>
+          {profile.occupation ? (
+            <View style={styles.attributeChip}>
+              <Text style={[typography.captionBold, styles.attributeChipText]}>
+                {profile.occupation}
+              </Text>
+            </View>
+          ) : null}
+          {profile.education ? (
+            <View style={styles.attributeChip}>
+              <Text style={[typography.captionBold, styles.attributeChipText]}>
+                {profile.education}
+              </Text>
+            </View>
+          ) : null}
+          {profile.religiousLevel ? (
+            <View style={styles.attributeChip}>
+              <Text style={[typography.captionBold, styles.attributeChipText]}>
+                {profile.religiousLevel}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      </View>
+
+      {/* Mutual Match Result Banner (S6-A04-F03) OR Standard Actions */}
+      {isMutualMatch ? (
+        <Card variant="selectable" selected padding="lg" style={styles.matchResultCard}>
+          <View style={styles.matchHeaderRow} accessibilityLiveRegion="assertive">
+            <AppIcon name="heart" size={24} color={colors.accent} />
+            <Text style={[typography.titleMedium, styles.matchTitle]}>נוצרה התאמה!</Text>
+          </View>
+          <BidiText
+            value={`אתה ו${profile.fullName} התאמתם זה לזו. אפשר לעבור לפרטי ההתאמה או להמשיך לצ׳אט.`}
+            style={[typography.bodyMedium, styles.matchSubtitle]}
+          />
+          <View style={styles.matchStatusBadge}>
+            <AppIcon name="check" size={16} color={colors.statusSuccess} />
+            <Text style={[typography.captionBold, styles.matchStatusText]}>
+              סטטוס קשר: התאמה נוצרה
+            </Text>
+          </View>
+
+          {/* Mutual Match Destinations (Server-Driven) */}
+          <ResponsiveActionGroup alignment="stacked" style={styles.matchActionsGroup}>
+            {allowedActions.includes('CHAT_OPEN') && matchId ? (
+              <Button
+                label="מעבר לצ׳אט"
+                onPress={handleChatOpen}
+                variant="primary"
+                iconStart="mail"
+                fullWidth
+                accessibilityLabel="מעבר לצ׳אט"
+              />
             ) : null}
+
+            {allowedActions.includes('MATCH_DETAILS_OPEN') && matchId ? (
+              <Button
+                label="למסך ההתאמות"
+                onPress={handleMatchDetailsOpen}
+                variant="secondary"
+                iconStart="info"
+                fullWidth
+                accessibilityLabel="מעבר לפרטי השידוך"
+              />
+            ) : null}
+          </ResponsiveActionGroup>
+        </Card>
+      ) : (
+        <>
+          {/* Relationship Status Badge */}
+          {profile.relationship && (
+            <View style={styles.statusBadgeCard}>
+              <BidiText
+                value={`סטטוס קשר: ${getRelationshipStatusText()}`}
+                style={[typography.captionBold, styles.statusBadgeText]}
+              />
+            </View>
+          )}
+
+          {/* Server-Driven Action Region (S6-A04-F01) */}
+          {profile.relationship && (
+            <View style={styles.actionsSection}>
+              <CandidateProfileActions
+                allowedActions={allowedActions}
+                loadingAction={loadingAction}
+                disabled={loading}
+                onLike={handleLike}
+                onDislike={handleDislike}
+                onFreeze={handleFreeze}
+                onRemoveAction={handleRemoveAction}
+                onUnfreeze={handleUnfreeze}
+                onOpeningCreate={() => setComposerVisible(true)}
+                onOpeningOpen={handleOpeningOpen}
+                onChatOpen={handleChatOpen}
+                onMatchDetailsOpen={handleMatchDetailsOpen}
+              />
+            </View>
+          )}
+        </>
+      )}
+
+      {/* Profile Information Sections (S6-A04-F04 — Long Profile Compact) */}
+      <View style={styles.sectionsContainer}>
+        {/* Section 1: Personal Details */}
+        <Card variant="surface" padding="md" style={styles.sectionCard}>
+          <Text style={[typography.titleSmall, styles.sectionTitle]}>פרטים אישיים</Text>
+          <View style={styles.cardContent}>
+            {renderFieldRow('גיל', profile.age)}
+            {renderFieldRow('עיר / אזור מגורים', profile.areaOfResidence)}
+            {renderFieldRow('גובה', `${profile.heightCm} ס״מ`)}
+            {renderFieldRow('כיסוי ראש', profile.headCovering)}
+            {renderFieldRow('רישיון נהיגה', getYesNoLabel(profile.hasDrivingLicense))}
           </View>
-        </View>
+        </Card>
 
-        {/* Header Info */}
-        <View style={styles.headerInfo}>
-          <Text style={styles.name}>{profile.fullName}</Text>
-          <Text style={styles.subtitle}>
-            {profile.age} שנים • {profile.heightCm} ס״מ
-          </Text>
-        </View>
-
-        {/* Relationship Status Section */}
-        {profile.relationship && (
-          <View style={styles.statusSection}>
-            <Text style={styles.statusText}>{getRelationshipStatusText()}</Text>
+        {/* Section 2: Education & Career */}
+        <Card variant="surface" padding="md" style={styles.sectionCard}>
+          <Text style={[typography.titleSmall, styles.sectionTitle]}>השכלה וקריירה</Text>
+          <View style={styles.cardContent}>
+            {renderFieldRow('השכלה', profile.education)}
+            {renderFieldRow('עיסוק', profile.occupation)}
+            {renderFieldRow('רמה דתית', profile.religiousLevel)}
           </View>
-        )}
+        </Card>
 
-        {/* Dynamic Actions Section */}
-        {profile.relationship && (
-          <View style={styles.actionsSection}>
-            <CandidateProfileActions
-              allowedActions={profile.relationship.allowedActions}
-              loadingAction={loadingAction}
-              disabled={loading}
-              onLike={handleLike}
-              onDislike={handleDislike}
-              onFreeze={handleFreeze}
-              onRemoveAction={handleRemoveAction}
-              onUnfreeze={handleUnfreeze}
-              onOpeningCreate={() => setComposerVisible(true)}
-              onOpeningOpen={handleOpeningOpen}
-              onChatOpen={handleChatOpen}
-              onMatchDetailsOpen={handleMatchDetailsOpen}
-              onMatchCancel={handleMatchCancel}
-            />
+        {/* Section 3: About Me */}
+        <Card variant="surface" padding="md" style={styles.sectionCard}>
+          <Text style={[typography.titleSmall, styles.sectionTitle]}>עליי</Text>
+          <View style={styles.cardContent}>
+            {renderFieldRow('תיאור עצמי', profile.selfDescription, true)}
+            {renderFieldRow('תחביבים ותחומי עניין', profile.hobbies, true)}
           </View>
-        )}
+        </Card>
 
-        {/* Basic Info Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>פרטי פרופיל</Text>
-          <View style={styles.card}>
-            {renderRow('אזור מגורים', profile.areaOfResidence)}
-            {renderRow('רמה דתית', profile.religiousLevel)}
-            {renderRow('כיסוי ראש', profile.headCovering)}
-            {renderRow('רישיון נהיגה', getYesNoLabel(profile.hasDrivingLicense))}
+        {/* Section 4: Looking For */}
+        <Card variant="surface" padding="md" style={styles.sectionCard}>
+          <Text style={[typography.titleSmall, styles.sectionTitle]}>מה אני מחפש/ת</Text>
+          <View style={styles.cardContent}>
+            {renderFieldRow('תיאור חיפוש', profile.lookingFor, true)}
           </View>
-        </View>
+        </Card>
 
-        {/* Education & Occupation Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>השכלה וקריירה</Text>
-          <View style={styles.card}>
-            {renderRow('השכלה', profile.education)}
-            {renderRow('עיסוק', profile.occupation)}
+        {/* Section 5: Family Background */}
+        {profile.familyDescription ? (
+          <Card variant="surface" padding="md" style={styles.sectionCard}>
+            <Text style={[typography.titleSmall, styles.sectionTitle]}>רקע משפחתי</Text>
+            <View style={styles.cardContent}>
+              {renderFieldRow('רקע משפחתי', profile.familyDescription, true)}
+            </View>
+          </Card>
+        ) : null}
+      </View>
+
+      {/* Visually Separated Safety Region */}
+      {(allowedActions.includes('REPORT') || allowedActions.includes('BLOCK')) && (
+        <Card variant="surface" padding="lg" style={styles.safetyCard}>
+          <View style={styles.safetyHeaderRow}>
+            <AppIcon name="shield" size={20} color={colors.textSecondary} />
+            <Text style={[typography.heading, styles.safetyTitle]}>בטיחות ופרטיות</Text>
           </View>
-        </View>
+          <Text style={[typography.caption, styles.safetySubtext]}>נשמר בדיסקרטיות</Text>
 
-        {/* Written Description Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>עליי</Text>
-          <View style={styles.card}>
-            {renderRow('תיאור עצמי', profile.selfDescription, true)}
-            {renderRow('תחביבים ותחומי עניין', profile.hobbies, true)}
-            {renderRow('רקע משפחתי', profile.familyDescription, true)}
-            {renderRow('מה אני מחפש/ת', profile.lookingFor, true)}
-          </View>
-        </View>
-
-        {((profile.relationship?.allowedActions.includes('BLOCK')) ||
-          (profile.relationship?.allowedActions.includes('REPORT'))) && (
-          <View style={styles.section}>
-            {profile.relationship?.allowedActions.includes('REPORT') && (
-              <AppButton
-                title="דווח על משתמש"
+          <ResponsiveActionGroup alignment="inline" style={styles.safetyActionsGroup}>
+            {allowedActions.includes('REPORT') && (
+              <Button
+                label="דיווח על משתמש"
                 onPress={() => navigation.navigate('ReportUser', { userId })}
-                style={styles.reportButton}
+                variant="secondary"
+                iconStart="alert-circle"
+                accessibilityLabel="דיווח על משתמש"
+                style={styles.safetyBtn}
               />
             )}
-            {profile.relationship?.allowedActions.includes('BLOCK') && (
-              <AppButton
-                title="חסום משתמש"
+            {allowedActions.includes('BLOCK') && (
+              <Button
+                label="חסום משתמש"
                 onPress={handleBlockUser}
-                style={styles.blockButton}
+                variant="destructive"
+                iconStart="x"
+                accessibilityLabel="חסום משתמש"
+                style={styles.safetyBtn}
               />
             )}
-          </View>
-        )}
-
-        <View style={styles.spacing} />
-      </ScrollView>
+          </ResponsiveActionGroup>
+        </Card>
+      )}
 
       <OpeningMessageComposer
         visible={composerVisible}
         onClose={() => setComposerVisible(false)}
         onSend={handleSendOpening}
       />
-    </Screen>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    padding: theme.spacing.m,
-    flexGrow: 1,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  sourceBanner: {
+    backgroundColor: colors.accentMuted,
+    borderColor: colors.accentBorder,
+    marginBottom: spacing.md,
     alignItems: 'center',
-    padding: theme.spacing.l,
   },
-  stateText: {
-    marginTop: theme.spacing.m,
-    color: theme.colors.textSecondary,
-    fontSize: 16,
-  },
-  errorText: {
-    color: theme.colors.error,
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: theme.spacing.m,
-  },
-  retryButton: {
-    width: '60%',
-  },
-  photoSection: {
-    marginBottom: theme.spacing.m,
-  },
-  photoContainer: {
+  sourceBannerContent: {
     flexDirection: 'row',
-    height: 280,
-    gap: theme.spacing.s,
-  },
-  mainImage: {
-    flex: 1,
-    height: '100%',
-    borderRadius: theme.borderRadius.l,
-    backgroundColor: theme.colors.border,
-  },
-  sideImage: {
-    width: 120,
-    height: '100%',
-    borderRadius: theme.borderRadius.l,
-    backgroundColor: theme.colors.border,
-  },
-  placeholderImage: {
     alignItems: 'center',
+    gap: spacing.xs,
+  },
+  sourceText: {
+    color: colors.accent,
+  },
+  mediaContainer: {
+    width: '100%',
+    aspectRatio: 4 / 5,
+    borderRadius: radii.lg,
+    overflow: 'hidden',
+    marginBottom: spacing.md,
+    backgroundColor: colors.surfaceSubtle,
+  },
+  mediaImage: {
+    width: '100%',
+    height: '100%',
+  },
+  mediaPlaceholder: {
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
-    backgroundColor: '#EAEAEA',
-  },
-  placeholderText: {
-    color: theme.colors.textSecondary,
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  headerInfo: {
     alignItems: 'center',
-    marginBottom: theme.spacing.l,
+    backgroundColor: colors.surfaceSubtle,
   },
-  name: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: theme.colors.text,
+  mediaPlaceholderText: {
+    color: colors.textTertiary,
+    marginTop: spacing.sm,
   },
-  subtitle: {
-    fontSize: 16,
-    color: theme.colors.primary,
-    fontWeight: '600',
-    marginTop: 4,
+  identityContainer: {
+    alignItems: 'center',
+    marginBottom: spacing.lg,
   },
-  section: {
-    marginBottom: theme.spacing.l,
+  candidateName: {
+    color: colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: spacing.xxs,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.s,
-    paddingRight: theme.spacing.s,
-    textAlign: 'right',
+  candidateSubtitle: {
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: spacing.md,
   },
-  card: {
-    backgroundColor: theme.colors.surface,
-    paddingHorizontal: theme.spacing.m,
-    paddingVertical: theme.spacing.s,
-    borderRadius: theme.borderRadius.m,
+  attributeChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: spacing.xs,
+  },
+  attributeChip: {
+    backgroundColor: colors.surfaceSubtle,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+    borderColor: colors.borderSubtle,
   },
-  row: {
-    flexDirection: 'row-reverse',
-    justifyContent: 'space-between',
-    paddingVertical: theme.spacing.m,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.border,
+  attributeChipText: {
+    color: colors.textSecondary,
   },
-  rowLabel: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    fontWeight: '600',
-    textAlign: 'right',
-  },
-  rowValue: {
-    fontSize: 14,
-    color: theme.colors.text,
-    fontWeight: '500',
-    textAlign: 'left',
-    flex: 1,
-    marginRight: theme.spacing.m,
-  },
-  longTextContainer: {
-    paddingVertical: theme.spacing.m,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.border,
-  },
-  longTextValue: {
-    fontSize: 14,
-    color: theme.colors.text,
-    marginTop: theme.spacing.s,
-    lineHeight: 20,
-    textAlign: 'right',
-  },
-  spacing: {
-    height: theme.spacing.xl,
-  },
-  reportButton: {
-    marginTop: theme.spacing.m,
-    borderColor: theme.colors.error,
-  },
-  blockButton: {
-    marginTop: theme.spacing.s,
-    backgroundColor: '#8B0000',
-  },
-  statusSection: {
-    backgroundColor: '#F5F5F5',
-    paddingVertical: theme.spacing.s,
-    paddingHorizontal: theme.spacing.m,
-    borderRadius: theme.borderRadius.s,
-    marginBottom: theme.spacing.m,
+  statusBadgeCard: {
+    backgroundColor: colors.surfaceSubtle,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.md,
+    marginBottom: spacing.md,
     alignItems: 'center',
   },
-  statusText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: theme.colors.textSecondary,
+  statusBadgeText: {
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   actionsSection: {
-    marginBottom: theme.spacing.l,
+    marginBottom: spacing.lg,
   },
-  contextBanner: {
-    backgroundColor: 'rgba(212, 175, 55, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.25)',
-    borderRadius: theme.borderRadius.m,
-    paddingVertical: theme.spacing.s,
-    paddingHorizontal: theme.spacing.m,
-    marginBottom: theme.spacing.m,
+  matchResultCard: {
+    backgroundColor: colors.accentMuted,
+    borderColor: colors.accentBorder,
+    marginBottom: spacing.lg,
+  },
+  matchHeaderRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
   },
-  contextBannerText: {
-    color: '#B58900',
-    fontSize: 14,
-    fontWeight: 'bold',
-    textAlign: 'center',
+  matchTitle: {
+    color: colors.accent,
+  },
+  matchSubtitle: {
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+    lineHeight: 22,
+  },
+  matchStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.statusSuccessBg,
+    borderColor: colors.statusSuccessBorder,
+    borderWidth: 1,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.full,
+    alignSelf: 'flex-start',
+    marginBottom: spacing.lg,
+  },
+  matchStatusText: {
+    color: colors.statusSuccess,
+  },
+  matchActionsGroup: {
+    marginTop: spacing.sm,
+  },
+  sectionsContainer: {
+    gap: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  sectionCard: {
+    backgroundColor: colors.surface,
+    borderColor: colors.borderSubtle,
+  },
+  sectionTitle: {
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
+  },
+  cardContent: {
+    gap: spacing.xs,
+  },
+  fieldRow: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.xs,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderSubtle,
+  },
+  fieldLabel: {
+    color: colors.textSecondary,
+    textAlign: 'right',
+  },
+  fieldValue: {
+    color: colors.textPrimary,
+    textAlign: 'left',
+    flex: 1,
+    marginRight: spacing.md,
+  },
+  longTextContainer: {
+    paddingVertical: spacing.xs,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderSubtle,
+  },
+  longTextValue: {
+    color: colors.textPrimary,
+    marginTop: spacing.xs,
+    lineHeight: 22,
+    textAlign: 'right',
+  },
+  safetyCard: {
+    backgroundColor: colors.surfaceSubtle,
+    borderColor: colors.borderSubtle,
+    marginTop: spacing.md,
+    marginBottom: spacing.xxl,
+  },
+  safetyHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  safetyTitle: {
+    color: colors.textPrimary,
+  },
+  safetySubtext: {
+    color: colors.textTertiary,
+    marginBottom: spacing.md,
+  },
+  safetyActionsGroup: {
+    gap: spacing.md,
+  },
+  safetyBtn: {
+    flex: 1,
   },
 });

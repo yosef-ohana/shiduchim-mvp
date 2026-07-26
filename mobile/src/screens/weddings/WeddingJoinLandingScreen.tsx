@@ -3,11 +3,13 @@ import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { AppInput } from '../../components/AppInput';
 import { AppButton } from '../../components/AppButton';
-import { theme } from '../../theme/theme';
+import { BidiText } from '../../components/foundation/BidiText';
+import { AppIcon } from '../../components/foundation/AppIcon';
+import { tokens } from '../../theme/tokens';
 import { validateCode, joinWedding, getMyWeddings } from '../../api/weddingsApi';
-import { ValidateWeddingCodeResponse, UserWeddingResponse } from '../../types/api';
+import { ValidateWeddingCodeResponse, UserWeddingResponse, WeddingStatus } from '../../types/api';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
-import { formatDisplayDate, getWeddingStatusLabel } from '../../utils/displayLabels';
+import { formatDisplayDate } from '../../utils/displayLabels';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { getWeddingReadiness } from '../../utils/weddingReadiness';
@@ -18,15 +20,29 @@ export const WeddingJoinLandingScreen = () => {
   const route = useRoute<any>();
   const { user, refreshMe } = useAuth();
 
-  const initialCode = route.params?.accessCode || '';
+  const initialCode = route.params?.accessCode || route.params?.pendingWeddingCode || '';
   const initialSnapshot = route.params?.weddingSnapshot as UserWeddingResponse | undefined;
 
   const [accessCode, setAccessCode] = useState(initialCode);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [weddingDetails, setWeddingDetails] = useState<any>(initialSnapshot || null);
-  const [myWedding, setMyWedding] = useState<UserWeddingResponse | null>(initialSnapshot || null);
   const [joinLoading, setJoinLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [validationDetails, setValidationDetails] = useState<ValidateWeddingCodeResponse | null>(null);
+  const [myWedding, setMyWedding] = useState<UserWeddingResponse | null>(initialSnapshot || null);
+  const [partialJoinState, setPartialJoinState] = useState<{ pendingCode: string; errorDetails: string } | null>(null);
+
+  const clearProtectedWeddingState = useCallback(() => {
+    setValidationDetails(null);
+    setMyWedding(null);
+    setPartialJoinState(null);
+  }, []);
+
+  const effectiveWeddingId = myWedding?.weddingId ?? validationDetails?.weddingId ?? null;
+  const effectiveWeddingName = myWedding?.weddingName ?? validationDetails?.weddingName ?? null;
+  const effectiveCity = myWedding?.city ?? validationDetails?.city ?? null;
+  const effectiveWeddingDate = myWedding?.weddingDate ?? validationDetails?.weddingDate ?? null;
+  const effectiveStatus: WeddingStatus | null = myWedding?.weddingStatus ?? validationDetails?.status ?? null;
+  const effectiveImageUri = myWedding?.backgroundImageUrl ?? validationDetails?.backgroundImageUrl ?? null;
 
   useFocusEffect(
     useCallback(() => {
@@ -35,18 +51,24 @@ export const WeddingJoinLandingScreen = () => {
         if (!user || user.role === 'ADMIN' || user.role === 'EVENT_MANAGER') return;
         try {
           await refreshMe();
-          if (weddingDetails?.weddingId) {
+          if (effectiveWeddingId) {
             const all = await getMyWeddings();
-            const match = all.find(w => w.weddingId === weddingDetails.weddingId);
+            const match = all.find(w => w.weddingId === effectiveWeddingId);
             if (isActive) setMyWedding(match || null);
           }
-        } catch (e) {
-          console.log('Failed to refresh data', e);
+        } catch (e: any) {
+          const status = e?.response?.status;
+          if (status === 401 || status === 403) {
+            if (isActive) {
+              clearProtectedWeddingState();
+              setErrorMsg(status === 401 ? 'נדרשת התחברות למערכת.' : 'אין הרשאה לצפות בפרטי חתונה זו.');
+            }
+          }
         }
       };
       refreshData();
       return () => { isActive = false; };
-    }, [user?.id, weddingDetails?.weddingId])
+    }, [user?.id, effectiveWeddingId, refreshMe, clearProtectedWeddingState])
   );
 
   useEffect(() => {
@@ -57,66 +79,165 @@ export const WeddingJoinLandingScreen = () => {
 
   const handleValidate = async (codeToValidate: string) => {
     setErrorMsg('');
-    setWeddingDetails(null);
-    setMyWedding(null);
+    clearProtectedWeddingState();
 
-    if (!codeToValidate) {
+    const cleanCode = codeToValidate.trim().toUpperCase();
+    if (!cleanCode) {
       setErrorMsg('אנא הזן קוד חתונה');
       return;
     }
 
     setIsLoading(true);
     try {
-      const response = await validateCode({ accessCode: codeToValidate });
+      const response = await validateCode({ accessCode: cleanCode });
       if (response.valid && response.joinAllowed) {
-        setWeddingDetails(response);
+        setValidationDetails(response);
         if (user && user.role === 'USER') {
-          const all = await getMyWeddings();
-          const match = all.find(w => w.weddingId === response.weddingId);
-          setMyWedding(match || null);
+          try {
+            const all = await getMyWeddings();
+            const match = all.find(w => w.weddingId === response.weddingId);
+            setMyWedding(match || null);
+          } catch (e: any) {
+            const status = e?.response?.status;
+            if (status === 401 || status === 403) {
+              clearProtectedWeddingState();
+              setErrorMsg(status === 401 ? 'נדרשת התחברות למערכת.' : 'אין הרשאה לצפות בפרטי חתונה זו.');
+            }
+          }
         }
       } else {
-        if (response.status === 'CLOSED' || response.status === 'CANCELLED') {
-          setWeddingDetails(response);
-          const statusLabel = response.status === 'CLOSED' ? 'נסגרה' : 'בוטלה';
-          setErrorMsg(`חתונה זו ${statusLabel} ולא ניתן להצטרף אליה.`);
+        if (response.status === 'CLOSED' || response.status === 'CANCELLED' || response.status === 'DELETED') {
+          if (response.status === 'DELETED') {
+            // Protected data clearing for DELETED
+            clearProtectedWeddingState();
+            setAccessCode('');
+          } else {
+            setValidationDetails(response);
+          }
         } else {
           setErrorMsg(response.message || 'קוד חתונה לא תקין. אנא ודא שהקוד נכון ונסה שוב.');
         }
       }
     } catch (e: any) {
-      setErrorMsg(getFriendlyErrorMessage(e, 'לא ניתן לבדוק את קוד החתונה כרגע.'));
+      const status = e?.response?.status;
+      if (status === 401 || status === 403) {
+        clearProtectedWeddingState();
+        setErrorMsg(status === 401 ? 'נדרשת התחברות למערכת.' : 'אין הרשאה לבדוק קוד חתונה זה.');
+      } else if (status === 404) {
+        setErrorMsg('קוד חתונה לא תקין. אנא ודא שהקוד נכון ונסה שוב.');
+      } else {
+        setErrorMsg(getFriendlyErrorMessage(e, 'לא ניתן לבדוק את קוד החתונה כרגע.'));
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleJoin = async () => {
-    if (!weddingDetails || !accessCode) return;
+    const codeToJoin = accessCode.trim().toUpperCase();
+    if (!codeToJoin) return;
 
     setJoinLoading(true);
     setErrorMsg('');
     try {
-      await joinWedding({ accessCode });
+      await joinWedding({ accessCode: codeToJoin });
       if (user && user.role === 'USER') {
-        const all = await getMyWeddings();
-        const match = all.find(w => w.weddingId === weddingDetails.weddingId);
-        setMyWedding(match || null);
-      }
-    } catch (err: any) {
-      // Backend may return error if already joined, attempt to fetch again
-      if (user && user.role === 'USER') {
-        const all = await getMyWeddings();
-        const match = all.find(w => w.weddingId === weddingDetails.weddingId);
-        if (match) {
-          setMyWedding(match);
-          return;
+        try {
+          const all = await getMyWeddings();
+          const targetId = effectiveWeddingId;
+          const match = all.find(w => w.weddingId === targetId);
+          if (match) {
+            setMyWedding(match);
+          }
+        } catch (e: any) {
+          const status = e?.response?.status;
+          if (status === 401 || status === 403) {
+            clearProtectedWeddingState();
+            if (status === 401) {
+              navigation.navigate('Login', { pendingWeddingCode: codeToJoin });
+            } else {
+              setErrorMsg('אין הרשאה לצפות בפרטי חתונה זו.');
+            }
+            return;
+          }
         }
       }
-      setErrorMsg(getFriendlyErrorMessage(err, 'לא ניתן להצטרף לחתונה כרגע.'));
+      setPartialJoinState(null);
+    } catch (err: any) {
+      const status = err?.response?.status;
+
+      if (status === 401) {
+        clearProtectedWeddingState();
+        navigation.navigate('Login', { pendingWeddingCode: codeToJoin });
+        return;
+      }
+
+      if (status === 403) {
+        clearProtectedWeddingState();
+        setErrorMsg('אין הרשאה להצטרף לחתונה זו.');
+        return;
+      }
+
+      if (status === 409 && user && user.role === 'USER') {
+        try {
+          const all = await getMyWeddings();
+          const targetId = effectiveWeddingId;
+          const match = all.find(w => w.weddingId === targetId);
+          if (match) {
+            setMyWedding(match);
+            setPartialJoinState(null);
+            return;
+          }
+        } catch (e: any) {
+          const innerStatus = e?.response?.status;
+          if (innerStatus === 401 || innerStatus === 403) {
+            clearProtectedWeddingState();
+            if (innerStatus === 401) {
+              navigation.navigate('Login', { pendingWeddingCode: codeToJoin });
+            } else {
+              setErrorMsg('אין הרשאה להצטרף לחתונה זו.');
+            }
+            return;
+          }
+        }
+      }
+
+      const friendlyError = getFriendlyErrorMessage(err, 'לא ניתן להצטרף לחתונה כרגע.');
+      setPartialJoinState({
+        pendingCode: codeToJoin,
+        errorDetails: friendlyError,
+      });
     } finally {
       setJoinLoading(false);
     }
+  };
+
+  const handleGoBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else if (user?.role === 'USER') {
+      navigation.navigate('Me');
+    } else if (user?.role === 'ADMIN') {
+      navigation.navigate('AdminHome');
+    } else if (user?.role === 'EVENT_MANAGER') {
+      navigation.navigate('EventManagerWeddings');
+    } else {
+      navigation.navigate('Welcome');
+    }
+  };
+
+  const handleContinueToSystem = () => {
+    if (user?.role === 'USER') {
+      navigation.navigate('Me');
+    } else {
+      handleGoBack();
+    }
+  };
+
+  const handleEditCode = () => {
+    setPartialJoinState(null);
+    setValidationDetails(null);
+    setMyWedding(null);
   };
 
   const handleLogin = () => {
@@ -129,9 +250,9 @@ export const WeddingJoinLandingScreen = () => {
 
   const readiness = getWeddingReadiness({
     user,
-    weddingStatus: weddingDetails?.status || weddingDetails?.weddingStatus,
+    weddingStatus: effectiveStatus,
     participantStatus: myWedding?.participantStatus,
-    isJoined: !!myWedding
+    isJoined: !!myWedding,
   });
 
   const renderReadinessGuidance = () => {
@@ -139,8 +260,9 @@ export const WeddingJoinLandingScreen = () => {
 
     if (readiness.state === 'READY') {
       return (
-        <View style={styles.readinessContainer}>
-          <Text style={styles.successMessage}>{readiness.message}</Text>
+        <View style={styles.noticeCardSuccess}>
+          <AppIcon name="check" size={24} color={tokens.colors.statusSuccess} style={styles.cardIcon} />
+          <Text style={styles.noticeTextSuccess}>{readiness.message}</Text>
         </View>
       );
     }
@@ -151,16 +273,17 @@ export const WeddingJoinLandingScreen = () => {
       readiness.state === 'JOINED_MISSING_BOTH'
     ) {
       return (
-        <View style={styles.readinessContainerWarning}>
-          <Text style={styles.warningMessage}>{readiness.message}</Text>
+        <View style={styles.noticeCardWarning}>
+          <AppIcon name="alert-circle" size={24} color={tokens.colors.statusWarning} style={styles.cardIcon} />
+          <Text style={styles.noticeTextWarning}>{readiness.message}</Text>
           {readiness.primaryAction === 'EDIT_PROFILE' && (
             <AppButton
               title="השלם פרופיל בסיסי"
               onPress={() => navigation.navigate('BasicProfile', {
                 returnToWedding: true,
-                returnWeddingId: weddingDetails?.weddingId,
+                returnWeddingId: effectiveWeddingId || undefined,
                 returnWeddingSnapshot: myWedding || undefined,
-                source: 'weddingHub'
+                source: 'weddingHub',
               })}
               style={styles.actionButton}
             />
@@ -170,9 +293,9 @@ export const WeddingJoinLandingScreen = () => {
               title="העלה תמונה ראשית"
               onPress={() => navigation.navigate('Photos', {
                 returnToWedding: true,
-                returnWeddingId: weddingDetails?.weddingId,
+                returnWeddingId: effectiveWeddingId || undefined,
                 returnWeddingSnapshot: myWedding || undefined,
-                source: 'weddingHub'
+                source: 'weddingHub',
               })}
               style={styles.actionButton}
             />
@@ -184,17 +307,186 @@ export const WeddingJoinLandingScreen = () => {
     return null;
   };
 
-  const hasWeddingData = weddingDetails && (weddingDetails.valid || weddingDetails.weddingId);
+  // Frame S6-A07-F03 — DELETED Tombstone
+  if (effectiveStatus === 'DELETED') {
+    return (
+      <Screen style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.railContainer}>
+            <View style={styles.tombstoneCard}>
+              <AppIcon name="alert-circle" size={40} color={tokens.colors.statusError} style={styles.cardIconCenter} />
+              <Text style={styles.tombstoneTitle}>חתונה זו נמחקה</Text>
+              <Text style={styles.tombstoneSubtitle}>
+                החתונה שהזנת אינה קיימת במערכת ואין לזהות זו כל מידע פעיל.
+              </Text>
+              <AppButton
+                title="חזרה"
+                onPress={handleGoBack}
+                style={styles.actionButton}
+              />
+            </View>
+          </View>
+        </ScrollView>
+      </Screen>
+    );
+  }
 
+  // Frame S6-A07-F02 — CLOSED Read-only
+  if (effectiveStatus === 'CLOSED') {
+    return (
+      <Screen style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.railContainer}>
+            <Text style={styles.title}>חתונה סגורה</Text>
+
+            <View style={styles.card}>
+              {effectiveImageUri ? (
+                <View style={styles.imageContainer}>
+                  <Image
+                    source={{ uri: getImageUrl(effectiveImageUri) }}
+                    style={styles.backgroundImage}
+                    resizeMode="cover"
+                  />
+                </View>
+              ) : null}
+              <Text style={styles.weddingName}>{effectiveWeddingName}</Text>
+              {effectiveWeddingDate ? (
+                <Text style={styles.weddingDetail}>תאריך: {formatDisplayDate(effectiveWeddingDate)}</Text>
+              ) : null}
+              {effectiveCity ? (
+                <Text style={styles.weddingDetail}>עיר: {effectiveCity}</Text>
+              ) : null}
+              <Text style={styles.weddingDetail}>סטטוס: נסגרה</Text>
+            </View>
+
+            <View style={styles.noticeCardInfo}>
+              <AppIcon name="info" size={24} color={tokens.colors.statusInfo} style={styles.cardIcon} />
+              <Text style={styles.noticeTextInfo}>
+                חתונה זו נסגרה. מידע זה מוצג לצפייה בלבד ולא ניתן להצטרף אליה או לצפות במאגר החתונה.
+              </Text>
+            </View>
+
+            <AppButton
+              title="חזרה"
+              onPress={handleGoBack}
+              style={styles.actionButton}
+            />
+          </View>
+        </ScrollView>
+      </Screen>
+    );
+  }
+
+  // Frame S6-A07-F02 variant — CANCELLED Read-only
+  if (effectiveStatus === 'CANCELLED') {
+    return (
+      <Screen style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.railContainer}>
+            <Text style={styles.title}>חתונה שבוטלה</Text>
+
+            <View style={styles.card}>
+              {effectiveImageUri ? (
+                <View style={styles.imageContainer}>
+                  <Image
+                    source={{ uri: getImageUrl(effectiveImageUri) }}
+                    style={styles.backgroundImage}
+                    resizeMode="cover"
+                  />
+                </View>
+              ) : null}
+              <Text style={styles.weddingName}>{effectiveWeddingName}</Text>
+              {effectiveWeddingDate ? (
+                <Text style={styles.weddingDetail}>תאריך: {formatDisplayDate(effectiveWeddingDate)}</Text>
+              ) : null}
+              {effectiveCity ? (
+                <Text style={styles.weddingDetail}>עיר: {effectiveCity}</Text>
+              ) : null}
+              <Text style={styles.weddingDetail}>סטטוס: בוטלה</Text>
+            </View>
+
+            <View style={styles.noticeCardWarning}>
+              <AppIcon name="alert-circle" size={24} color={tokens.colors.statusWarning} style={styles.cardIcon} />
+              <Text style={styles.noticeTextWarning}>
+                חתונה זו בוטלה ולא ניתן להצטרף אליה.
+              </Text>
+            </View>
+
+            <AppButton
+              title="חזרה"
+              onPress={handleGoBack}
+              style={styles.actionButton}
+            />
+          </View>
+        </ScrollView>
+      </Screen>
+    );
+  }
+
+  // Frame S6-A07-F04 — Partial Join Compact
+  if (partialJoinState) {
+    return (
+      <Screen style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.railContainer}>
+            <Text style={styles.title}>שגיאה בהצטרפות לחתונה</Text>
+
+            <View style={styles.noticeCardError}>
+              <AppIcon name="alert-circle" size={24} color={tokens.colors.statusError} style={styles.cardIcon} />
+              <Text style={styles.noticeTextError}>{partialJoinState.errorDetails}</Text>
+            </View>
+
+            <View style={styles.codeBox}>
+              <Text style={styles.codeLabel}>קוד חתונה שנשמר:</Text>
+              <BidiText value={partialJoinState.pendingCode} kind="code" style={styles.codeText} />
+            </View>
+
+            <View style={styles.actionStack}>
+              <AppButton
+                title="ניסיון הצטרפות נוסף"
+                onPress={handleJoin}
+                loading={joinLoading}
+                style={styles.actionButton}
+              />
+              <AppButton
+                title="עריכת קוד חתונה"
+                onPress={handleEditCode}
+                variant="secondary"
+                style={styles.actionButton}
+              />
+              {user?.role === 'USER' ? (
+                <AppButton
+                  title="המשך למערכת ללא הצטרפות"
+                  onPress={handleContinueToSystem}
+                  variant="secondary"
+                  style={styles.actionButton}
+                />
+              ) : null}
+            </View>
+          </View>
+        </ScrollView>
+      </Screen>
+    );
+  }
+
+  const hasWeddingData = Boolean(effectiveWeddingId || validationDetails?.valid);
+
+  // Main ACTIVE / Unvalidated Surface (S6-A07-F01)
   return (
     <Screen style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {!hasWeddingData ? (
-          <View style={styles.content}>
+          <View style={styles.railContainer}>
             <Text style={styles.title}>הזן קוד חתונה</Text>
-            <Text style={styles.subtitle}>הזן את קוד החתונה שקיבלת ממנהל האירוע כדי לצפות בפרטי החתונה ולהצטרף.</Text>
+            <Text style={styles.subtitle}>
+              הזן את קוד החתונה שקיבלת ממנהל האירוע כדי לצפות בפרטי החתונה ולהצטרף.
+            </Text>
 
-            {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
+            {errorMsg ? (
+              <View style={styles.noticeCardError}>
+                <Text style={styles.noticeTextError}>{errorMsg}</Text>
+              </View>
+            ) : null}
 
             <AppInput
               label="קוד חתונה"
@@ -205,37 +497,45 @@ export const WeddingJoinLandingScreen = () => {
             />
 
             <AppButton
-              title="המשך"
+              title="בדיקת קוד חתונה"
               onPress={() => handleValidate(accessCode)}
               loading={isLoading}
-              style={styles.button}
+              style={styles.actionButton}
             />
           </View>
         ) : (
-          <View style={styles.content}>
-            <Text style={styles.title}>החתונה נמצאה!</Text>
+          <View style={styles.railContainer}>
+            <Text style={styles.title}>פרטי החתונה</Text>
 
             <View style={styles.card}>
-              {weddingDetails.backgroundImageUrl && (
-                <Image
-                  source={{ uri: getImageUrl(weddingDetails.backgroundImageUrl) }}
-                  style={styles.backgroundImage}
-                  resizeMode="cover"
-                />
-              )}
-              <Text style={styles.weddingName}>{weddingDetails.weddingName}</Text>
-              <Text style={styles.weddingDetail}>תאריך: {formatDisplayDate(weddingDetails.weddingDate)}</Text>
-              <Text style={styles.weddingDetail}>עיר: {weddingDetails.city}</Text>
-              <Text style={styles.weddingDetail}>סטטוס: {getWeddingStatusLabel(weddingDetails.status || weddingDetails.weddingStatus)}</Text>
+              {effectiveImageUri ? (
+                <View style={styles.imageContainer}>
+                  <Image
+                    source={{ uri: getImageUrl(effectiveImageUri) }}
+                    style={styles.backgroundImage}
+                    resizeMode="cover"
+                  />
+                </View>
+              ) : null}
+              <Text style={styles.weddingName}>{effectiveWeddingName}</Text>
+              {effectiveWeddingDate ? (
+                <Text style={styles.weddingDetail}>תאריך: {formatDisplayDate(effectiveWeddingDate)}</Text>
+              ) : null}
+              {effectiveCity ? (
+                <Text style={styles.weddingDetail}>עיר: {effectiveCity}</Text>
+              ) : null}
+              <Text style={styles.weddingDetail}>סטטוס: פעילה</Text>
             </View>
 
             {errorMsg ? (
-              <Text style={styles.errorText}>{errorMsg}</Text>
+              <View style={styles.noticeCardError}>
+                <Text style={styles.noticeTextError}>{errorMsg}</Text>
+              </View>
             ) : null}
 
             {!user ? (
-              <View style={styles.actionContainer}>
-                <Text style={styles.subtitle}>כדי להצטרף לחתונה הזו, יש להתחבר או ליצור חשבון.</Text>
+              <View style={styles.actionStack}>
+                <Text style={styles.subtitle}>כדי להצטרף לחתונה זו, יש להתחבר או ליצור חשבון.</Text>
                 <AppButton
                   title="התחברות"
                   onPress={handleLogin}
@@ -249,15 +549,21 @@ export const WeddingJoinLandingScreen = () => {
                 />
               </View>
             ) : user.role === 'ADMIN' || user.role === 'EVENT_MANAGER' ? (
-              <View style={styles.actionContainer}>
-                <Text style={styles.errorText}>הצטרפות כמשתתף זמינה למשתמשים רגילים בלבד.</Text>
+              <View style={styles.noticeCardInfo}>
+                <Text style={styles.noticeTextInfo}>
+                  מנהלים וצוות המערכת אינם יכולים להצטרף למאגר הזיווגים של החתונה כמשתתף.
+                </Text>
               </View>
-            ) : readiness.state === 'BLOCKED_USER' || readiness.state === 'INACTIVE_WEDDING' || readiness.state === 'INACTIVE_PARTICIPANT' ? (
-              <View style={styles.actionContainer}>
-                <Text style={styles.errorText}>{readiness.message}</Text>
+            ) : readiness.state === 'BLOCKED_USER' ? (
+              <View style={styles.noticeCardError}>
+                <Text style={styles.noticeTextError}>המשתמש חסום. פנה להנהלת המערכת.</Text>
+              </View>
+            ) : readiness.state === 'INACTIVE_PARTICIPANT' ? (
+              <View style={styles.noticeCardWarning}>
+                <Text style={styles.noticeTextWarning}>אינך משתתף פעיל בחתונה זו.</Text>
               </View>
             ) : readiness.state === 'NOT_JOINED' ? (
-              <View style={styles.actionContainer}>
+              <View style={styles.actionStack}>
                 <AppButton
                   title="הצטרפות לחתונה"
                   onPress={handleJoin}
@@ -266,12 +572,12 @@ export const WeddingJoinLandingScreen = () => {
                 />
               </View>
             ) : (
-              <View style={styles.actionContainer}>
+              <View style={styles.actionStack}>
                 {renderReadinessGuidance()}
-                {readiness.canOpenDiscover && (
+                {readiness.canOpenDiscover && myWedding?.isWeddingPoolEligible === true && (
                   <AppButton
                     title="גלה התאמות בחתונה"
-                    onPress={() => navigation.navigate('Discover', { pool: 'WEDDING', weddingId: weddingDetails.weddingId })}
+                    onPress={() => navigation.navigate('Discover', { pool: 'WEDDING', weddingId: myWedding.weddingId })}
                     style={styles.actionButton}
                   />
                 )}
@@ -285,22 +591,189 @@ export const WeddingJoinLandingScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  scrollContent: { flexGrow: 1, padding: theme.spacing.xl, justifyContent: 'center' },
-  content: { width: '100%' },
-  title: { fontSize: 24, fontWeight: 'bold', color: theme.colors.primary, marginBottom: theme.spacing.m, textAlign: 'center' },
-  subtitle: { fontSize: 16, color: theme.colors.textSecondary, marginBottom: theme.spacing.xl, textAlign: 'center' },
-  button: { marginTop: theme.spacing.l },
-  errorText: { color: theme.colors.error, marginBottom: theme.spacing.m, textAlign: 'center', fontWeight: '500' },
-  card: { backgroundColor: theme.colors.surface, padding: theme.spacing.l, borderRadius: theme.borderRadius.m, borderWidth: 1, borderColor: theme.colors.border, marginBottom: theme.spacing.xl, alignItems: 'center' },
-  backgroundImage: { width: '100%', height: 150, borderRadius: theme.borderRadius.s, marginBottom: theme.spacing.m, backgroundColor: theme.colors.border },
-  weddingName: { fontSize: 20, fontWeight: 'bold', color: theme.colors.text, marginBottom: theme.spacing.s, textAlign: 'center' },
-  weddingDetail: { fontSize: 16, color: theme.colors.textSecondary, marginBottom: theme.spacing.s / 2 },
-  actionContainer: { marginTop: theme.spacing.m },
-  actionButton: { marginBottom: theme.spacing.m },
-  successTitle: { fontSize: 22, fontWeight: 'bold', color: theme.colors.primary, marginBottom: theme.spacing.m, textAlign: 'center' },
-  successMessage: { color: theme.colors.primary, fontSize: 16, textAlign: 'center' },
-  warningMessage: { color: '#F57C00', fontSize: 16, textAlign: 'center', marginBottom: theme.spacing.m },
-  readinessContainer: { padding: theme.spacing.m, backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.s, marginBottom: theme.spacing.l, borderWidth: 1, borderColor: theme.colors.primary },
-  readinessContainerWarning: { padding: theme.spacing.m, backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.s, marginBottom: theme.spacing.l, borderWidth: 1, borderColor: '#F57C00' },
+  container: {
+    flex: 1,
+    backgroundColor: tokens.colors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: tokens.spacing.lg,
+    justifyContent: 'center',
+  },
+  railContainer: {
+    width: '100%',
+    maxWidth: tokens.sizing.maxContentRailWidth,
+    alignSelf: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: tokens.colors.textPrimary,
+    marginBottom: tokens.spacing.md,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: tokens.colors.textSecondary,
+    marginBottom: tokens.spacing.xl,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  card: {
+    backgroundColor: tokens.colors.surface,
+    padding: tokens.spacing.lg,
+    borderRadius: tokens.radii.lg,
+    borderWidth: 1,
+    borderColor: tokens.colors.border,
+    marginBottom: tokens.spacing.xl,
+    alignItems: 'center',
+  },
+  imageContainer: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderRadius: tokens.radii.md,
+    overflow: 'hidden',
+    marginBottom: tokens.spacing.md,
+    backgroundColor: tokens.colors.surfaceSubtle,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+  },
+  weddingName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: tokens.colors.textPrimary,
+    marginBottom: tokens.spacing.sm,
+    textAlign: 'center',
+  },
+  weddingDetail: {
+    fontSize: 16,
+    color: tokens.colors.textSecondary,
+    marginBottom: tokens.spacing.xs,
+    textAlign: 'center',
+  },
+  actionStack: {
+    marginTop: tokens.spacing.md,
+    width: '100%',
+  },
+  actionButton: {
+    marginBottom: tokens.spacing.md,
+    minHeight: tokens.sizing.minTouchTarget,
+  },
+  codeBox: {
+    backgroundColor: tokens.colors.surfaceSubtle,
+    padding: tokens.spacing.md,
+    borderRadius: tokens.radii.md,
+    borderWidth: 1,
+    borderColor: tokens.colors.border,
+    marginBottom: tokens.spacing.lg,
+    alignItems: 'center',
+  },
+  codeLabel: {
+    fontSize: 14,
+    color: tokens.colors.textSecondary,
+    marginBottom: tokens.spacing.xs,
+  },
+  codeText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: tokens.colors.textPrimary,
+    letterSpacing: 2,
+  },
+  tombstoneCard: {
+    backgroundColor: tokens.colors.surface,
+    padding: tokens.spacing.xxl,
+    borderRadius: tokens.radii.lg,
+    borderWidth: 1,
+    borderColor: tokens.colors.statusErrorBorder,
+    alignItems: 'center',
+  },
+  tombstoneTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: tokens.colors.statusError,
+    marginTop: tokens.spacing.md,
+    marginBottom: tokens.spacing.sm,
+    textAlign: 'center',
+  },
+  tombstoneSubtitle: {
+    fontSize: 15,
+    color: tokens.colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: tokens.spacing.xl,
+    lineHeight: 22,
+  },
+  cardIcon: {
+    marginRight: tokens.spacing.sm,
+  },
+  cardIconCenter: {
+    marginBottom: tokens.spacing.sm,
+  },
+  noticeCardError: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    backgroundColor: tokens.colors.statusErrorBg,
+    padding: tokens.spacing.md,
+    borderRadius: tokens.radii.md,
+    borderWidth: 1,
+    borderColor: tokens.colors.statusErrorBorder,
+    marginBottom: tokens.spacing.lg,
+  },
+  noticeTextError: {
+    flex: 1,
+    color: tokens.colors.statusError,
+    fontSize: 15,
+    textAlign: 'right',
+  },
+  noticeCardWarning: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    backgroundColor: tokens.colors.statusWarningBg,
+    padding: tokens.spacing.md,
+    borderRadius: tokens.radii.md,
+    borderWidth: 1,
+    borderColor: tokens.colors.statusWarningBorder,
+    marginBottom: tokens.spacing.lg,
+    flexWrap: 'wrap',
+  },
+  noticeTextWarning: {
+    flex: 1,
+    color: tokens.colors.statusWarning,
+    fontSize: 15,
+    textAlign: 'right',
+    marginBottom: tokens.spacing.xs,
+  },
+  noticeCardSuccess: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    backgroundColor: tokens.colors.statusSuccessBg,
+    padding: tokens.spacing.md,
+    borderRadius: tokens.radii.md,
+    borderWidth: 1,
+    borderColor: tokens.colors.statusSuccessBorder,
+    marginBottom: tokens.spacing.lg,
+  },
+  noticeTextSuccess: {
+    flex: 1,
+    color: tokens.colors.statusSuccess,
+    fontSize: 15,
+    textAlign: 'right',
+  },
+  noticeCardInfo: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    backgroundColor: tokens.colors.statusInfoBg,
+    padding: tokens.spacing.md,
+    borderRadius: tokens.radii.md,
+    borderWidth: 1,
+    borderColor: tokens.colors.statusInfoBorder,
+    marginBottom: tokens.spacing.lg,
+  },
+  noticeTextInfo: {
+    flex: 1,
+    color: tokens.colors.statusInfo,
+    fontSize: 15,
+    textAlign: 'right',
+  },
 });

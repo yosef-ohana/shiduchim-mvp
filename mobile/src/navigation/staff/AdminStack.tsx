@@ -9,6 +9,8 @@ import { StaffHeader } from './StaffHeader';
 import { StaffGuardedRoute } from './StaffGuardedRoute';
 
 // Target ADMIN Screens
+import { AdminHomeScreen } from '../../screens/admin/AdminHomeScreen';
+import { AdminOperationsScreen } from '../../screens/admin/AdminOperationsScreen';
 import { AdminUsersScreen } from '../../screens/admin/AdminUsersScreen';
 import { AdminWeddingsScreen } from '../../screens/admin/AdminWeddingsScreen';
 import { AdminWeddingDetailsScreen } from '../../screens/admin/AdminWeddingDetailsScreen';
@@ -26,10 +28,6 @@ import { WeddingParticipantsScreen } from '../../screens/weddings/WeddingPartici
 import { StaffParticipantDetailsScreen } from '../../screens/weddings/StaffParticipantDetailsScreen';
 
 const Stack = createNativeStackNavigator<AdminStackParamList>();
-
-// Navigation-only compatibility alias adapters
-const AdminHomeAdapter: React.FC = () => <AdminUsersScreen />;
-const AdminOperationsAdapter: React.FC = () => <AdminEventManagersScreen />;
 
 // Guarded Shared Staff Route Components
 const AdminWeddingParticipantsGuarded: React.FC = () => (
@@ -64,7 +62,7 @@ export const AdminStack: React.FC = () => {
     >
       <Stack.Screen
         name="AdminHome"
-        component={AdminHomeAdapter}
+        component={AdminHomeScreen}
         options={{ title: 'ניהול מערכת' }}
       />
       <Stack.Screen
@@ -89,7 +87,7 @@ export const AdminStack: React.FC = () => {
       />
       <Stack.Screen
         name="AdminOperations"
-        component={AdminOperationsAdapter}
+        component={AdminOperationsScreen}
         options={{ title: 'תפעול ומנהלי אירועים' }}
       />
       <Stack.Screen

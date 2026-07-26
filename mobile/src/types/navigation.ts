@@ -84,7 +84,8 @@ export type UserDiscoverStackParamList = {
 };
 
 export type UserConnectionsStackParamList = {
-  Lists: undefined; // Explicit compatibility bridge entry (not ConnectionsHub implementation)
+  ConnectionsHub: undefined;
+  Lists: undefined; // Explicit compatibility bridge entry preserved
   OpeningMessages: undefined;
   OpeningConversationDetails: MainStackParamList['OpeningConversationDetails'];
   Matches: undefined;

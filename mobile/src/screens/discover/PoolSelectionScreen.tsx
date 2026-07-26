@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import { Screen } from '../../components/Screen';
-import { AppButton } from '../../components/AppButton';
-import { theme } from '../../theme/theme';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { ScreenContainer } from '../../components/foundation/ScreenContainer';
+import { AppHeader } from '../../components/foundation/AppHeader';
+import { Card } from '../../components/foundation/Card';
+import { Button } from '../../components/foundation/Button';
+import { AppIcon } from '../../components/foundation/AppIcon';
+import { BidiText } from '../../components/foundation/BidiText';
+import { StateSurface } from '../../components/foundation/StateSurface';
+import { colors, spacing, radii, sizing } from '../../theme/tokens';
+import { typography } from '../../theme/typography';
 import { DiscoverPool, UserWeddingResponse } from '../../types/api';
 import { useAuth } from '../../context/AuthContext';
 import { getMyWeddings } from '../../api/weddingsApi';
@@ -18,13 +24,16 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
   const [errorText, setErrorText] = useState<string | null>(null);
   const [ctaAction, setCtaAction] = useState<{ label: string; onPress: () => void } | null>(null);
 
+  // Staff security guard
+  const isStaffUser = user?.role === 'ADMIN' || user?.role === 'EVENT_MANAGER';
+
   const fetchWeddings = async () => {
     setLoadingWeddings(true);
     setErrorText(null);
     try {
       const list = await getMyWeddings();
       setWeddings(list);
-      
+
       const eligible = list.filter(
         (w) => w.isWeddingPoolEligible && w.weddingStatus === 'ACTIVE' && w.participantStatus === 'ACTIVE'
       );
@@ -54,9 +63,9 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
 
     // 1. Primary photo check
     if (!user?.hasPrimaryPhoto) {
-      setErrorText("אנא העלה/י תמונה ראשית לפני השימוש בחיפוש מועמדים.");
+      setErrorText('אנא העלה/י תמונה ראשית לפני השימוש בחיפוש מועמדים.');
       setCtaAction({
-        label: "להעלאת תמונה ראשית",
+        label: 'להעלאת תמונה ראשית',
         onPress: () => navigation.navigate('Profile', { focusSection: 'photos' }),
       });
       return;
@@ -65,25 +74,25 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
     if (selectedPool === 'GLOBAL') {
       // 2. Global Pool eligibility checks
       if (!user?.profileStatus || user.profileStatus === 'NONE') {
-        setErrorText("אנא השלם/י את הפרופיל הבסיסי לפני השימוש במאגר החיפוש.");
+        setErrorText('אנא השלם/י את הפרופיל הבסיסי לפני השימוש במאגר החיפוש.');
         setCtaAction({
-          label: "למילוי פרופיל מלא",
+          label: 'למילוי פרופיל מלא',
           onPress: () => navigation.navigate('Profile', { intent: 'onboarding_full' }),
         });
         return;
       }
       if (user.profileStatus === 'FULL_INCOMPLETE_BLOCKED') {
-        setErrorText("אנא השלם/י את הפרופיל הבסיסי לפני השימוש במאגר החיפוש.");
+        setErrorText('אנא השלם/י את הפרופיל הבסיסי לפני השימוש במאגר החיפוש.');
         setCtaAction({
-          label: "לתיקון והשלמת הפרופיל",
+          label: 'לתיקון והשלמת הפרופיל',
           onPress: () => navigation.navigate('Profile', { intent: 'repair_full' }),
         });
         return;
       }
       if (user.profileStatus === 'BASIC') {
-        setErrorText("המאגר הכללי זמין רק לאחר השלמת הפרופיל המלא שלך.");
+        setErrorText('המאגר הכללי זמין רק לאחר השלמת הפרופיל המלא שלך.');
         setCtaAction({
-          label: "להשלמת פרופיל מלא",
+          label: 'להשלמת פרופיל מלא',
           onPress: () => navigation.navigate('Profile', { intent: 'complete_full' }),
         });
         return;
@@ -92,10 +101,10 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
     } else {
       // 3. Wedding Pool eligibility checks
       if (!user?.profileStatus || user.profileStatus === 'NONE' || user.profileStatus === 'FULL_INCOMPLETE_BLOCKED') {
-        setErrorText("אנא השלם/י את הפרופיל הבסיסי לפני השימוש במאגר החתונה.");
+        setErrorText('אנא השלם/י את הפרופיל הבסיסי לפני השימוש במאגר החתונה.');
         return;
       }
-      
+
       if (!selectedWeddingId) {
         setErrorText('אנא בחר/י חתונה מהרשימה.');
         return;
@@ -104,252 +113,275 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
     }
   };
 
+  if (isStaffUser) {
+    return (
+      <ScreenContainer header={<AppHeader title="בחירת מאגר" />}>
+        <StateSurface
+          kind="denied"
+          title="אין הרשאת גישה"
+          message="משתמשי ניהול ואירועים אינם מורשים להשתמש במאגר המועמדים."
+          primaryAction={{
+            label: 'חזרה',
+            onPress: () => navigation.goBack(),
+          }}
+        />
+      </ScreenContainer>
+    );
+  }
+
   return (
-    <Screen>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>בחירת מאגר</Text>
-        <Text style={styles.subtitle}>אנא בחר/י את מאגר המועמדים שברצונך לחפש.</Text>
+    <ScreenContainer scroll header={<AppHeader title="בחירת מאגר" />}>
+      <View style={styles.container}>
+        <Text style={[typography.titleLarge, styles.title]}>
+          בחירת מאגר
+        </Text>
+        <Text style={[typography.bodyMedium, styles.subtitle]}>
+          אנא בחר/י את מאגר המועמדים שברצונך לחפש.
+        </Text>
 
         <View style={styles.optionsContainer}>
+          {/* Global Option Card */}
           <TouchableOpacity
-            style={[
-              styles.optionCard,
-              selectedPool === 'GLOBAL' && styles.selectedOptionCard,
-            ]}
+            activeOpacity={0.8}
             onPress={() => {
               setSelectedPool('GLOBAL');
               setErrorText(null);
               setCtaAction(null);
             }}
           >
-            <Text
-              style={[
-                styles.optionTitle,
-                selectedPool === 'GLOBAL' && styles.selectedOptionTitle,
-              ]}
+            <Card
+              variant={selectedPool === 'GLOBAL' ? 'selectable' : 'outlined'}
+              selected={selectedPool === 'GLOBAL'}
+              style={styles.optionCard}
             >
-              מאגר כללי
-            </Text>
-            <Text style={styles.optionDescription}>
-              חיפוש מועמדים מתאימים מתוך הרשת הכללית של המשתמשים.
-            </Text>
+              <View style={styles.cardHeaderRow}>
+                <AppIcon
+                  name="navDiscover"
+                  size={sizing.iconMd}
+                  color={selectedPool === 'GLOBAL' ? colors.primary : colors.textSecondary}
+                />
+                <Text
+                  style={[
+                    typography.titleMedium,
+                    styles.optionTitle,
+                    selectedPool === 'GLOBAL' && styles.selectedOptionTitle,
+                  ]}
+                >
+                  מאגר כללי
+                </Text>
+              </View>
+              <Text style={[typography.bodyMedium, styles.optionDescription]}>
+                חיפוש מועמדים מתאימים מתוך הרשת הכללית של המשתמשים במערכת.
+              </Text>
+            </Card>
           </TouchableOpacity>
 
+          {/* Wedding Option Card */}
           <TouchableOpacity
-            style={[
-              styles.optionCard,
-              selectedPool === 'WEDDING' && styles.selectedOptionCard,
-            ]}
+            activeOpacity={0.8}
             onPress={() => {
               setSelectedPool('WEDDING');
               setErrorText(null);
               setCtaAction(null);
             }}
           >
-            <Text
-              style={[
-                styles.optionTitle,
-                selectedPool === 'WEDDING' && styles.selectedOptionTitle,
-              ]}
+            <Card
+              variant={selectedPool === 'WEDDING' ? 'selectable' : 'outlined'}
+              selected={selectedPool === 'WEDDING'}
+              style={styles.optionCard}
             >
-              מאגר חתונה
-            </Text>
-            <Text style={styles.optionDescription}>
-              חיפוש מועמדים מתאימים במיוחד מתוך אירוע חתונה ספציפי.
-            </Text>
+              <View style={styles.cardHeaderRow}>
+                <AppIcon
+                  name="calendar"
+                  size={sizing.iconMd}
+                  color={selectedPool === 'WEDDING' ? colors.accent : colors.textSecondary}
+                />
+                <Text
+                  style={[
+                    typography.titleMedium,
+                    styles.optionTitle,
+                    selectedPool === 'WEDDING' && styles.selectedOptionTitle,
+                  ]}
+                >
+                  מאגר חתונה
+                </Text>
+              </View>
+              <Text style={[typography.bodyMedium, styles.optionDescription]}>
+                חיפוש מועמדים מתאימים מתוך אירוע חתונה ספציפי שהצטרפת אליו.
+              </Text>
+            </Card>
           </TouchableOpacity>
         </View>
 
         {selectedPool === 'WEDDING' && (
-          <View style={styles.weddingInputContainer}>
+          <Card variant="surface" style={styles.weddingInputContainer}>
             {loadingWeddings ? (
-              <ActivityIndicator size="small" color={theme.colors.primary} style={styles.loader} />
+              <ActivityIndicator size="small" color={colors.primary} style={styles.loader} />
             ) : eligibleWeddings.length === 0 ? (
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>לא הצטרפת לאף חתונה פעילה זמינה כרגע.</Text>
-                <Text style={styles.emptySubText}>אנא הצטרף/י לחתונה באמצעות קוד גישה תחילה.</Text>
+                <Text style={[typography.bodyMediumBold, styles.emptyText]}>
+                  לא הצטרפת לאף חתונה פעילה זמינה כרגע.
+                </Text>
+                <Text style={[typography.caption, styles.emptySubText]}>
+                  אנא הצטרף/י לחתונה באמצעות קוד גישה תחילה באזור החתונות שלי.
+                </Text>
               </View>
             ) : (
               <View style={styles.weddingsListContainer}>
-                <Text style={styles.sectionTitle}>בחירת חתונה:</Text>
+                <Text style={[typography.heading, styles.sectionTitle]}>
+                  בחירת חתונה:
+                </Text>
                 {eligibleWeddings.map((w) => {
                   const isSelected = selectedWeddingId === w.weddingId;
                   return (
                     <TouchableOpacity
                       key={w.weddingId}
-                      style={[
-                        styles.weddingCard,
-                        isSelected && styles.selectedWeddingCard,
-                      ]}
+                      activeOpacity={0.7}
                       onPress={() => {
                         setSelectedWeddingId(w.weddingId);
                         setErrorText(null);
                         setCtaAction(null);
                       }}
                     >
-                      <Text style={[styles.weddingNameText, isSelected && styles.selectedWeddingNameText]}>
-                        {w.weddingName}
-                      </Text>
-                      {w.city || w.weddingDate ? (
-                        <Text style={styles.weddingDetailsText}>
-                          {[w.city, w.weddingDate ? formatDisplayDate(w.weddingDate) : null]
-                            .filter(Boolean)
-                            .join(' - ')}
+                      <Card
+                        variant={isSelected ? 'selectable' : 'outlined'}
+                        selected={isSelected}
+                        style={styles.weddingCard}
+                      >
+                        <Text style={[typography.bodyLargeBold, isSelected && styles.selectedWeddingNameText]}>
+                          {w.weddingName}
                         </Text>
-                      ) : null}
+                        {w.city || w.weddingDate ? (
+                          <BidiText
+                            value={[w.city, w.weddingDate ? formatDisplayDate(w.weddingDate) : null]
+                              .filter(Boolean)
+                              .join(' — ')}
+                            kind="date"
+                            style={[typography.caption, styles.weddingDetailsText]}
+                          />
+                        ) : null}
+                      </Card>
                     </TouchableOpacity>
                   );
                 })}
               </View>
             )}
-          </View>
+          </Card>
         )}
 
         {errorText ? (
-          <View style={{ alignItems: 'center', marginBottom: theme.spacing.m }}>
-            <Text style={styles.errorText}>{errorText}</Text>
-            {ctaAction && (
-              <AppButton
-                title={ctaAction.label}
-                onPress={ctaAction.onPress}
-                style={{ marginTop: theme.spacing.s, width: '80%' }}
-              />
-            )}
-          </View>
+          <StateSurface
+            kind="error"
+            title="נדרש טיפול בזכאות"
+            message={errorText}
+            primaryAction={
+              ctaAction
+                ? {
+                    label: ctaAction.label,
+                    onPress: ctaAction.onPress,
+                    icon: 'edit',
+                  }
+                : undefined
+            }
+            style={styles.errorSurface}
+          />
         ) : null}
-        <AppButton
-          title="חיפוש מועמדים"
+
+        <Button
+          label="חיפוש מועמדים"
           onPress={handleDiscover}
+          variant="primary"
+          iconEnd="search"
           style={styles.actionButton}
         />
-      </ScrollView>
-    </Screen>
+      </View>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    padding: theme.spacing.l,
-    flexGrow: 1,
+    paddingVertical: spacing.lg,
+    flex: 1,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.s,
+    color: colors.primary,
+    marginBottom: spacing.xs,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
-    marginBottom: theme.spacing.xl,
-    paddingHorizontal: theme.spacing.m,
+    marginBottom: spacing.xl,
   },
   optionsContainer: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: spacing.xl,
+    gap: spacing.md,
   },
   optionCard: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.l,
-    padding: theme.spacing.l,
-    marginBottom: theme.spacing.m,
+    padding: spacing.lg,
   },
-  selectedOptionCard: {
-    borderColor: theme.colors.primary,
-    backgroundColor: '#FAF7F0',
+  cardHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
   },
   optionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.s,
-    textAlign: 'right',
+    color: colors.textPrimary,
   },
   selectedOptionTitle: {
-    color: theme.colors.primary,
+    color: colors.primary,
   },
   optionDescription: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    lineHeight: 20,
+    color: colors.textSecondary,
     textAlign: 'right',
   },
   weddingInputContainer: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.l,
-    padding: theme.spacing.m,
-    marginBottom: theme.spacing.xl,
+    padding: spacing.md,
+    marginBottom: spacing.xl,
   },
   loader: {
-    marginVertical: theme.spacing.m,
+    marginVertical: spacing.md,
   },
   emptyContainer: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.m,
+    paddingVertical: spacing.md,
   },
   emptyText: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    fontWeight: 'bold',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   emptySubText: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
+    color: colors.textTertiary,
     textAlign: 'center',
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   weddingsListContainer: {
     width: '100%',
+    gap: spacing.sm,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.m,
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
     textAlign: 'right',
   },
   weddingCard: {
-    backgroundColor: theme.colors.background,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.m,
-    padding: theme.spacing.m,
-    marginBottom: theme.spacing.s,
-  },
-  selectedWeddingCard: {
-    borderColor: theme.colors.primary,
-    backgroundColor: '#FAF7F0',
-  },
-  weddingNameText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.text,
-    textAlign: 'right',
+    padding: spacing.md,
   },
   selectedWeddingNameText: {
-    color: theme.colors.primary,
+    color: colors.accent,
   },
   weddingDetailsText: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginTop: 4,
+    color: colors.textSecondary,
+    marginTop: spacing.xxs,
     textAlign: 'right',
   },
-  actionButton: {
-    marginTop: 'auto',
-    marginBottom: theme.spacing.l,
+  errorSurface: {
+    marginBottom: spacing.lg,
   },
-  errorText: {
-    color: theme.colors.error,
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: theme.spacing.m,
-    paddingHorizontal: theme.spacing.m,
+  actionButton: {
+    marginTop: spacing.md,
+    marginBottom: spacing.xl,
   },
 });

@@ -4,22 +4,22 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
   TouchableOpacity,
   Image,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Screen } from '../../components/Screen';
+import { ScreenContainer } from '../../components/foundation/ScreenContainer';
+import { StateSurface } from '../../components/foundation/StateSurface';
+import { AppIcon } from '../../components/foundation/AppIcon';
 import { AppButton } from '../../components/AppButton';
 import { AppInput } from '../../components/AppInput';
-import { theme } from '../../theme/theme';
+import { colors, spacing, radii, sizing } from '../../theme/tokens';
+import { typography } from '../../theme/typography';
 import { getChatMessages, sendChatMessage, markMessagesAsRead } from '../../api/chatApi';
+import { getMatchDetails } from '../../api/matchesApi';
 import { ChatMessageResponse, MatchDetailsResponse } from '../../types/api';
 import { ChatMessageBubble } from '../../components/ChatMessageBubble';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
-import { getMatchDetails } from '../../api/matchesApi';
 import { getImageUrl } from '../../utils/imageUrl';
 
 export const ChatScreen = ({ route, navigation }: any) => {
@@ -28,6 +28,7 @@ export const ChatScreen = ({ route, navigation }: any) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDenied, setIsDenied] = useState(false);
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
   const [matchDetails, setMatchDetails] = useState<MatchDetailsResponse | null>(null);
@@ -36,6 +37,7 @@ export const ChatScreen = ({ route, navigation }: any) => {
   const isFirstLoad = useRef(true);
 
   const handleMarkAsRead = async () => {
+    if (!matchId) return;
     try {
       await markMessagesAsRead(matchId);
     } catch (err) {
@@ -44,29 +46,47 @@ export const ChatScreen = ({ route, navigation }: any) => {
   };
 
   const fetchMessages = async (showLoadingIndicator = true) => {
-    if (fetchingRef.current) return;
+    if (!matchId || fetchingRef.current) return;
     fetchingRef.current = true;
 
     if (showLoadingIndicator) {
       setLoading(true);
     }
-    setError(null);
+
     try {
-      const response = await getChatMessages(matchId);
-      const sorted = [...response.messages].sort(
+      const [detailsData, messagesData] = await Promise.all([
+        getMatchDetails(matchId),
+        getChatMessages(matchId),
+      ]);
+
+      setMatchDetails(detailsData);
+      const sorted = [...messagesData.messages].sort(
         (a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime()
       );
       setMessages(sorted);
+      setError(null);
+      setIsDenied(false);
+
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
 
       await handleMarkAsRead();
     } catch (err: any) {
-      if (showLoadingIndicator || refreshing) {
-        setError(
-          getFriendlyErrorMessage(err, 'טעינת הודעות הצ׳אט נכשלה.')
-        );
+      const statusCode = err?.response?.status;
+      if (statusCode === 403 || statusCode === 401) {
+        // Clear protected conversation data before rendering denial StateSurface
+        setMatchDetails(null);
+        setMessages([]);
+        setIsDenied(true);
+      } else {
+        const friendlyMsg = getFriendlyErrorMessage(err, 'טעינת הודעות הצ׳אט נכשלה.');
+        if (showLoadingIndicator || messages.length === 0) {
+          setError(friendlyMsg);
+        } else {
+          // Refresh / poll failure when valid history exists: partial error banner without clearing valid history
+          setError(friendlyMsg);
+        }
       }
     } finally {
       setLoading(false);
@@ -77,18 +97,6 @@ export const ChatScreen = ({ route, navigation }: any) => {
 
   useEffect(() => {
     isFirstLoad.current = true;
-  }, [matchId]);
-
-  useEffect(() => {
-    const fetchMatchDetails = async () => {
-      try {
-        const details = await getMatchDetails(matchId);
-        setMatchDetails(details);
-      } catch (err) {
-        console.warn('Failed to load match details for header:', err);
-      }
-    };
-    fetchMatchDetails();
   }, [matchId]);
 
   useFocusEffect(
@@ -113,7 +121,7 @@ export const ChatScreen = ({ route, navigation }: any) => {
 
   const handleSend = async () => {
     const trimmed = inputText.trim();
-    if (!trimmed) return;
+    if (!trimmed || sending || !matchDetails || matchDetails.status !== 'ACTIVE') return;
 
     setSending(true);
     setError(null);
@@ -124,236 +132,336 @@ export const ChatScreen = ({ route, navigation }: any) => {
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 50);
-      
+
       fetchMessages(false);
     } catch (err: any) {
-      setError(
-        getFriendlyErrorMessage(err, 'שליחת ההודעה נכשלה.')
-      );
+      setError(getFriendlyErrorMessage(err, 'שליחת ההודעה נכשלה.'));
     } finally {
       setSending(false);
     }
   };
 
-  if (loading) {
+  // 1. HTTP 403 / Access Denial State
+  if (isDenied) {
     return (
-      <Screen style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.stateText}>פותח צ׳אט...</Text>
-      </Screen>
+      <ScreenContainer testID="chat-screen-denied">
+        <StateSurface
+          kind="denied"
+          title="אין הרשאה לגישה"
+          message="אין לך הרשאה לצפות בצ׳אט זה."
+          primaryAction={{
+            label: 'חזרה',
+            onPress: () => navigation.goBack(),
+          }}
+        />
+      </ScreenContainer>
     );
   }
 
-  return (
-    <Screen>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
-        <View style={styles.header}>
-          {matchDetails?.otherUserProfile && (
-            <TouchableOpacity
-              onPress={() => {
-                if (matchDetails.otherUserProfile.userId) {
-                  navigation.navigate('CandidateProfile', {
-                    userId: matchDetails.otherUserProfile.userId,
-                    sourceType: 'MATCH',
-                    sourceId: matchDetails.matchId,
-                    poolType: matchDetails.poolType,
-                    weddingId: matchDetails.weddingId ?? undefined,
-                  });
-                }
-              }}
-              style={styles.headerProfileContainer}
-              activeOpacity={0.7}
-            >
-              {getImageUrl(matchDetails.otherUserProfile.primaryPhotoUrl) ? (
-                <Image
-                  source={{ uri: getImageUrl(matchDetails.otherUserProfile.primaryPhotoUrl) }}
-                  style={styles.headerAvatar}
-                />
-              ) : (
-                <View style={styles.headerPlaceholderAvatar}>
-                  <Text style={styles.headerPlaceholderText}>אין תמונה</Text>
-                </View>
-              )}
-              <Text style={styles.headerName}>
-                {matchDetails.otherUserProfile.fullName}
-              </Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity onPress={() => fetchMessages()} style={styles.refreshButton}>
-            <Text style={styles.refreshButtonText}>🔄 רענון צ׳אט</Text>
-          </TouchableOpacity>
-        </View>
+  // 2. Initial Loading State
+  if (loading && !matchDetails && messages.length === 0) {
+    return (
+      <ScreenContainer testID="chat-screen-loading">
+        <StateSurface
+          kind="loading"
+          title="פותח צ׳אט..."
+          message="טוען נתוני שיחה והודעות"
+        />
+      </ScreenContainer>
+    );
+  }
 
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
+  // 3. Initial Load Error (No data loaded)
+  if (error && !matchDetails && messages.length === 0) {
+    return (
+      <ScreenContainer testID="chat-screen-error">
+        <StateSurface
+          kind="error"
+          title="שגיאה בטעינת הצ׳אט"
+          message={error}
+          primaryAction={{
+            label: 'נסה שוב',
+            onPress: () => fetchMessages(true),
+          }}
+        />
+      </ScreenContainer>
+    );
+  }
+
+  const isMatchActive = matchDetails?.status === 'ACTIVE';
+  const isMatchBlocked = matchDetails?.status === 'BLOCKED';
+  const isUnknownStatus = matchDetails !== null && !isMatchActive && !isMatchBlocked;
+
+  const otherUser = matchDetails?.otherUserProfile;
+  const avatarUrl = otherUser ? getImageUrl(otherUser.primaryPhotoUrl) : null;
+
+  return (
+    <ScreenContainer keyboardAware containerStyle={styles.screenContainer}>
+      {/* Header identity bar */}
+      <View style={styles.header}>
+        {otherUser ? (
+          <TouchableOpacity
+            onPress={() => {
+              if (otherUser.userId && matchDetails) {
+                navigation.navigate('CandidateProfile', {
+                  userId: otherUser.userId,
+                  sourceType: 'MATCH',
+                  sourceId: matchDetails.matchId,
+                  poolType: matchDetails.poolType,
+                  weddingId: matchDetails.weddingId ?? undefined,
+                });
+              }
+            }}
+            style={styles.headerProfileContainer}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`פרופיל של ${otherUser.fullName}`}
+          >
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={styles.headerAvatar} />
+            ) : (
+              <View style={styles.headerPlaceholderAvatar}>
+                <Text style={styles.headerPlaceholderText}>
+                  {otherUser.fullName ? otherUser.fullName[0] : 'פ'}
+                </Text>
+              </View>
+            )}
+            <Text style={styles.headerName} numberOfLines={1}>
+              {otherUser.fullName}
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.headerProfileContainer}>
+            <Text style={styles.headerName}>צ׳אט</Text>
           </View>
         )}
+        <TouchableOpacity
+          onPress={() => fetchMessages(false)}
+          style={styles.refreshButton}
+          accessibilityRole="button"
+          accessibilityLabel="רענון צ׳אט"
+        >
+          <AppIcon name="info" size={sizing.iconSm} color={colors.textPrimary} />
+          <Text style={styles.refreshButtonText}>רענון</Text>
+        </TouchableOpacity>
+      </View>
 
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => <ChatMessageBubble message={item} />}
-          contentContainerStyle={styles.messageList}
-          onRefresh={handleRefresh}
-          refreshing={refreshing}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyTitle}>עדיין אין הודעות</Text>
-              <Text style={styles.emptySubtitle}>שלח/י הודעה כדי להתחיל בשיחה!</Text>
-            </View>
-          }
-        />
+      {/* Partial error / refresh failure message banner */}
+      {error && (matchDetails || messages.length > 0) && (
+        <View style={styles.errorContainer} accessibilityLiveRegion="polite">
+          <AppIcon name="alert-circle" size={sizing.iconSm} color={colors.statusError} />
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
 
+      {/* Unsupported status warning banner */}
+      {isUnknownStatus && (
+        <View style={styles.warningContainer} accessibilityLiveRegion="polite">
+          <AppIcon name="info" size={sizing.iconSm} color={colors.statusWarning} />
+          <Text style={styles.warningText}>
+            סטטוס השידוך אינו מוכר. לא ניתן לשלוח הודעות כעת.
+          </Text>
+        </View>
+      )}
+
+      {/* Message history list */}
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => <ChatMessageBubble message={item} />}
+        contentContainerStyle={styles.messageList}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
+        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyTitle}>עדיין אין הודעות</Text>
+            <Text style={styles.emptySubtitle}>שלח/י הודעה כדי להתחיל בשיחה!</Text>
+          </View>
+        }
+      />
+
+      {/* Composer or Terminal surface */}
+      {isMatchActive ? (
         <View style={styles.inputContainer}>
           <View style={styles.inputWrapper}>
             <AppInput
               value={inputText}
-              onChangeText={setInputText}
+              onChangeText={(text) => {
+                setInputText(text);
+                if (error) setError(null);
+              }}
               placeholder="כתוב/כתבי הודעה..."
               style={styles.input}
               multiline
               maxLength={1000}
+              disabled={sending}
+              accessibilityLabel="תוכן ההודעה"
             />
           </View>
           <AppButton
             title="שליחה"
             onPress={handleSend}
             loading={sending}
-            disabled={!inputText.trim()}
+            disabled={!inputText.trim() || sending}
             style={styles.sendButton}
+            accessibilityLabel="שליחת הודעה"
           />
         </View>
-      </KeyboardAvoidingView>
-    </Screen>
+      ) : isMatchBlocked ? (
+        <View style={styles.terminalContainer} accessibilityLiveRegion="polite">
+          <AppIcon name="lock" size={sizing.iconSm} color={colors.textSecondary} />
+          <Text style={styles.terminalText}>השידוך אינו פעיל. לא ניתן לשלוח הודעות.</Text>
+        </View>
+      ) : null}
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: theme.spacing.l,
-  },
-  stateText: {
-    marginTop: theme.spacing.m,
-    color: theme.colors.textSecondary,
-    fontSize: 16,
+  screenContainer: {
+    paddingHorizontal: 0,
   },
   header: {
-    padding: theme.spacing.s,
-    backgroundColor: theme.colors.surface,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: colors.borderSubtle,
     flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
+    minHeight: sizing.headerHeight,
   },
   headerProfileContainer: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
+    minHeight: sizing.minTouchTarget,
   },
   headerAvatar: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: theme.colors.border,
+    borderRadius: radii.full,
+    backgroundColor: colors.surfaceSubtle,
   },
   headerPlaceholderAvatar: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: '#EAEAEA',
+    borderRadius: radii.full,
+    backgroundColor: colors.surfaceSubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerPlaceholderText: {
-    fontSize: 8,
-    color: theme.colors.textSecondary,
-    fontWeight: 'bold',
+    ...typography.captionBold,
+    color: colors.textSecondary,
   },
   headerName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginRight: theme.spacing.s,
+    ...typography.titleSmall,
+    color: colors.textPrimary,
+    marginRight: spacing.sm,
   },
   refreshButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: theme.borderRadius.s,
-    backgroundColor: theme.colors.border,
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radii.sm,
+    backgroundColor: colors.surfaceSubtle,
+    minHeight: sizing.minTouchTarget,
+    gap: spacing.xxs,
   },
   refreshButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: theme.colors.text,
+    ...typography.captionBold,
+    color: colors.textPrimary,
   },
   errorContainer: {
-    backgroundColor: '#FFEBEE',
-    padding: theme.spacing.s,
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    backgroundColor: colors.statusErrorBg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#FFCDD2',
+    borderBottomColor: colors.statusErrorBorder,
+    gap: spacing.xs,
   },
   errorText: {
-    color: theme.colors.error,
-    fontSize: 14,
-    textAlign: 'center',
-    fontWeight: '500',
+    ...typography.caption,
+    color: colors.statusError,
+    flex: 1,
+    textAlign: 'right',
+  },
+  warningContainer: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    backgroundColor: colors.statusWarningBg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.statusWarningBorder,
+    gap: spacing.xs,
+  },
+  warningText: {
+    ...typography.caption,
+    color: colors.statusWarning,
+    flex: 1,
+    textAlign: 'right',
   },
   messageList: {
-    padding: theme.spacing.m,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     flexGrow: 1,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: theme.spacing.xl,
+    paddingVertical: spacing.xxxl,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: theme.colors.textSecondary,
+    ...typography.titleMedium,
+    color: colors.textSecondary,
   },
   emptySubtitle: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    marginTop: 4,
+    ...typography.bodyMedium,
+    color: colors.textTertiary,
+    marginTop: spacing.xs,
   },
   inputContainer: {
     flexDirection: 'row-reverse',
     alignItems: 'flex-end',
-    padding: theme.spacing.s,
+    padding: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
+    borderTopColor: colors.borderSubtle,
+    backgroundColor: colors.surface,
   },
   inputWrapper: {
     flex: 1,
-    marginBottom: -theme.spacing.m,
   },
   input: {
     maxHeight: 100,
-    minHeight: 45,
-    paddingVertical: 10,
-    backgroundColor: '#F7F7F7',
+    minHeight: sizing.inputHeight,
   },
   sendButton: {
-    marginRight: theme.spacing.s,
-    height: 45,
+    marginRight: spacing.sm,
+    height: sizing.inputHeight,
+    minWidth: 80,
     justifyContent: 'center',
-    paddingHorizontal: theme.spacing.m,
-    marginBottom: 4,
+  },
+  terminalContainer: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.lg,
+    backgroundColor: colors.surfaceSubtle,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSubtle,
+    gap: spacing.xs,
+  },
+  terminalText: {
+    ...typography.bodyMedium,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
 });
