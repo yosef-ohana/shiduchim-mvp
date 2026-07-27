@@ -13,7 +13,7 @@ import {
   TextStyle,
   TouchableOpacity,
 } from 'react-native';
-import { colors, spacing, radii, sizing } from '../../theme/tokens';
+import { colors, spacing, radii, sizing, visual, field, text, state, gold } from '../../theme/tokens';
 import { typography } from '../../theme/typography';
 import { FormField } from './FormField';
 import { BidiValueKind } from './BidiText';
@@ -41,6 +41,7 @@ export interface TextFieldProps extends Omit<TextInputProps, 'onChangeText'> {
   accessibilityLabel?: string;
   testID?: string;
   containerStyle?: StyleProp<ViewStyle>;
+  appearance?: 'ivory' | 'light';
 }
 
 export const TextField: React.FC<TextFieldProps> = ({
@@ -64,8 +65,21 @@ export const TextField: React.FC<TextFieldProps> = ({
   style,
   keyboardType,
   autoCapitalize,
+  appearance,
+  onFocus,
+  onBlur,
   ...props
 }) => {
+  const [isFocused, setIsFocused] = React.useState(false);
+
+  const handleFocus = (e: any) => {
+    setIsFocused(true);
+    onFocus?.(e);
+  };
+  const handleBlur = (e: any) => {
+    setIsFocused(false);
+    onBlur?.(e);
+  };
   // Determine if input requires technical/LTR formatting (e.g. email, phone, code, password)
   const isLtrMode =
     bidiType ||
@@ -99,32 +113,112 @@ export const TextField: React.FC<TextFieldProps> = ({
   const derivedAutoCapitalize =
     autoCapitalize || (inputModeType === 'email' || inputModeType === 'password' || secure ? 'none' : 'sentences');
 
-  const renderInput = () => (
-    <TextInput
-      value={value}
-      onChangeText={onChangeText}
-      editable={!disabled}
-      secureTextEntry={secure || inputModeType === 'password'}
-      multiline={multiline || inputModeType === 'multiline'}
-      keyboardType={derivedKeyboardType}
-      autoCapitalize={derivedAutoCapitalize}
-      placeholderTextColor={colors.textTertiary}
-      style={[
-        styles.input,
-        typography.bodyLarge,
-        { textAlign: defaultTextAlign },
-        bidiStyle,
-        multiline || inputModeType === 'multiline' ? styles.multilineInput : null,
-        error ? styles.errorInput : null,
-        disabled ? styles.disabledInput : null,
-        style,
-      ]}
-      accessibilityLabel={accessibilityLabel || label}
-      accessibilityState={{ disabled }}
-      testID={testID}
-      {...props}
-    />
-  );
+  let r2InputStyles: StyleProp<ViewStyle> = undefined;
+  let r2TextStyles: StyleProp<TextStyle> = undefined;
+  let r2PlaceholderColor: string | undefined = undefined;
+
+  const isError = !!error;
+  const isFocus = isFocused && !isError && !disabled;
+
+  if (appearance) {
+    r2PlaceholderColor = field.placeholder;
+    r2TextStyles = { color: text.onIvory.primary };
+
+    const bg = appearance === 'ivory' ? field.background : visual.surface.light;
+
+    if (disabled) {
+      r2InputStyles = {
+        backgroundColor: state.disabled.background,
+        borderColor: state.disabled.border,
+        borderWidth: 1,
+      };
+      r2TextStyles = { color: state.disabled.text };
+      r2PlaceholderColor = state.disabled.text;
+    } else if (isError) {
+      r2InputStyles = {
+        backgroundColor: bg,
+        borderColor: field.border.error,
+        borderWidth: 1,
+      };
+    } else if (isFocus) {
+      r2InputStyles = {
+        backgroundColor: bg,
+        borderColor: field.border.focus.ivory.outer.color,
+        borderWidth: field.border.focus.ivory.outer.width,
+        paddingHorizontal: spacing.lg - (field.border.focus.ivory.outer.width - 1),
+      };
+    } else {
+      r2InputStyles = {
+        backgroundColor: bg,
+        borderColor: field.border.default,
+        borderWidth: 1,
+      };
+    }
+  }
+
+  const renderFocusInner = () => {
+    if (appearance && isFocus) {
+      return (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            borderWidth: field.border.focus.ivory.inner.width,
+            borderColor: field.border.focus.ivory.inner.color,
+            borderRadius: radii.md - field.border.focus.ivory.outer.width,
+            pointerEvents: 'none',
+          }}
+        />
+      );
+    }
+    return null;
+  };
+
+  const renderInput = () => {
+    const inputNode = (
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        editable={!disabled}
+        secureTextEntry={secure || inputModeType === 'password'}
+        multiline={multiline || inputModeType === 'multiline'}
+        keyboardType={derivedKeyboardType}
+        autoCapitalize={derivedAutoCapitalize}
+        placeholderTextColor={r2PlaceholderColor || colors.textTertiary}
+        style={[
+          styles.input,
+          typography.bodyLarge,
+          { textAlign: defaultTextAlign },
+          bidiStyle,
+          multiline || inputModeType === 'multiline' ? styles.multilineInput : null,
+          error && !appearance ? styles.errorInput : null,
+          disabled && !appearance ? styles.disabledInput : null,
+          r2InputStyles,
+          r2TextStyles,
+          style,
+        ]}
+        accessibilityLabel={accessibilityLabel || label}
+        accessibilityState={{ disabled }}
+        testID={testID}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        {...props}
+      />
+    );
+
+    if (appearance) {
+      return (
+        <View style={styles.r2StandaloneWrapper}>
+          {inputNode}
+          {renderFocusInner()}
+        </View>
+      );
+    }
+    return inputNode;
+  };
 
   return (
     <FormField
@@ -135,10 +229,17 @@ export const TextField: React.FC<TextFieldProps> = ({
       helper={helper}
       testID={testID ? `${testID}-field` : undefined}
       style={containerStyle}
+      appearance={appearance}
     >
       {iconEnd ? (
-        <View style={[styles.inputWrapper, error ? styles.errorWrapper : null, disabled ? styles.disabledWrapper : null]}>
-          <TextInput
+        <View style={styles.r2StandaloneWrapper}>
+          <View style={[
+            styles.inputWrapper,
+            error && !appearance ? styles.errorWrapper : null,
+            disabled && !appearance ? styles.disabledWrapper : null,
+            r2InputStyles
+          ]}>
+            <TextInput
             value={value}
             onChangeText={onChangeText}
             editable={!disabled}
@@ -146,17 +247,20 @@ export const TextField: React.FC<TextFieldProps> = ({
             multiline={multiline || inputModeType === 'multiline'}
             keyboardType={derivedKeyboardType}
             autoCapitalize={derivedAutoCapitalize}
-            placeholderTextColor={colors.textTertiary}
+            placeholderTextColor={r2PlaceholderColor || colors.textTertiary}
             style={[
               styles.wrappedInput,
               typography.bodyLarge,
               { textAlign: defaultTextAlign },
               bidiStyle,
+              r2TextStyles,
               style,
             ]}
             accessibilityLabel={accessibilityLabel || label}
             accessibilityState={{ disabled }}
             testID={testID}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             {...props}
           />
           {onPressIconEnd ? (
@@ -166,11 +270,13 @@ export const TextField: React.FC<TextFieldProps> = ({
               accessibilityRole="button"
               accessibilityLabel="הצג/הסתר"
             >
-              <AppIcon name={iconEnd} size={sizing.iconSm} color={colors.textSecondary} />
+              <AppIcon name={iconEnd} size={sizing.iconSm} color={appearance ? ((r2TextStyles as any)?.color as string | undefined) : colors.textSecondary} />
             </TouchableOpacity>
           ) : (
-            <AppIcon name={iconEnd} size={sizing.iconSm} color={colors.textSecondary} />
+            <AppIcon name={iconEnd} size={sizing.iconSm} color={appearance ? ((r2TextStyles as any)?.color as string | undefined) : colors.textSecondary} />
           )}
+          </View>
+          {renderFocusInner()}
         </View>
       ) : (
         renderInput()
@@ -180,6 +286,9 @@ export const TextField: React.FC<TextFieldProps> = ({
 };
 
 const styles = StyleSheet.create({
+  r2StandaloneWrapper: {
+    position: 'relative',
+  },
   input: {
     minHeight: sizing.minTouchTarget, // 48dp
     borderWidth: 1,

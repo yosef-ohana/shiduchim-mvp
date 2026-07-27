@@ -2,7 +2,7 @@
  * Theme Compatibility Facade — Batch F0 Foundation
  * Wraps semantic tokens for backward compatibility with existing screen consumers.
  */
-import { tokens } from './tokens';
+import { tokens, LEGACY_GOLD_COMPAT } from './tokens';
 
 export const theme = {
   // Direct reference to semantic tokens
@@ -10,7 +10,7 @@ export const theme = {
 
   // Backward compatibility facade for existing consumers
   colors: {
-    primary: '#D4AF37', // Legacy gold accent compatibility alias
+    primary: LEGACY_GOLD_COMPAT, // Legacy gold accent compatibility alias
     background: tokens.colors.background,
     surface: tokens.colors.surface,
     text: tokens.colors.textPrimary,

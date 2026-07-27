@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { StyleSheet, View, Text, StyleProp, ViewStyle } from 'react-native';
-import { colors, spacing, sizing } from '../../theme/tokens';
+import { colors, spacing, sizing, text, field, icon } from '../../theme/tokens';
 import { typography } from '../../theme/typography';
 import { getTextAlign } from '../../utils/direction';
 import { AppIcon } from './AppIcon';
@@ -19,6 +19,7 @@ export interface FormFieldProps {
   children: React.ReactNode;
   testID?: string;
   style?: StyleProp<ViewStyle>;
+  appearance?: 'ivory' | 'light';
 }
 
 export const FormField: React.FC<FormFieldProps> = ({
@@ -30,8 +31,23 @@ export const FormField: React.FC<FormFieldProps> = ({
   children,
   testID,
   style,
+  appearance,
 }) => {
   const textAlignStyle = { textAlign: getTextAlign('start') };
+
+  let r2LabelColor = undefined;
+  let r2IconColor = undefined;
+  let r2RequiredColor = undefined;
+  let r2ErrorColor = undefined;
+  let r2HelperColor = undefined;
+
+  if (appearance) {
+    r2LabelColor = text.onIvory.primary;
+    r2IconColor = icon.onIvory;
+    r2RequiredColor = field.requiredIndicator;
+    r2ErrorColor = field.errorText;
+    r2HelperColor = field.helper;
+  }
 
   return (
     <View style={[styles.container, style]} testID={testID}>
@@ -41,26 +57,26 @@ export const FormField: React.FC<FormFieldProps> = ({
             <AppIcon
               name={iconLabel}
               size={sizing.iconSm}
-              color={colors.textSecondary}
+              color={r2IconColor || colors.textSecondary}
               style={styles.labelIcon}
             />
           )}
-          <Text style={[typography.bodyMediumMedium, styles.labelText, textAlignStyle]}>
+          <Text style={[typography.bodyMediumMedium, styles.labelText, r2LabelColor ? { color: r2LabelColor } : undefined, textAlignStyle]}>
             {label}
-            {required && <Text style={styles.requiredStar}> *</Text>}
+            {required && <Text style={[styles.requiredStar, r2RequiredColor ? { color: r2RequiredColor } : undefined]}> *</Text>}
           </Text>
         </View>
       )}
       {children}
       {error ? (
         <View style={styles.errorRow}>
-          <AppIcon name="alert-circle" size={sizing.iconSm} color={colors.statusError} style={styles.errorIcon} />
-          <Text style={[typography.caption, styles.errorText, textAlignStyle]}>
+          <AppIcon name="alert-circle" size={sizing.iconSm} color={r2ErrorColor || colors.statusError} style={styles.errorIcon} />
+          <Text style={[typography.caption, styles.errorText, r2ErrorColor ? { color: r2ErrorColor } : undefined, textAlignStyle]}>
             {error}
           </Text>
         </View>
       ) : helper ? (
-        <Text style={[typography.caption, styles.helperText, textAlignStyle]}>
+        <Text style={[typography.caption, styles.helperText, r2HelperColor ? { color: r2HelperColor } : undefined, textAlignStyle]}>
           {helper}
         </Text>
       ) : null}

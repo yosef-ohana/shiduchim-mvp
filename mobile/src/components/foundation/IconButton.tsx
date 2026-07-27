@@ -11,13 +11,13 @@ import {
   StyleProp,
   ViewStyle,
 } from 'react-native';
-import { colors, spacing, radii, sizing } from '../../theme/tokens';
+import { colors, spacing, radii, sizing, icon as iconToken, gold, glow } from '../../theme/tokens';
 import { AppIcon } from './AppIcon';
 import { SemanticIconName } from '../../theme/icons';
 
 export type IconButtonVariant = 'plain' | 'contained' | 'destructive' | 'header';
 
-export interface IconButtonProps {
+export type IconButtonProps = {
   icon: SemanticIconName;
   onPress: (event?: any) => void;
   accessibilityLabel?: string;
@@ -27,7 +27,10 @@ export interface IconButtonProps {
   badge?: number | boolean;
   testID?: string;
   style?: StyleProp<ViewStyle>;
-}
+} & (
+  | { variant?: 'plain' | 'contained' | 'header'; appearance?: 'onDark' | 'onIvory' | 'onGold' }
+  | { variant: 'destructive'; appearance?: never }
+);
 
 export const IconButton: React.FC<IconButtonProps> = ({
   icon,
@@ -39,7 +42,9 @@ export const IconButton: React.FC<IconButtonProps> = ({
   badge,
   testID,
   style,
+  appearance,
 }) => {
+  const [isFocused, setIsFocused] = React.useState(false);
   const isInteractive = !disabled && !decorative;
 
   let containerVariantStyle: StyleProp<ViewStyle> = styles.plainContainer;
@@ -56,9 +61,19 @@ export const IconButton: React.FC<IconButtonProps> = ({
     iconColor = colors.primary;
   }
 
+  if (appearance && variant !== 'destructive') {
+    if (appearance === 'onDark') iconColor = iconToken.onDark.primary;
+    else if (appearance === 'onIvory') iconColor = iconToken.onIvory;
+    else if (appearance === 'onGold') iconColor = iconToken.onGold;
+  }
+
   if (disabled) {
-    iconColor = colors.textDisabled;
-    containerVariantStyle = [containerVariantStyle, styles.disabledContainer];
+    if (appearance) {
+      iconColor = iconToken.disabled;
+    } else {
+      iconColor = colors.textDisabled;
+      containerVariantStyle = [containerVariantStyle, styles.disabledContainer];
+    }
   }
 
   const renderBadge = () => {
@@ -79,10 +94,22 @@ export const IconButton: React.FC<IconButtonProps> = ({
     <Pressable
       onPress={isInteractive ? onPress : undefined}
       disabled={!isInteractive}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
       style={({ pressed }) => [
         styles.baseContainer,
         containerVariantStyle,
-        pressed && isInteractive && styles.pressedState,
+        pressed && isInteractive && !appearance && styles.pressedState,
+        pressed && isInteractive && appearance && { opacity: 0.8 },
+        isFocused && isInteractive && appearance && {
+          borderWidth: 2,
+          borderColor: gold.focus,
+          shadowColor: glow.focus.gold.color,
+          shadowOpacity: glow.focus.gold.opacity,
+          shadowRadius: glow.focus.gold.radius,
+          shadowOffset: { width: 0, height: glow.focus.gold.offset },
+          elevation: 4,
+        },
         style,
       ]}
       android_ripple={{ color: 'rgba(0, 0, 0, 0.1)', borderless: true, radius: 24 }}

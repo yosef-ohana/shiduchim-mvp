@@ -3,7 +3,7 @@
  * Layout container for adaptive button positioning (inline, stacked, split-destructive).
  */
 import React from 'react';
-import { StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
+import { StyleSheet, View, StyleProp, ViewStyle, useWindowDimensions } from 'react-native';
 import { spacing } from '../../theme/tokens';
 import { useResponsive } from '../../utils/responsive';
 
@@ -27,7 +27,11 @@ export const ResponsiveActionGroup: React.FC<ResponsiveActionGroupProps> = ({
   style,
 }) => {
   const { isCompact } = useResponsive();
-  const shouldStack = alignment === 'stacked' || compactMode || isCompact;
+  const { width, fontScale } = useWindowDimensions();
+  const actionCount = React.Children.count(children);
+  const isR2Stacked = actionCount >= 3 || width < 360 || fontScale >= 1.5;
+
+  const shouldStack = alignment === 'stacked' || compactMode || isCompact || (alignment === 'inline' && isR2Stacked);
 
   if (alignment === 'split-destructive') {
     return (

@@ -10,8 +10,9 @@ import {
   ActivityIndicator,
   StyleProp,
   ViewStyle,
+  TextStyle,
 } from 'react-native';
-import { colors, spacing, radii, sizing } from '../../theme/tokens';
+import { colors, spacing, radii, sizing, visual, status, text } from '../../theme/tokens';
 import { typography } from '../../theme/typography';
 import { AppIcon } from './AppIcon';
 import { Button } from './Button';
@@ -25,7 +26,8 @@ export type StateSurfaceKind =
   | 'partial'
   | 'denied'
   | 'stale'
-  | 'success';
+  | 'success'
+  | 'warning';
 
 export interface StateSurfaceAction {
   label: string;
@@ -33,7 +35,12 @@ export interface StateSurfaceAction {
   icon?: SemanticIconName;
 }
 
-export interface StateSurfaceProps {
+export type StateSurfaceVisualState =
+  | { kind: 'success'; appearance: 'ivory' | 'dark' }
+  | { kind: 'error'; appearance: 'ivory' }
+  | { kind: 'warning'; appearance: 'ivory' };
+
+export type StateSurfaceProps = {
   kind: StateSurfaceKind;
   title: string;
   message?: string;
@@ -42,7 +49,12 @@ export interface StateSurfaceProps {
   live?: boolean;
   testID?: string;
   style?: StyleProp<ViewStyle>;
-}
+} & (
+  | { visualState?: never }
+  | { kind: 'success'; visualState: { kind: 'success'; appearance: 'ivory' | 'dark' } }
+  | { kind: 'error'; visualState: { kind: 'error'; appearance: 'ivory' } }
+  | { kind: 'warning'; visualState: { kind: 'warning'; appearance: 'ivory' } }
+);
 
 export const StateSurface: React.FC<StateSurfaceProps> = ({
   kind,
@@ -53,9 +65,45 @@ export const StateSurface: React.FC<StateSurfaceProps> = ({
   live = false,
   testID,
   style,
+  visualState,
 }) => {
   const isError = kind === 'error' || kind === 'denied';
   const liveRegionPolicy = live || isError ? 'assertive' : kind === 'loading' ? 'polite' : 'none';
+
+  let r2SurfaceStyles: StyleProp<ViewStyle> = undefined;
+  let r2IconWrapperStyles: StyleProp<ViewStyle> = undefined;
+  let r2TitleStyles: StyleProp<TextStyle> = undefined;
+  let r2MessageStyles: StyleProp<TextStyle> = undefined;
+  let r2IconColorOverride: string | undefined = undefined;
+
+  if (visualState) {
+    const vs = visualState as StateSurfaceVisualState;
+    if (vs.kind === 'success' && vs.appearance === 'ivory') {
+      r2SurfaceStyles = { backgroundColor: visual.surface.ivory, borderColor: 'transparent', borderWidth: 0 };
+      r2TitleStyles = { color: text.onIvory.primary };
+      r2MessageStyles = { color: text.onIvory.secondary };
+      r2IconWrapperStyles = { backgroundColor: 'transparent' };
+      r2IconColorOverride = status.success.onIvory;
+    } else if (vs.kind === 'success' && vs.appearance === 'dark') {
+      r2SurfaceStyles = { backgroundColor: visual.surface.dark, borderColor: 'transparent', borderWidth: 0 };
+      r2TitleStyles = { color: text.onDark.primary };
+      r2MessageStyles = { color: text.onDark.secondary };
+      r2IconWrapperStyles = { backgroundColor: 'transparent' };
+      r2IconColorOverride = status.success.onDark;
+    } else if (vs.kind === 'error' && vs.appearance === 'ivory') {
+      r2SurfaceStyles = { backgroundColor: visual.surface.ivory, borderColor: 'transparent', borderWidth: 0 };
+      r2TitleStyles = { color: text.onIvory.primary };
+      r2MessageStyles = { color: text.onIvory.secondary };
+      r2IconWrapperStyles = { backgroundColor: 'transparent' };
+      r2IconColorOverride = status.error.onIvory;
+    } else if (vs.kind === 'warning' && vs.appearance === 'ivory') {
+      r2SurfaceStyles = { backgroundColor: visual.surface.ivory, borderColor: 'transparent', borderWidth: 0 };
+      r2TitleStyles = { color: text.onIvory.primary };
+      r2MessageStyles = { color: text.onIvory.secondary };
+      r2IconWrapperStyles = { backgroundColor: 'transparent' };
+      r2IconColorOverride = status.warning.onIvory;
+    }
+  }
 
   const renderVisualElement = () => {
     if (kind === 'loading') {
@@ -89,10 +137,17 @@ export const StateSurface: React.FC<StateSurfaceProps> = ({
     } else if (kind === 'success') {
       iconName = 'check';
       iconColor = colors.statusSuccess;
+    } else if (kind === 'warning') {
+      iconName = 'alert-circle';
+      iconColor = colors.statusWarning;
+    }
+
+    if (r2IconColorOverride) {
+      iconColor = r2IconColorOverride;
     }
 
     return (
-      <View style={styles.iconWrapper}>
+      <View style={[styles.iconWrapper, r2IconWrapperStyles]}>
         <AppIcon name={iconName} size={sizing.iconXl} color={iconColor} />
       </View>
     );
@@ -100,15 +155,15 @@ export const StateSurface: React.FC<StateSurfaceProps> = ({
 
   return (
     <View
-      style={[styles.container, style]}
+      style={[styles.container, r2SurfaceStyles, style]}
       accessibilityLiveRegion={liveRegionPolicy}
       accessibilityState={{ busy: kind === 'loading' }}
       testID={testID}
     >
       {renderVisualElement()}
-      <Text style={[typography.titleMedium, styles.titleText]}>{title}</Text>
+      <Text style={[typography.titleMedium, styles.titleText, r2TitleStyles]}>{title}</Text>
       {message && (
-        <Text style={[typography.bodyMedium, styles.messageText]}>{message}</Text>
+        <Text style={[typography.bodyMedium, styles.messageText, r2MessageStyles]}>{message}</Text>
       )}
 
       {(primaryAction || secondaryAction) && (

@@ -13,7 +13,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets, Edge } from 'react-native-safe-area-context';
-import { colors, sizing } from '../../theme/tokens';
+import { colors, sizing, visual } from '../../theme/tokens';
 import { useResponsive } from '../../utils/responsive';
 
 export interface ScreenContainerProps {
@@ -27,6 +27,7 @@ export interface ScreenContainerProps {
   maxWidth?: number;
   safeEdges?: Edge[];
   testID?: string;
+  appearance?: 'darkCanvas' | 'darkShell' | 'lightExceptionCanvas';
 }
 
 export const ScreenContainer: React.FC<ScreenContainerProps> = ({
@@ -40,6 +41,7 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
   maxWidth = sizing.maxContentRailWidth,
   safeEdges = ['top', 'bottom', 'left', 'right'],
   testID,
+  appearance,
 }) => {
   const insets = useSafeAreaInsets();
   const { gutter } = useResponsive();
@@ -78,10 +80,20 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
     );
   };
 
+  let appearanceBackgroundColor: string | undefined;
+  if (appearance === 'darkCanvas') {
+    appearanceBackgroundColor = visual.canvas.dark;
+  } else if (appearance === 'darkShell') {
+    appearanceBackgroundColor = visual.shell.dark;
+  } else if (appearance === 'lightExceptionCanvas') {
+    appearanceBackgroundColor = visual.canvas.lightException;
+  }
+
   const innerLayout = (
     <View
       style={[
         styles.outerContainer,
+        appearanceBackgroundColor ? { backgroundColor: appearanceBackgroundColor } : undefined,
         {
           paddingTop,
           paddingBottom,

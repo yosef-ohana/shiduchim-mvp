@@ -12,6 +12,7 @@ import {
 import { AuthProvider } from './src/context/AuthContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { colors } from './src/theme/tokens';
+import { FoundationProbe } from './src/components/foundation/FoundationProbe';
 
 export default function App() {
   const [fontsLoaded, fontError] = useFonts({
@@ -34,6 +35,18 @@ export default function App() {
   // Controlled recoverable fallback if font loading encounters an unexpected error
   if (fontError) {
     console.warn('[App] Heebo font failed to load; proceeding with system fallback font.', fontError);
+  }
+
+  const showFoundationProbe =
+    __DEV__ && process.env.EXPO_PUBLIC_SHOW_PROBE === 'true';
+
+  if (showFoundationProbe) {
+    return (
+      <SafeAreaProvider>
+        <FoundationProbe />
+        <StatusBar style="auto" />
+      </SafeAreaProvider>
+    );
   }
 
   return (
