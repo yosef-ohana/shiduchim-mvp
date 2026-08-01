@@ -12,14 +12,6 @@ export type AuthStackParamList = {
   WeddingCodeEntry: { accessCode?: string; pendingWeddingCode?: string } | undefined;
 };
 
-export type RootStackParamList = {
-  Auth: undefined;
-  Main: undefined;
-  UserShell: undefined;
-  AdminShell: undefined;
-  EventManagerShell: undefined;
-};
-
 export type AdminStackParamList = {
   AdminHome: undefined;
   AdminUsers: { focusUserId?: number } | undefined;
@@ -85,32 +77,18 @@ export type UserDiscoverStackParamList = {
 
 export type UserConnectionsStackParamList = {
   ConnectionsHub: undefined;
-  Lists: undefined; // Explicit compatibility bridge entry preserved
-  OpeningMessages: undefined;
-  OpeningConversationDetails: MainStackParamList['OpeningConversationDetails'];
-  Matches: undefined;
-  MatchDetails: MainStackParamList['MatchDetails'];
 };
 
 export type UserChatsStackParamList = {
   Chats: undefined;
-  Chat: MainStackParamList['Chat'];
 };
 
 export type UserWeddingsStackParamList = {
   MyWeddings: undefined;
-  JoinWedding: MainStackParamList['JoinWedding'];
 };
 
 export type UserMeStackParamList = {
   Me: undefined;
-  Profile: MainStackParamList['Profile'];
-  BasicProfile: MainStackParamList['BasicProfile'];
-  FullProfile: MainStackParamList['FullProfile'];
-  Photos: MainStackParamList['Photos'];
-  BlockedUsers: undefined;
-  SendProductFeedback: undefined;
-  MyProductFeedback: MainStackParamList['MyProductFeedback'];
 };
 
 export type UserTabsParamList = {
@@ -126,6 +104,20 @@ export type UserShellStackParamList = {
   CandidateProfile: MainStackParamList['CandidateProfile'];
   Notifications: undefined;
   ReportUser: MainStackParamList['ReportUser'];
+  Lists: undefined;
+  OpeningMessages: undefined;
+  OpeningConversationDetails: MainStackParamList['OpeningConversationDetails'];
+  Matches: undefined;
+  MatchDetails: MainStackParamList['MatchDetails'];
+  Chat: MainStackParamList['Chat'];
+  JoinWedding: MainStackParamList['JoinWedding'];
+  Profile: MainStackParamList['Profile'];
+  BasicProfile: MainStackParamList['BasicProfile'];
+  FullProfile: MainStackParamList['FullProfile'];
+  Photos: MainStackParamList['Photos'];
+  BlockedUsers: undefined;
+  SendProductFeedback: undefined;
+  MyProductFeedback: MainStackParamList['MyProductFeedback'];
 };
 
 export type { MainStackParamList };
