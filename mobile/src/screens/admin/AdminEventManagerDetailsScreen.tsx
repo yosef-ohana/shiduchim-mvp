@@ -4,14 +4,14 @@ import { useRoute, useNavigation, useFocusEffect, RouteProp } from '@react-navig
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { adminApi } from '../../api/adminApi';
-import { MainStackParamList } from '../../navigation/MainStack';
+import type { AdminStackParamList } from '../../types/navigation';
 import { AdminEventManagerDetailsResponse, ManagedWeddingSummaryResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 import { getWeddingStatusLabel, getUserRoleLabel, formatDisplayDate } from '../../utils/displayLabels';
 
-type DetailsRouteProp = RouteProp<MainStackParamList, 'AdminEventManagerDetails'>;
-type NavigationProp = NativeStackNavigationProp<MainStackParamList, 'AdminEventManagerDetails'>;
+type DetailsRouteProp = RouteProp<AdminStackParamList, 'AdminEventManagerDetails'>;
+type NavigationProp = NativeStackNavigationProp<AdminStackParamList, 'AdminEventManagerDetails'>;
 
 export const AdminEventManagerDetailsScreen = () => {
   const route = useRoute<DetailsRouteProp>();

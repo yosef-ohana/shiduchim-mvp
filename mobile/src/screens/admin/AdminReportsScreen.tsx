@@ -2,11 +2,11 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { MainStackParamList } from '../../navigation/MainStack';
+import type { AdminStackParamList } from '../../types/navigation';
 import { UserReportSummaryResponse } from '../../types/api';
 import { adminApi } from '../../api/adminApi';
 
-type AdminReportsNavigationProp = NativeStackNavigationProp<MainStackParamList, 'AdminReports'>;
+type AdminReportsNavigationProp = NativeStackNavigationProp<AdminStackParamList, 'AdminReports'>;
 
 export const AdminReportsScreen = () => {
   const navigation = useNavigation<AdminReportsNavigationProp>();

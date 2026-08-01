@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
-import { MainStackParamList } from '../../navigation/MainStack';
+import type { AdminStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
@@ -21,8 +21,8 @@ const getProfileStatusLabel = (status: string) => {
   }
 };
 
-type AdminUsersRouteProp = RouteProp<MainStackParamList, 'AdminUsers'>;
-type AdminUsersNavigationProp = NativeStackNavigationProp<MainStackParamList, 'AdminUsers'>;
+type AdminUsersRouteProp = RouteProp<AdminStackParamList, 'AdminUsers'>;
+type AdminUsersNavigationProp = NativeStackNavigationProp<AdminStackParamList, 'AdminUsers'>;
 
 export const AdminUsersScreen = () => {
   const route = useRoute<AdminUsersRouteProp>();

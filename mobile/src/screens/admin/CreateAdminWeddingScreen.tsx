@@ -4,13 +4,13 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { adminApi } from '../../api/adminApi';
-import { MainStackParamList } from '../../navigation/MainStack';
+import type { AdminStackParamList } from '../../types/navigation';
 import { theme } from '../../theme/theme';
 import { AdminUserResponse } from '../../types/api';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 import { isValidDateString } from '../../utils/validation';
 
-type NavigationProp = NativeStackNavigationProp<MainStackParamList, 'CreateAdminWedding'>;
+type NavigationProp = NativeStackNavigationProp<AdminStackParamList, 'CreateAdminWedding'>;
 
 export const CreateAdminWeddingScreen = () => {
   const navigation = useNavigation<NavigationProp>();

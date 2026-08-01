@@ -4,7 +4,7 @@ import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { adminApi } from '../../api/adminApi';
-import { MainStackParamList } from '../../navigation/MainStack';
+import type { AdminStackParamList } from '../../types/navigation';
 import { AdminWeddingResponse, WeddingInviteResponse, AdminUserResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
@@ -13,8 +13,8 @@ import { WeddingJoinQrCard } from '../../components/WeddingJoinQrCard';
 import { WeddingBackgroundManager } from '../../components/WeddingBackgroundManager';
 import { useAuth } from '../../context/AuthContext';
 
-type DetailsRouteProp = RouteProp<MainStackParamList, 'AdminWeddingDetails'>;
-type NavigationProp = NativeStackNavigationProp<MainStackParamList, 'AdminWeddingDetails'>;
+type DetailsRouteProp = RouteProp<AdminStackParamList, 'AdminWeddingDetails'>;
+type NavigationProp = NativeStackNavigationProp<AdminStackParamList, 'AdminWeddingDetails'>;
 
 export const AdminWeddingDetailsScreen = () => {
   const route = useRoute<DetailsRouteProp>();

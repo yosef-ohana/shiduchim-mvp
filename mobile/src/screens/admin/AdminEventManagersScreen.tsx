@@ -8,9 +8,9 @@ import { adminApi } from '../../api/adminApi';
 import { AdminUserResponse } from '../../types/api';
 import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
-import { MainStackParamList } from '../../navigation/MainStack';
+import type { AdminStackParamList } from '../../types/navigation';
 
-type NavigationProp = NativeStackNavigationProp<MainStackParamList, 'AdminEventManagers'>;
+type NavigationProp = NativeStackNavigationProp<AdminStackParamList, 'AdminEventManagers'>;
 
 export const AdminEventManagersScreen = () => {
   const navigation = useNavigation<NavigationProp>();

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { MainStackParamList } from '../../navigation/MainStack';
+import type { AdminStackParamList } from '../../types/navigation';
 import { Screen } from '../../components/Screen';
 import { adminApi } from '../../api/adminApi';
 import { AdminWeddingResponse } from '../../types/api';
@@ -10,7 +10,7 @@ import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 import { getWeddingStatusLabel, formatDisplayDate } from '../../utils/displayLabels';
 
-type NavigationProp = NativeStackNavigationProp<MainStackParamList, 'AdminWeddings'>;
+type NavigationProp = NativeStackNavigationProp<AdminStackParamList, 'AdminWeddings'>;
 
 export const AdminWeddingsScreen = () => {
   const navigation = useNavigation<NavigationProp>();
