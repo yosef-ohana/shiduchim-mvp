@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { MainStackParamList } from '../../navigation/MainStack';
+import type { UserShellStackParamList } from '../../types/navigation';
 import { ReportReasonType } from '../../types/api';
 import { reportsApi } from '../../api/reportsApi';
 
-type ReportUserScreenNavigationProp = NativeStackNavigationProp<MainStackParamList, 'ReportUser'>;
-type ReportUserScreenRouteProp = RouteProp<MainStackParamList, 'ReportUser'>;
+type ReportUserScreenNavigationProp = NativeStackNavigationProp<UserShellStackParamList, 'ReportUser'>;
+type ReportUserScreenRouteProp = RouteProp<UserShellStackParamList, 'ReportUser'>;
 
 export const ReportUserScreen = () => {
   const navigation = useNavigation<ReportUserScreenNavigationProp>();

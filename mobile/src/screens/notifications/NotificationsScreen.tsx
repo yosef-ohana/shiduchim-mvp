@@ -18,9 +18,9 @@ import { getOpeningConversationDetails } from '../../api/openingMessagesApi';
 import { getMatchDetails } from '../../api/matchesApi';
 import { NotificationResponse } from '../../types/api';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { MainStackParamList } from '../../navigation/MainStack';
+import type { UserShellStackParamList } from '../../types/navigation';
 
-type NotificationsScreenNavigationProp = NativeStackNavigationProp<MainStackParamList, 'Notifications'>;
+type NotificationsScreenNavigationProp = NativeStackNavigationProp<UserShellStackParamList, 'Notifications'>;
 
 const getStatusLabel = (status: string | null) => {
   if (!status) return 'עודכן';
