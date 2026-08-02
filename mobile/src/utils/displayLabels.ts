@@ -117,11 +117,13 @@ export const getYesNoLabel = (value?: boolean | string | null): string => {
 /**
  * Maps empty/unspecified values to Hebrew placeholder.
  */
-export const getEmptyLabel = (value?: string | null): string => {
-  if (!value || value.trim() === '' || value.toLowerCase() === 'not specified') {
+export const getEmptyLabel = (value?: string | number | null): string => {
+  if (value === undefined || value === null) return 'לא צוין';
+  const str = String(value).trim();
+  if (str === '' || str.toLowerCase() === 'not specified') {
     return 'לא צוין';
   }
-  return value;
+  return typeof value === 'string' ? value : str;
 };
 
 /**
