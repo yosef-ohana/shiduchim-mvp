@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { ScreenContainer } from '../../components/foundation/ScreenContainer';
-import { AppHeader } from '../../components/foundation/AppHeader';
 import { Card } from '../../components/foundation/Card';
 import { Button } from '../../components/foundation/Button';
 import { AppIcon } from '../../components/foundation/AppIcon';
@@ -115,7 +114,7 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
 
   if (isStaffUser) {
     return (
-      <ScreenContainer header={<AppHeader title="בחירת מאגר" />}>
+      <ScreenContainer safeEdges={['bottom', 'left', 'right']}>
         <StateSurface
           kind="denied"
           title="אין הרשאת גישה"
@@ -130,7 +129,7 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
   }
 
   return (
-    <ScreenContainer scroll header={<AppHeader title="בחירת מאגר" />}>
+    <ScreenContainer scroll safeEdges={['bottom', 'left', 'right']}>
       <View style={styles.container}>
         <Text style={[typography.titleLarge, styles.title]}>
           בחירת מאגר

@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import { ScreenContainer } from '../../components/foundation/ScreenContainer';
-import { AppHeader } from '../../components/foundation/AppHeader';
 import { Card } from '../../components/foundation/Card';
 import { Button } from '../../components/foundation/Button';
 import { IconButton } from '../../components/foundation/IconButton';
@@ -229,7 +228,7 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
   // 1. Staff Guard
   if (screenState === 'STAFF_DENIED' || isStaffUser) {
     return (
-      <ScreenContainer header={<AppHeader title="גילוי מועמדים" back onBack={() => navigation.goBack()} />}>
+      <ScreenContainer safeEdges={['bottom', 'left', 'right']}>
         <StateSurface
           kind="denied"
           title="אין הרשאת גישה למאגר"
@@ -246,7 +245,7 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
   // 2. Loading State
   if (loading || screenState === 'LOADING') {
     return (
-      <ScreenContainer header={<AppHeader title="גילוי מועמדים" back onBack={() => navigation.goBack()} />}>
+      <ScreenContainer safeEdges={['bottom', 'left', 'right']}>
         {renderHeader()}
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -261,7 +260,7 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
   // 3. Stale Wedding State (Authoritative typed lifecycle status CLOSED / CANCELLED / DELETED)
   if (screenState === 'STALE_WEDDING') {
     return (
-      <ScreenContainer header={<AppHeader title="גילוי מועמדים" back onBack={() => navigation.goBack()} />}>
+      <ScreenContainer safeEdges={['bottom', 'left', 'right']}>
         {renderHeader()}
         <View style={styles.stateWrapper}>
           <StateSurface
@@ -307,7 +306,7 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
   // 4. Participant Inactive State (Authoritative typed participantStatus === 'REMOVED')
   if (screenState === 'PARTICIPANT_INACTIVE') {
     return (
-      <ScreenContainer header={<AppHeader title="גילוי מועמדים" back onBack={() => navigation.goBack()} />}>
+      <ScreenContainer safeEdges={['bottom', 'left', 'right']}>
         {renderHeader()}
         <View style={styles.stateWrapper}>
           <StateSurface
@@ -333,7 +332,7 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
   // 5. Generic HTTP 403 Access Denied State (NO Profile repair CTA)
   if (screenState === 'ACCESS_DENIED') {
     return (
-      <ScreenContainer header={<AppHeader title="גילוי מועמדים" back onBack={() => navigation.goBack()} />}>
+      <ScreenContainer safeEdges={['bottom', 'left', 'right']}>
         {renderHeader()}
         <View style={styles.stateWrapper}>
           <StateSurface
@@ -363,7 +362,7 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
   // 6. Generic HTTP 404 Context Not Found State (Safe unavailable treatment; no false lifecycle claims)
   if (screenState === 'CONTEXT_NOT_FOUND') {
     return (
-      <ScreenContainer header={<AppHeader title="גילוי מועמדים" back onBack={() => navigation.goBack()} />}>
+      <ScreenContainer safeEdges={['bottom', 'left', 'right']}>
         {renderHeader()}
         <View style={styles.stateWrapper}>
           <StateSurface
@@ -389,7 +388,7 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
   // 7. Transport / Network / 5xx Error State
   if (screenState === 'TRANSPORT_ERROR') {
     return (
-      <ScreenContainer header={<AppHeader title="גילוי מועמדים" back onBack={() => navigation.goBack()} />}>
+      <ScreenContainer safeEdges={['bottom', 'left', 'right']}>
         {renderHeader()}
         <View style={styles.stateWrapper}>
           <StateSurface
@@ -415,7 +414,7 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
   // 8. Empty Candidate Result State (Authoritative HTTP 200 with 0 candidates)
   if (screenState === 'EMPTY' || candidates.length === 0) {
     return (
-      <ScreenContainer header={<AppHeader title="גילוי מועמדים" back onBack={() => navigation.goBack()} />}>
+      <ScreenContainer safeEdges={['bottom', 'left', 'right']}>
         {renderHeader()}
 
         {isPartialError && (
@@ -455,7 +454,7 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
 
   // 9. Loaded Candidate List State (Authoritative HTTP 200 with candidates > 0)
   return (
-    <ScreenContainer header={<AppHeader title="גילוי מועמדים" back onBack={() => navigation.goBack()} />}>
+    <ScreenContainer safeEdges={['bottom', 'left', 'right']}>
       {matchMessage && (
         <View style={styles.matchBanner}>
           <Text style={styles.matchBannerText}>{matchMessage}</Text>

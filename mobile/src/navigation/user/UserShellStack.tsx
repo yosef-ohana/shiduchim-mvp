@@ -57,17 +57,6 @@ export const UserShellStack: React.FC = () => {
             title={options.title || 'שידוכים MVP'}
             back={!!back}
             onBack={back ? () => navigation.goBack() : undefined}
-            trailingActions={
-              route.name === 'UserTabs' ? (
-                <IconButton
-                  icon="notifications"
-                  onPress={() => navigation.navigate('Notifications')}
-                  accessibilityLabel="התראות"
-                  variant="header"
-                  testID="header-notifications-button"
-                />
-              ) : undefined
-            }
           />
         ),
       })}
@@ -75,7 +64,7 @@ export const UserShellStack: React.FC = () => {
       <Stack.Screen
         name="UserTabs"
         component={UserTabs}
-        options={{ title: 'שידוכים MVP' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="CandidateProfile"
