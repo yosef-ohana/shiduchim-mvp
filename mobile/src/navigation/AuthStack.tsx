@@ -9,19 +9,28 @@ import { WeddingCodeEntryScreen } from '../screens/weddings/WeddingCodeEntryScre
 import { theme } from '../theme/theme';
 import { AuthStackParamList } from '../types/navigation';
 
+import { AppHeader } from '../components/foundation/AppHeader';
+
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export const AuthStack = () => {
   return (
     <Stack.Navigator
-      screenOptions={{
+      screenOptions={({ route, navigation }) => ({
         headerStyle: { backgroundColor: theme.colors.background },
         headerTintColor: theme.colors.primary,
         headerTitleStyle: { fontWeight: 'bold' },
-      }}
+        header: ({ options, back }) => (
+          <AppHeader
+            title={options.title || route.name}
+            back={Boolean(back)}
+            onBack={navigation.goBack}
+          />
+        ),
+      })}
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'התחברות' }} />
+      <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'הרשמה' }} />
       <Stack.Screen name="StaffLoginChoice" component={StaffLoginChoiceScreen} options={{ title: 'פורטל צוות' }} />
       <Stack.Screen name="StaffLogin" component={StaffLoginScreen} options={{ title: 'התחברות צוות' }} />

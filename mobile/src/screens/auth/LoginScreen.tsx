@@ -189,11 +189,6 @@ export const LoginScreen = ({ route, navigation }: any) => {
           title="שידוכים"
           back
           onBack={handleContinueToSystem}
-          trailingActions={
-            <TouchableOpacity style={styles.headerBellButton} accessibilityLabel="התראות">
-              <AppIcon name="bell" size={20} color={colors.accentBorder} />
-            </TouchableOpacity>
-          }
         />
 
         <ScreenContainer scroll containerStyle={styles.containerStyle} contentStyle={styles.contentStyle}>
@@ -443,16 +438,6 @@ const styles = StyleSheet.create({
   contentStyle: {
     paddingVertical: spacing.lg,
     gap: spacing.lg,
-  },
-  headerBellButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#1E1B18',
-    borderWidth: 1,
-    borderColor: '#3D352E',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 
   // Titles

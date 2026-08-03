@@ -57,7 +57,6 @@ export const BottomNavigation: React.FC = () => {
           height: tabBarHeight,
           paddingBottom: bottomInset,
           paddingTop: spacing.xs,
-          flexDirection: 'row-reverse', // Ensures strict RTL visual order: Discover (Right) -> Me (Left)
         },
         tabBarItemStyle: {
           minHeight: sizing.minTouchTarget,
