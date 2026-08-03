@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Screen } from '../../components/Screen';
+import { ScreenContainer } from '../../components/foundation/ScreenContainer';
 import { AppButton } from '../../components/AppButton';
 import { theme } from '../../theme/theme';
 import { getConversations } from '../../api/chatsApi';
@@ -9,6 +9,7 @@ import { ConversationResponse } from '../../types/api';
 import { getImageUrl } from '../../utils/imageUrl';
 import { getPoolTypeLabel } from '../../utils/displayLabels';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+
 
 const formatLastMessageTime = (isoString?: string | null) => {
   if (!isoString) return '';
@@ -155,31 +156,24 @@ export const ChatsScreen = ({ navigation }: any) => {
 
   if (loading) {
     return (
-      <Screen style={styles.centerContainer}>
+      <ScreenContainer safeEdges={['bottom', 'left', 'right']} containerStyle={styles.centerContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text style={styles.loadingText}>טוען שיחות...</Text>
-      </Screen>
+      </ScreenContainer>
     );
   }
 
   if (error) {
     return (
-      <Screen style={styles.centerContainer}>
+      <ScreenContainer safeEdges={['bottom', 'left', 'right']} containerStyle={styles.centerContainer}>
         <Text style={styles.errorText}>{error}</Text>
         <AppButton title="נסה שוב" onPress={() => fetchChats()} style={styles.retryButton} />
-      </Screen>
+      </ScreenContainer>
     );
   }
 
   return (
-    <Screen>
-      <View style={styles.header}>
-        <Text style={styles.title}>שיחות</Text>
-        <TouchableOpacity onPress={() => fetchChats()} style={styles.refreshIconContainer}>
-          <Text style={styles.refreshIconText}>🔄 רענון</Text>
-        </TouchableOpacity>
-      </View>
-
+    <ScreenContainer safeEdges={['bottom', 'left', 'right']}>
       <FlatList
         data={chats}
         keyExtractor={(item) => item.matchId.toString()}
@@ -196,7 +190,7 @@ export const ChatsScreen = ({ navigation }: any) => {
           </View>
         }
       />
-    </Screen>
+    </ScreenContainer>
   );
 };
 

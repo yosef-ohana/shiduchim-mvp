@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { ScreenContainer } from '../../components/foundation/ScreenContainer';
 import { StateSurface } from '../../components/foundation/StateSurface';
 import { AppIcon } from '../../components/foundation/AppIcon';
+import { IconButton } from '../../components/foundation/IconButton';
 import { AppButton } from '../../components/AppButton';
 import { AppInput } from '../../components/AppInput';
 import { colors, spacing, radii, sizing } from '../../theme/tokens';
@@ -21,9 +22,15 @@ import { ChatMessageResponse, MatchDetailsResponse } from '../../types/api';
 import { ChatMessageBubble } from '../../components/ChatMessageBubble';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 import { getImageUrl } from '../../utils/imageUrl';
+import { getPoolTypeLabel } from '../../utils/displayLabels';
 
 export const ChatScreen = ({ route, navigation }: any) => {
   const { matchId } = route.params || {};
+
+  useLayoutEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
+
   const [messages, setMessages] = useState<ChatMessageResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -197,44 +204,61 @@ export const ChatScreen = ({ route, navigation }: any) => {
 
   return (
     <ScreenContainer keyboardAware containerStyle={styles.screenContainer}>
-      {/* Header identity bar */}
+      {/* Contextual Conversation Header */}
       <View style={styles.header}>
-        {otherUser ? (
-          <TouchableOpacity
-            onPress={() => {
-              if (otherUser.userId && matchDetails) {
-                navigation.navigate('CandidateProfile', {
-                  userId: otherUser.userId,
-                  sourceType: 'MATCH',
-                  sourceId: matchDetails.matchId,
-                  poolType: matchDetails.poolType,
-                  weddingId: matchDetails.weddingId ?? undefined,
-                });
-              }
-            }}
-            style={styles.headerProfileContainer}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel={`פרופיל של ${otherUser.fullName}`}
-          >
-            {avatarUrl ? (
-              <Image source={{ uri: avatarUrl }} style={styles.headerAvatar} />
-            ) : (
-              <View style={styles.headerPlaceholderAvatar}>
-                <Text style={styles.headerPlaceholderText}>
-                  {otherUser.fullName ? otherUser.fullName[0] : 'פ'}
+        <View style={styles.headerRightGroup}>
+          <IconButton
+            icon="arrow-left"
+            onPress={() => navigation.goBack()}
+            accessibilityLabel="חזרה"
+            variant="header"
+            testID="chat-back-button"
+          />
+          {otherUser ? (
+            <TouchableOpacity
+              onPress={() => {
+                if (otherUser.userId && matchDetails) {
+                  navigation.navigate('CandidateProfile', {
+                    userId: otherUser.userId,
+                    sourceType: 'MATCH',
+                    sourceId: matchDetails.matchId,
+                    poolType: matchDetails.poolType,
+                    weddingId: matchDetails.weddingId ?? undefined,
+                  });
+                }
+              }}
+              style={styles.headerProfileContainer}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`פרופיל של ${otherUser.fullName}`}
+            >
+              {avatarUrl ? (
+                <Image source={{ uri: avatarUrl }} style={styles.headerAvatar} />
+              ) : (
+                <View style={styles.headerPlaceholderAvatar}>
+                  <Text style={styles.headerPlaceholderText}>
+                    {otherUser.fullName ? otherUser.fullName[0] : 'פ'}
+                  </Text>
+                </View>
+              )}
+              <View style={styles.headerTextContainer}>
+                <Text style={styles.headerName} numberOfLines={1}>
+                  {otherUser.fullName}
                 </Text>
+                {matchDetails && (
+                  <Text style={styles.headerStatusText} numberOfLines={1}>
+                    {getPoolTypeLabel(matchDetails.poolType)}
+                  </Text>
+                )}
               </View>
-            )}
-            <Text style={styles.headerName} numberOfLines={1}>
-              {otherUser.fullName}
-            </Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.headerProfileContainer}>
-            <Text style={styles.headerName}>צ׳אט</Text>
-          </View>
-        )}
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.headerProfileContainer}>
+              <Text style={styles.headerName}>צ׳אט</Text>
+            </View>
+          )}
+        </View>
+
         <TouchableOpacity
           onPress={() => fetchMessages(false)}
           style={styles.refreshButton}
@@ -324,7 +348,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   header: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
@@ -334,10 +358,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minHeight: sizing.headerHeight,
   },
+  headerRightGroup: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    flex: 1,
+  },
   headerProfileContainer: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
     minHeight: sizing.minTouchTarget,
+    marginRight: spacing.xs,
+    flex: 1,
   },
   headerAvatar: {
     width: 36,
@@ -357,10 +388,20 @@ const styles = StyleSheet.create({
     ...typography.captionBold,
     color: colors.textSecondary,
   },
+  headerTextContainer: {
+    marginRight: spacing.xs,
+    justifyContent: 'center',
+    flex: 1,
+  },
   headerName: {
     ...typography.titleSmall,
     color: colors.textPrimary,
-    marginRight: spacing.sm,
+    textAlign: 'right',
+  },
+  headerStatusText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    textAlign: 'right',
   },
   refreshButton: {
     flexDirection: 'row-reverse',
