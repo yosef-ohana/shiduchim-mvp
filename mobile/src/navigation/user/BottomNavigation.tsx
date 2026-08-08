@@ -1,7 +1,8 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
+import { getFocusedRouteNameFromRoute, StackActions } from '@react-navigation/native';
+import { StyleSheet, Pressable, Text } from 'react-native';
 import { UserTabsParamList } from '../../types/navigation';
 import { UserDiscoverStack } from './UserDiscoverStack';
 import { UserConnectionsStack } from './UserConnectionsStack';
@@ -9,17 +10,16 @@ import { UserChatsStack } from './UserChatsStack';
 import { UserWeddingsStack } from './UserWeddingsStack';
 import { UserMeStack } from './UserMeStack';
 import { AppIcon } from '../../components/foundation/AppIcon';
-import { colors, spacing, sizing } from '../../theme/tokens';
-import { typography } from '../../theme/typography';
+import { navigation as navTokens, visual, gold, spacing, sizing, radii, borderWidths } from '../../theme/tokens';
+import { typography, FONT_KEYS } from '../../theme/typography';
 
 const Tab = createBottomTabNavigator<UserTabsParamList>();
 
-// Routes where the bottom tab bar MUST be visible
+// Legal USER root-experience surfaces where bottom navigation is visible
 const TAB_BAR_VISIBLE_ROUTES = new Set([
   'PoolSelection',
   'Discover',
   'ConnectionsHub',
-  'Lists',
   'Chats',
   'MyWeddings',
   'Me',
@@ -41,23 +41,26 @@ export const getTabBarVisibility = (route: any): boolean => {
 export const BottomNavigation: React.FC = () => {
   const insets = useSafeAreaInsets();
   const bottomInset = Math.max(insets.bottom, spacing.xs);
-  const tabBarHeight = sizing.headerHeight + bottomInset;
+  const tabBarMinHeight = sizing.headerHeight + bottomInset;
 
   return (
     <Tab.Navigator
       initialRouteName="DiscoverRoot"
+      backBehavior="history"
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopWidth: 1,
-          borderTopColor: colors.borderSubtle,
-          height: tabBarHeight,
-          paddingBottom: bottomInset,
-          paddingTop: spacing.xs,
-        },
+        tabBarActiveTintColor: navTokens.active.onDark,
+        tabBarInactiveTintColor: navTokens.inactive.onDark,
+        tabBarStyle: getTabBarVisibility(route)
+          ? {
+              backgroundColor: navTokens.surface.dark,
+              borderTopWidth: borderWidths.thin,
+              borderTopColor: visual.surface.darkRaised,
+              minHeight: tabBarMinHeight,
+              paddingBottom: bottomInset,
+              paddingTop: spacing.xs,
+            }
+          : { display: 'none' },
         tabBarItemStyle: {
           minHeight: sizing.minTouchTarget,
           minWidth: sizing.minTouchTarget,
@@ -65,9 +68,25 @@ export const BottomNavigation: React.FC = () => {
           alignItems: 'center',
         },
         tabBarLabelStyle: {
-          ...typography.caption,
           fontSize: 12,
           marginTop: 2,
+        },
+        tabBarButton: (props) => {
+          const { accessibilityState, style, children, ...rest } = props;
+          const focused = accessibilityState?.selected ?? false;
+          return (
+            <Pressable
+              {...rest}
+              accessibilityState={accessibilityState}
+              style={[
+                style,
+                styles.tabItem,
+                focused ? styles.tabItemSelected : styles.tabItemUnselected,
+              ]}
+            >
+              {children}
+            </Pressable>
+          );
         },
       })}
     >
@@ -82,118 +101,198 @@ export const BottomNavigation: React.FC = () => {
       <Tab.Screen
         name="DiscoverRoot"
         component={UserDiscoverStack}
-        options={({ route }) => ({
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            if (navigation.isFocused()) {
+              navigation.dispatch(StackActions.popToTop());
+            }
+          },
+        })}
+        options={{
           title: 'גילוי',
-          tabBarLabel: 'גילוי',
+          tabBarLabel: ({ focused, color }) => (
+            <Text
+              style={[
+                typography.caption,
+                {
+                  color,
+                  fontFamily: focused ? FONT_KEYS.bold : FONT_KEYS.regular,
+                  fontWeight: focused ? '700' : '400',
+                  fontSize: 12,
+                  marginTop: 2,
+                },
+              ]}
+            >
+              גילוי
+            </Text>
+          ),
           tabBarAccessibilityLabel: 'גילוי',
           tabBarIcon: ({ color, size }) => (
             <AppIcon name="navDiscover" size={size || 24} color={color} />
           ),
-          tabBarStyle: getTabBarVisibility(route)
-            ? {
-                backgroundColor: colors.surface,
-                borderTopWidth: 1,
-                borderTopColor: colors.borderSubtle,
-                height: tabBarHeight,
-                paddingBottom: bottomInset,
-                paddingTop: spacing.xs,
-                flexDirection: 'row-reverse',
-              }
-            : { display: 'none' },
-        })}
+        }}
       />
       <Tab.Screen
         name="ConnectionsRoot"
         component={UserConnectionsStack}
-        options={({ route }) => ({
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            if (navigation.isFocused()) {
+              navigation.dispatch(StackActions.popToTop());
+            }
+          },
+        })}
+        options={{
           title: 'קשרים',
-          tabBarLabel: 'קשרים',
+          tabBarLabel: ({ focused, color }) => (
+            <Text
+              style={[
+                typography.caption,
+                {
+                  color,
+                  fontFamily: focused ? FONT_KEYS.bold : FONT_KEYS.regular,
+                  fontWeight: focused ? '700' : '400',
+                  fontSize: 12,
+                  marginTop: 2,
+                },
+              ]}
+            >
+              קשרים
+            </Text>
+          ),
           tabBarAccessibilityLabel: 'קשרים',
           tabBarIcon: ({ color, size }) => (
             <AppIcon name="navConnections" size={size || 24} color={color} />
           ),
-          tabBarStyle: getTabBarVisibility(route)
-            ? {
-                backgroundColor: colors.surface,
-                borderTopWidth: 1,
-                borderTopColor: colors.borderSubtle,
-                height: tabBarHeight,
-                paddingBottom: bottomInset,
-                paddingTop: spacing.xs,
-                flexDirection: 'row-reverse',
-              }
-            : { display: 'none' },
-        })}
+        }}
       />
       <Tab.Screen
         name="ChatsRoot"
         component={UserChatsStack}
-        options={({ route }) => ({
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            if (navigation.isFocused()) {
+              navigation.dispatch(StackActions.popToTop());
+            }
+          },
+        })}
+        options={{
           title: 'צ׳אטים',
-          tabBarLabel: 'צ׳אטים',
+          tabBarLabel: ({ focused, color }) => (
+            <Text
+              style={[
+                typography.caption,
+                {
+                  color,
+                  fontFamily: focused ? FONT_KEYS.bold : FONT_KEYS.regular,
+                  fontWeight: focused ? '700' : '400',
+                  fontSize: 12,
+                  marginTop: 2,
+                },
+              ]}
+            >
+              צ׳אטים
+            </Text>
+          ),
           tabBarAccessibilityLabel: 'צ׳אטים',
           tabBarIcon: ({ color, size }) => (
             <AppIcon name="navChats" size={size || 24} color={color} />
           ),
-          tabBarStyle: getTabBarVisibility(route)
-            ? {
-                backgroundColor: colors.surface,
-                borderTopWidth: 1,
-                borderTopColor: colors.borderSubtle,
-                height: tabBarHeight,
-                paddingBottom: bottomInset,
-                paddingTop: spacing.xs,
-                flexDirection: 'row-reverse',
-              }
-            : { display: 'none' },
-        })}
+        }}
       />
       <Tab.Screen
         name="WeddingsRoot"
         component={UserWeddingsStack}
-        options={({ route }) => ({
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            if (navigation.isFocused()) {
+              navigation.dispatch(StackActions.popToTop());
+            }
+          },
+        })}
+        options={{
           title: 'חתונות',
-          tabBarLabel: 'חתונות',
+          tabBarLabel: ({ focused, color }) => (
+            <Text
+              style={[
+                typography.caption,
+                {
+                  color,
+                  fontFamily: focused ? FONT_KEYS.bold : FONT_KEYS.regular,
+                  fontWeight: focused ? '700' : '400',
+                  fontSize: 12,
+                  marginTop: 2,
+                },
+              ]}
+            >
+              חתונות
+            </Text>
+          ),
           tabBarAccessibilityLabel: 'חתונות',
           tabBarIcon: ({ color, size }) => (
             <AppIcon name="navWeddings" size={size || 24} color={color} />
           ),
-          tabBarStyle: getTabBarVisibility(route)
-            ? {
-                backgroundColor: colors.surface,
-                borderTopWidth: 1,
-                borderTopColor: colors.borderSubtle,
-                height: tabBarHeight,
-                paddingBottom: bottomInset,
-                paddingTop: spacing.xs,
-                flexDirection: 'row-reverse',
-              }
-            : { display: 'none' },
-        })}
+        }}
       />
       <Tab.Screen
         name="MeRoot"
         component={UserMeStack}
-        options={({ route }) => ({
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            if (navigation.isFocused()) {
+              navigation.dispatch(StackActions.popToTop());
+            }
+          },
+        })}
+        options={{
           title: 'אני',
-          tabBarLabel: 'אני',
+          tabBarLabel: ({ focused, color }) => (
+            <Text
+              style={[
+                typography.caption,
+                {
+                  color,
+                  fontFamily: focused ? FONT_KEYS.bold : FONT_KEYS.regular,
+                  fontWeight: focused ? '700' : '400',
+                  fontSize: 12,
+                  marginTop: 2,
+                },
+              ]}
+            >
+              אני
+            </Text>
+          ),
           tabBarAccessibilityLabel: 'אני',
           tabBarIcon: ({ color, size }) => (
             <AppIcon name="navMe" size={size || 24} color={color} />
           ),
-          tabBarStyle: getTabBarVisibility(route)
-            ? {
-                backgroundColor: colors.surface,
-                borderTopWidth: 1,
-                borderTopColor: colors.borderSubtle,
-                height: tabBarHeight,
-                paddingBottom: bottomInset,
-                paddingTop: spacing.xs,
-                flexDirection: 'row-reverse',
-              }
-            : { display: 'none' },
-        })}
+        }}
       />
     </Tab.Navigator>
   );
 };
+
+const styles = StyleSheet.create({
+  tabItem: {
+    flex: 1,
+    minHeight: sizing.minTouchTarget,
+    minWidth: sizing.minTouchTarget,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: spacing.xxs,
+    marginVertical: spacing.xxs,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
+  },
+  tabItemSelected: {
+    backgroundColor: visual.surface.darkRaised,
+    borderWidth: borderWidths.thin,
+    borderColor: gold.border.restrained,
+  },
+  tabItemUnselected: {
+    backgroundColor: 'transparent',
+    borderWidth: borderWidths.thin,
+    borderColor: 'transparent',
+  },
+});

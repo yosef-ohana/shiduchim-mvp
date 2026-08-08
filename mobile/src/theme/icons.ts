@@ -37,7 +37,7 @@ export const ICON_REGISTRY = {
   'star': { glyph: 'star', isDirectional: false },
 
   // N2 Navigation Icons (Non-directional)
-  'navDiscover': { glyph: 'compass-outline', isDirectional: false },
+  'navDiscover': { glyph: 'magnify', isDirectional: false },
   'navConnections': { glyph: 'account-multiple-outline', isDirectional: false },
   'navChats': { glyph: 'chat-outline', isDirectional: false },
   'navWeddings': { glyph: 'ring', isDirectional: false },
