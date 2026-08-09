@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, BackHandler } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { AppInput } from '../../components/AppInput';
 import { AppButton } from '../../components/AppButton';
@@ -212,23 +212,37 @@ export const WeddingJoinLandingScreen = () => {
     }
   };
 
-  const handleGoBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else if (user?.role === 'USER') {
-      navigation.navigate('Me');
+  const handleGoBack = useCallback(() => {
+    if (user?.role === 'USER') {
+      navigation.navigate('UserTabs', {
+        screen: 'WeddingsRoot',
+        params: { screen: 'MyWeddings' },
+      });
     } else if (user?.role === 'ADMIN') {
       navigation.navigate('AdminHome');
     } else if (user?.role === 'EVENT_MANAGER') {
       navigation.navigate('EventManagerWeddings');
+    } else if (navigation.canGoBack()) {
+      navigation.goBack();
     } else {
       navigation.navigate('Welcome');
     }
-  };
+  }, [user?.role, navigation]);
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleGoBack();
+      return true;
+    });
+    return () => subscription.remove();
+  }, [handleGoBack]);
 
   const handleContinueToSystem = () => {
     if (user?.role === 'USER') {
-      navigation.navigate('Me');
+      navigation.navigate('UserTabs', {
+        screen: 'WeddingsRoot',
+        params: { screen: 'MyWeddings' },
+      });
     } else {
       handleGoBack();
     }

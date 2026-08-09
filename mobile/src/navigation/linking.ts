@@ -10,15 +10,7 @@ export const getLinkingConfig = (user: MeResponse | null): LinkingOptions<ReactN
       screens: user
         ? (isUserRole
             ? {
-                UserTabs: {
-                  screens: {
-                    WeddingsRoot: {
-                      screens: {
-                        JoinWedding: 'join-wedding/:accessCode',
-                      },
-                    },
-                  },
-                },
+                JoinWedding: 'join-wedding/:accessCode',
               }
             : {})
         : { WeddingCodeEntry: 'join-wedding/:accessCode' },

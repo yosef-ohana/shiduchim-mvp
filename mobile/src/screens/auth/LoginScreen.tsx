@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ScreenContainer } from '../../components/foundation/ScreenContainer';
 import { AppHeader } from '../../components/foundation/AppHeader';
@@ -8,9 +8,6 @@ import { Button } from '../../components/foundation/Button';
 import { AppIcon } from '../../components/foundation/AppIcon';
 import { BidiText } from '../../components/foundation/BidiText';
 import { useAuth } from '../../context/AuthContext';
-import { loginUser, getMe } from '../../api/authApi';
-import { saveAccessToken, clearAccessToken } from '../../storage/authStorage';
-import { joinWedding } from '../../api/weddingsApi';
 import { colors, spacing, radii } from '../../theme/tokens';
 import { typography } from '../../theme/typography';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
@@ -25,14 +22,7 @@ export const LoginScreen = ({ route, navigation }: any) => {
   const [formError, setFormError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Partial success result state (Frame S6-A01-F03)
-  const [partialSuccess, setPartialSuccess] = useState<{
-    pendingCode: string;
-    errorDetails?: string;
-  } | null>(null);
-
-  const isPromotingRef = useRef(false);
-  const { refreshMe } = useAuth();
+  const { login } = useAuth();
 
   const validateEmailFormat = (val: string): boolean => {
     if (!val) return false;
@@ -52,37 +42,6 @@ export const LoginScreen = ({ route, navigation }: any) => {
       }
     }
   };
-
-  // Shared session-promotion function for Continue, Header Back, and beforeRemove
-  const handleContinueToSystem = useCallback(async () => {
-    if (isPromotingRef.current) return;
-    isPromotingRef.current = true;
-    setIsLoading(true);
-    try {
-      await refreshMe();
-    } catch (err: any) {
-      isPromotingRef.current = false;
-      setIsLoading(false);
-      setFormError(
-        getFriendlyErrorMessage(err, 'לא ניתן להתחבר למערכת כרגע. אנא נסה שוב.')
-      );
-    }
-  }, [refreshMe]);
-
-  // Install React Navigation beforeRemove listener while partialSuccess is active
-  useEffect(() => {
-    if (!partialSuccess) return;
-
-    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
-      if (isPromotingRef.current) {
-        return;
-      }
-      e.preventDefault();
-      handleContinueToSystem();
-    });
-
-    return unsubscribe;
-  }, [navigation, partialSuccess, handleContinueToSystem]);
 
   const handleLogin = async () => {
     setFormError('');
@@ -107,46 +66,7 @@ export const LoginScreen = ({ route, navigation }: any) => {
     setIsLoading(true);
 
     try {
-      // Step A: Credential Authentication (ONCE)
-      const authResponse = await loginUser({ email: email.trim(), password });
-      await saveAccessToken(authResponse.accessToken);
-
-      // Step B: Role Verification
-      const me = await getMe();
-
-      if (me.role !== 'USER') {
-        // Non-USER account entered in AUTH-02: Purge token immediately and reject safely
-        await clearAccessToken();
-        if (me.role === 'ADMIN' || me.role === 'EVENT_MANAGER') {
-          setFormError('חשבון מנהל/צוות אינו יכול להתחבר דרך מסך זה. אנא השתמש במסך כניסת צוות וניהול.');
-        } else {
-          setFormError('סוג חשבון לא נתמך. אנא פנה לתמיכה.');
-        }
-        setIsLoading(false);
-        return;
-      }
-
-      // Step C & D: USER Role Execution
-      if (pendingWeddingCode) {
-        // Attempt Wedding Join ONCE for authenticated USER
-        try {
-          await joinWedding({ accessCode: pendingWeddingCode });
-          // Join succeeded: promote session ONCE via refreshMe
-          await handleContinueToSystem();
-        } catch (weddingErr: any) {
-          // Join failed: token is preserved in SecureStore, show partial success S6-A01-F03
-          setPartialSuccess({
-            pendingCode: pendingWeddingCode,
-            errorDetails: getFriendlyErrorMessage(
-              weddingErr,
-              'אירעה תקלה בעת ניסיון ההצטרפות. הקוד שנמסר נשמר וניתן לנסות שוב.'
-            ),
-          });
-        }
-      } else {
-        // USER without pending wedding code: promote session ONCE via refreshMe
-        await handleContinueToSystem();
-      }
+      await login({ email: email.trim(), password }, pendingWeddingCode);
     } catch (err: any) {
       setFormError(getFriendlyErrorMessage(err, 'לא ניתן להתחבר כרגע. נסה שוב.'));
     } finally {
@@ -154,158 +74,6 @@ export const LoginScreen = ({ route, navigation }: any) => {
     }
   };
 
-  // Retry Join Action: Call joinWedding ONCE for USER role, zero re-authentications
-  const handleRetryJoin = async () => {
-    if (!partialSuccess?.pendingCode || isPromotingRef.current) return;
-    setIsLoading(true);
-    setFormError('');
-    try {
-      await joinWedding({ accessCode: partialSuccess.pendingCode });
-      // Join succeeded on retry: promote session to USER shell
-      await handleContinueToSystem();
-    } catch (err: any) {
-      setFormError(
-        getFriendlyErrorMessage(err, 'ניסיון נוסף נכשל. הקוד נשמר וניתן לנסות שוב מאוחר יותר.')
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Edit Code Action: Navigates to WeddingCodeEntry
-  const handleEditCode = () => {
-    navigation.navigate('WeddingCodeEntry', {
-      accessCode: partialSuccess?.pendingCode || pendingWeddingCode,
-    });
-  };
-
-  // ==========================================
-  // RENDER STATE 2: Partial Success (S6-A01-F03)
-  // ==========================================
-  if (partialSuccess) {
-    return (
-      <View style={styles.darkCanvas}>
-        <AppHeader
-          title="שידוכים"
-          back
-          onBack={handleContinueToSystem}
-        />
-
-        <ScreenContainer scroll containerStyle={styles.containerStyle} contentStyle={styles.contentStyle}>
-          <Text style={[typography.display, styles.pageTitleText]} accessibilityRole="header">
-            עדכון מצב
-          </Text>
-
-          {/* Card 1: Auth Success Surface */}
-          <Card style={styles.resultCard}>
-            <View style={styles.resultCardRow}>
-              <View style={styles.resultTextCol}>
-                <Text style={[typography.titleLarge, styles.resultSuccessTitle]}>
-                  התחברת בהצלחה
-                </Text>
-                <Text style={[typography.bodyMedium, styles.resultBodyText]}>
-                  כניסתך למערכת בוצעה בהצלחה.{'\n'}אתה מחובר למערכת.
-                </Text>
-              </View>
-              <View style={styles.successIconBadge}>
-                <AppIcon name="check" size={28} color={colors.statusSuccess} />
-              </View>
-            </View>
-          </Card>
-
-          {/* Card 2: Wedding Join Failure Surface */}
-          <Card style={styles.resultCard}>
-            <View style={styles.incompleteBadgeRow}>
-              <View style={styles.incompleteBadge}>
-                <AppIcon name="alert-circle" size={14} color={colors.statusError} />
-                <Text style={styles.incompleteBadgeText}>לא הושלם</Text>
-              </View>
-            </View>
-
-            <View style={styles.resultCardRow}>
-              <View style={styles.resultTextCol}>
-                <Text style={[typography.titleMedium, styles.resultFailureTitle]}>
-                  ההצטרפות לחתונת{'\n'}משפחות אבוחצירא-בן-דוד{'\n'}לא הושלמה
-                </Text>
-                <Text style={[typography.bodyMedium, styles.resultBodyText]}>
-                  אירעה תקלה בעת ניסיון ההצטרפות.{'\n'}הקוד שנמסר נשמר וניתן לנסות שוב.
-                </Text>
-              </View>
-              <View style={styles.failureIconBadge}>
-                <AppIcon name="x" size={28} color={colors.statusError} />
-              </View>
-            </View>
-
-            <View style={styles.cardDivider}>
-              <View style={styles.cardDividerLine} />
-              <AppIcon name="star" size={12} color={colors.accentBorder} />
-              <View style={styles.cardDividerLine} />
-            </View>
-
-            <View style={styles.retainedCodeSection}>
-              <View style={styles.retainedCodeLabelRow}>
-                <AppIcon name="shield" size={16} color={colors.accent} />
-                <Text style={styles.retainedCodeLabelText}>קוד החתונה נשמר</Text>
-              </View>
-
-              <View style={styles.codeDashedPill}>
-                <AppIcon name="link" size={18} color={colors.accent} />
-                <BidiText value={partialSuccess.pendingCode} kind="code" style={styles.retainedCodeValueText} />
-              </View>
-
-              <Text style={styles.retainedCodeHelperText}>
-                ניתן להשתמש בקוד זה לניסיון הצטרפות חוזר{'\n'}או להעבירו אליך אחר.
-              </Text>
-            </View>
-          </Card>
-
-          {formError ? <Text style={styles.errorBannerText}>{formError}</Text> : null}
-
-          {/* Action Stack */}
-          <View style={styles.resultActionsStack}>
-            <Button
-              label="ניסיון נוסף"
-              onPress={handleRetryJoin}
-              loading={isLoading}
-              variant="primary"
-              iconStart="chevron-left"
-              fullWidth
-              style={styles.retryButton}
-              labelStyle={styles.retryButtonText}
-              testID="result-retry-button"
-            />
-
-            <Button
-              label="עריכת הקוד"
-              onPress={handleEditCode}
-              variant="secondary"
-              iconEnd="edit"
-              fullWidth
-              style={styles.outlineDarkButton}
-              labelStyle={styles.outlineDarkButtonText}
-              testID="result-edit-code-button"
-            />
-
-            <Button
-              label="המשך למערכת"
-              onPress={handleContinueToSystem}
-              loading={isLoading}
-              variant="secondary"
-              iconEnd="calendar"
-              fullWidth
-              style={styles.outlineDarkButton}
-              labelStyle={styles.outlineDarkButtonText}
-              testID="result-continue-button"
-            />
-          </View>
-        </ScreenContainer>
-      </View>
-    );
-  }
-
-  // ==========================================
-  // RENDER STATE 1: Standard Login Form (S6-A01-F02)
-  // ==========================================
   return (
     <View style={styles.darkCanvas}>
       <AppHeader

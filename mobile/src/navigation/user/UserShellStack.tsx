@@ -31,22 +31,23 @@ export const UserShellStack: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<UserShellStackParamList>>();
 
   useEffect(() => {
-    if (justRegistered && user?.role === 'USER') {
-      consumeJustRegistered();
-      // Post-registration Profile intent for newly registered USER
-      navigation.navigate('Profile');
-    }
-  }, [justRegistered, user, consumeJustRegistered, navigation]);
-
-  useEffect(() => {
     if (user?.role === 'USER') {
       const pendingCode = claimPendingWeddingCode();
       if (pendingCode) {
-        // Authenticated USER wedding deep-link / accessCode intent
-        navigation.navigate('JoinWedding', { accessCode: pendingCode });
+        if (justRegistered) {
+          consumeJustRegistered();
+        }
+        navigation.navigate('JoinWedding', { accessCode: pendingCode, source: 'deepLink' });
+        return;
+      }
+
+      if (justRegistered) {
+        consumeJustRegistered();
+        navigation.navigate('Profile');
+        return;
       }
     }
-  }, [user, claimPendingWeddingCode, navigation]);
+  }, [user, justRegistered, consumeJustRegistered, claimPendingWeddingCode, navigation]);
 
   return (
     <Stack.Navigator
@@ -56,7 +57,13 @@ export const UserShellStack: React.FC = () => {
           <AppHeader
             title={options.title || 'שידוכים MVP'}
             back={!!back}
-            onBack={back ? () => navigation.goBack() : undefined}
+            onBack={back ? () => {
+              if (route.name === 'JoinWedding' && user?.role === 'USER') {
+                navigation.navigate('UserTabs', { screen: 'WeddingsRoot' });
+              } else {
+                navigation.goBack();
+              }
+            } : undefined}
           />
         ),
       })}
