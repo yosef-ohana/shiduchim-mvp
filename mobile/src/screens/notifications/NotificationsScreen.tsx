@@ -13,7 +13,6 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { theme } from '../../theme/theme';
 import { notificationsApi } from '../../api/notificationsApi';
-import { getPublicProfile } from '../../api/profileApi';
 import { getOpeningConversationDetails } from '../../api/openingMessagesApi';
 import { getMatchDetails } from '../../api/matchesApi';
 import { NotificationResponse } from '../../types/api';
@@ -157,16 +156,17 @@ export const NotificationsScreen = () => {
         Alert.alert('שגיאה', 'פרופיל המשתמש אינו זמין.');
         return;
       }
-      try {
-        await getPublicProfile(actorUserId);
-        navigation.navigate('CandidateProfile', {
-          userId: actorUserId,
-          sourceType: 'NOTIFICATION',
-          sourceId: notification.id,
-        });
-      } catch (err) {
-        Alert.alert('שגיאה', 'פרופיל המשתמש אינו נגיש או שנחסם.');
-      }
+      navigation.navigate('CandidateProfile', {
+        userId: actorUserId,
+        sourceType: 'NOTIFICATION',
+        sourceId: notification.id,
+        returnIntent: {
+          kind: 'NOTIFICATIONS',
+          role: 'USER',
+          sourceRoute: 'Notifications',
+          notificationId: notification.id,
+        },
+      });
     } else if (type === 'OPENING_RECEIVED') {
       try {
         await getOpeningConversationDetails(referenceId);
@@ -195,20 +195,17 @@ export const NotificationsScreen = () => {
     setActionInProgress(true);
 
     try {
-      let updatedNotification = notification;
-
       if (!notification.readAt) {
-        try {
-          updatedNotification = await notificationsApi.markNotificationRead(notification.id);
-          setNotifications(prev => prev.map(item => item.id === notification.id ? updatedNotification : item));
-        } catch (err) {
-          Alert.alert('שגיאה', 'לא ניתן לסמן את ההתראה כנקראת');
-          setActionInProgress(false);
-          return;
-        }
+        notificationsApi.markNotificationRead(notification.id)
+          .then(updated => {
+            setNotifications(prev => prev.map(item => item.id === notification.id ? updated : item));
+          })
+          .catch(() => {
+            // Mark read failure is silently contained; navigation is not blocked
+          });
       }
 
-      await performNavigation(updatedNotification);
+      await performNavigation(notification);
     } finally {
       setActionInProgress(false);
     }
@@ -219,34 +216,32 @@ export const NotificationsScreen = () => {
     setActionInProgress(true);
 
     try {
-      let updatedNotification = notification;
-
       if (!notification.readAt) {
-        try {
-          updatedNotification = await notificationsApi.markNotificationRead(notification.id);
-          setNotifications(prev => prev.map(item => item.id === notification.id ? updatedNotification : item));
-        } catch (err) {
-          Alert.alert('שגיאה', 'לא ניתן לסמן את ההתראה כנקראת');
-          setActionInProgress(false);
-          return;
-        }
+        notificationsApi.markNotificationRead(notification.id)
+          .then(updated => {
+            setNotifications(prev => prev.map(item => item.id === notification.id ? updated : item));
+          })
+          .catch(() => {
+            // Mark read failure is silently contained; navigation is not blocked
+          });
       }
 
-      if (!updatedNotification.actorUserId) {
+      if (!notification.actorUserId) {
         Alert.alert('שגיאה', 'פרופיל המשתמש אינו זמין.');
         return;
       }
 
-      try {
-        await getPublicProfile(updatedNotification.actorUserId);
-        navigation.navigate('CandidateProfile', {
-          userId: updatedNotification.actorUserId,
-          sourceType: 'NOTIFICATION',
-          sourceId: updatedNotification.id,
-        });
-      } catch (err) {
-        Alert.alert('שגיאה', 'פרופיל המשתמש אינו נגיש או שנחסם.');
-      }
+      navigation.navigate('CandidateProfile', {
+        userId: notification.actorUserId,
+        sourceType: 'NOTIFICATION',
+        sourceId: notification.id,
+        returnIntent: {
+          kind: 'NOTIFICATIONS',
+          role: 'USER',
+          sourceRoute: 'Notifications',
+          notificationId: notification.id,
+        },
+      });
     } finally {
       setActionInProgress(false);
     }

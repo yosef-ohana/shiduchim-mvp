@@ -140,14 +140,39 @@ export const DiscoverScreen = ({ route, navigation }: any) => {
   };
 
   const handleViewProfile = (candidateUserId: number) => {
-    navigation.navigate('CandidateProfile', {
-      userId: candidateUserId,
-      sourceType: 'DISCOVER',
-      poolType: pool,
-      weddingId: pool === 'WEDDING' ? weddingId : undefined,
-      contextLabel: pool === 'WEDDING' ? (weddingSnapshot?.weddingName || 'מאגר חתונה') : 'מאגר גלובלי',
-      sourceContext: 'DISCOVER',
-    });
+    if (pool === 'WEDDING') {
+      if (!weddingId) {
+        return;
+      }
+      navigation.navigate('CandidateProfile', {
+        userId: candidateUserId,
+        sourceType: 'DISCOVER',
+        poolType: 'WEDDING',
+        weddingId,
+        contextLabel: weddingSnapshot?.weddingName || 'מאגר חתונה',
+        returnIntent: {
+          kind: 'DISCOVER_WEDDING',
+          role: 'USER',
+          sourceRoute: 'Discover',
+          poolType: 'WEDDING',
+          weddingId,
+        },
+      });
+    } else {
+      navigation.navigate('CandidateProfile', {
+        userId: candidateUserId,
+        sourceType: 'DISCOVER',
+        poolType: 'GLOBAL',
+        weddingId: undefined,
+        contextLabel: 'מאגר גלובלי',
+        returnIntent: {
+          kind: 'DISCOVER_GLOBAL',
+          role: 'USER',
+          sourceRoute: 'Discover',
+          poolType: 'GLOBAL',
+        },
+      });
+    }
   };
 
   // Header Component (Neutral Authority-Safe Copy)

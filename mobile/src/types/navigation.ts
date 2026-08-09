@@ -99,6 +99,35 @@ export type UserTabsParamList = {
   MeRoot: NavigatorScreenParams<UserMeStackParamList> | undefined;
 };
 
+export type CandidateProfileReturnIntent =
+  | {
+      kind: 'DISCOVER_GLOBAL';
+      role: 'USER';
+      sourceRoute: 'Discover';
+      poolType: 'GLOBAL';
+    }
+  | {
+      kind: 'DISCOVER_WEDDING';
+      role: 'USER';
+      sourceRoute: 'Discover';
+      poolType: 'WEDDING';
+      weddingId: number;
+    }
+  | {
+      kind: 'NOTIFICATIONS';
+      role: 'USER';
+      sourceRoute: 'Notifications';
+      notificationId: number;
+    };
+
+export type ReportUserReturnIntent = {
+  kind: 'CANDIDATE_PROFILE';
+  role: 'USER';
+  sourceRoute: 'CandidateProfile';
+  candidateUserId: number;
+  parentReturnIntent?: CandidateProfileReturnIntent;
+};
+
 export type UserShellStackParamList = {
   UserTabs: NavigatorScreenParams<UserTabsParamList> | undefined;
   CandidateProfile: {
@@ -109,9 +138,13 @@ export type UserShellStackParamList = {
     sourceId?: number;
     poolType?: PoolType;
     weddingId?: number;
+    returnIntent?: CandidateProfileReturnIntent;
   };
   Notifications: undefined;
-  ReportUser: { userId: number };
+  ReportUser: {
+    userId: number;
+    returnIntent?: ReportUserReturnIntent;
+  };
   Lists: undefined;
   OpeningMessages: undefined;
   OpeningConversationDetails: {

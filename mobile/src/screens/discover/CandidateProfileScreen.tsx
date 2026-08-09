@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Image, Alert } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useRoute, RouteProp } from '@react-navigation/native';
 import { ScreenContainer } from '../../components/foundation/ScreenContainer';
 import { Card } from '../../components/foundation/Card';
 import { StateSurface } from '../../components/foundation/StateSurface';
@@ -14,7 +14,8 @@ import { PublicProfileResponse, AllowedCandidateAction, PoolType } from '../../t
 import { getImageUrl } from '../../utils/imageUrl';
 import { getYesNoLabel, getEmptyLabel } from '../../utils/displayLabels';
 import { blockUser } from '../../api/blocksApi';
-import { getPublicProfile } from '../../api/profileApi';
+import { getPublicProfile, ProfileSourceDescriptor } from '../../api/profileApi';
+import { CandidateProfileReturnIntent, UserShellStackParamList } from '../../types/navigation';
 import { likeUser, dislikeUser, freezeUser, unfreezeUser, removeAction } from '../../api/actionsApi';
 import { sendOpeningMessage } from '../../api/openingMessagesApi';
 import { CandidateProfileActions } from '../../components/profile/CandidateProfileActions';
@@ -28,8 +29,11 @@ interface ProfileErrorInfo {
   message: string;
 }
 
-export const CandidateProfileScreen = ({ route, navigation }: any) => {
-  const { userId, contextLabel, sourceType, sourceId, poolType, weddingId } = route.params || {};
+type CandidateProfileRouteProp = RouteProp<UserShellStackParamList, 'CandidateProfile'>;
+
+export const CandidateProfileScreen = ({ route: routeProp, navigation }: any) => {
+  const route = useRoute<CandidateProfileRouteProp>();
+  const { userId, contextLabel, sourceType, sourceId, poolType, weddingId, returnIntent } = route.params || {};
   const [profile, setProfile] = useState<PublicProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<ProfileErrorInfo | null>(null);
@@ -43,6 +47,52 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
     profileRef.current = profile;
   }, [profile]);
 
+  const handleReturn = useCallback(() => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    if (returnIntent) {
+      if (returnIntent.kind === 'DISCOVER_GLOBAL') {
+        navigation.navigate('UserTabs', {
+          screen: 'DiscoverRoot',
+          params: {
+            screen: 'Discover',
+            params: { pool: 'GLOBAL' },
+          },
+        });
+      } else if (returnIntent.kind === 'DISCOVER_WEDDING') {
+        navigation.navigate('UserTabs', {
+          screen: 'DiscoverRoot',
+          params: {
+            screen: 'Discover',
+            params: { pool: 'WEDDING', weddingId: returnIntent.weddingId },
+          },
+        });
+      } else if (returnIntent.kind === 'NOTIFICATIONS') {
+        navigation.navigate('Notifications');
+      } else {
+        navigation.navigate('UserTabs', { screen: 'DiscoverRoot' });
+      }
+    } else {
+      navigation.navigate('UserTabs', { screen: 'DiscoverRoot' });
+    }
+  }, [navigation, returnIntent]);
+
+  const handleReportUser = () => {
+    navigation.navigate('ReportUser', {
+      userId,
+      returnIntent: {
+        kind: 'CANDIDATE_PROFILE',
+        role: 'USER',
+        sourceRoute: 'CandidateProfile',
+        candidateUserId: userId,
+        parentReturnIntent: returnIntent,
+      },
+    });
+  };
+
   const fetchProfile = useCallback(async () => {
     const hasLoadedProfile = profileRef.current && profileRef.current.userId === userId;
     if (!hasLoadedProfile) {
@@ -50,11 +100,11 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
     }
     setError(null);
     try {
-      const sourceDescriptor = {
+      const sourceDescriptor: ProfileSourceDescriptor = {
         sourceType,
-        sourceId,
-        poolType,
-        weddingId,
+        sourceId: sourceType === 'NOTIFICATION' ? sourceId : undefined,
+        poolType: sourceType === 'DISCOVER' ? poolType : undefined,
+        weddingId: sourceType === 'DISCOVER' && poolType === 'WEDDING' ? weddingId : undefined,
       };
       const data = await getPublicProfile(userId, sourceDescriptor);
       if (isFocusedRef.current) {
@@ -321,7 +371,7 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
             try {
               await blockUser(userId);
               Alert.alert('חסימה בוצעה', 'המשתמש נחסם בהצלחה.', [
-                { text: 'אישור', onPress: () => navigation.goBack() }
+                { text: 'אישור', onPress: handleReturn }
               ]);
             } catch (err: any) {
               Alert.alert('שגיאה', err.response?.data?.message || 'חסימת המשתמש נכשלה.');
@@ -388,7 +438,7 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
           message={error.message}
           primaryAction={{
             label: 'חזור',
-            onPress: () => navigation.goBack(),
+            onPress: handleReturn,
             icon: 'arrow-left',
           }}
           live
@@ -408,13 +458,13 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
           message={error?.message || 'לא ניתן היה לטעון את הפרופיל המבוקש.'}
           primaryAction={
             isNotFound
-              ? { label: 'חזור', onPress: () => navigation.goBack(), icon: 'arrow-left' }
+              ? { label: 'חזור', onPress: handleReturn, icon: 'arrow-left' }
               : { label: 'נסה שוב', onPress: fetchProfile, icon: 'check' }
           }
           secondaryAction={
             isNotFound
               ? undefined
-              : { label: 'חזור', onPress: () => navigation.goBack(), icon: 'arrow-left' }
+              : { label: 'חזור', onPress: handleReturn, icon: 'arrow-left' }
           }
           live
         />
@@ -661,7 +711,7 @@ export const CandidateProfileScreen = ({ route, navigation }: any) => {
             {allowedActions.includes('REPORT') && (
               <Button
                 label="דיווח על משתמש"
-                onPress={() => navigation.navigate('ReportUser', { userId })}
+                onPress={handleReportUser}
                 variant="secondary"
                 iconStart="alert-circle"
                 accessibilityLabel="דיווח על משתמש"

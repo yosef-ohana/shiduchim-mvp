@@ -12,11 +12,27 @@ type ReportUserScreenRouteProp = RouteProp<UserShellStackParamList, 'ReportUser'
 export const ReportUserScreen = () => {
   const navigation = useNavigation<ReportUserScreenNavigationProp>();
   const route = useRoute<ReportUserScreenRouteProp>();
-  const { userId } = route.params;
+  const { userId, returnIntent } = route.params;
 
   const [reasonType, setReasonType] = useState<ReportReasonType | null>(null);
   const [text, setText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleReturnToCaller = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    if (returnIntent?.kind === 'CANDIDATE_PROFILE') {
+      navigation.navigate('CandidateProfile', {
+        userId: returnIntent.candidateUserId,
+        returnIntent: returnIntent.parentReturnIntent,
+      });
+    } else {
+      navigation.goBack();
+    }
+  };
 
   const handleSubmit = async () => {
     if (!reasonType) {
@@ -31,7 +47,7 @@ export const ReportUserScreen = () => {
         text: text.trim() ? text.trim() : undefined,
       });
       Alert.alert('הצלחה', 'הדיווח נשלח לאדמין.', [
-        { text: 'אישור', onPress: () => navigation.goBack() }
+        { text: 'אישור', onPress: handleReturnToCaller }
       ]);
     } catch (error) {
       console.error('Failed to submit report', error);
@@ -96,7 +112,7 @@ export const ReportUserScreen = () => {
         
         <TouchableOpacity 
           style={[styles.button, styles.cancelButton]} 
-          onPress={() => navigation.goBack()}
+          onPress={handleReturnToCaller}
           disabled={isSubmitting}
         >
           <Text style={styles.cancelButtonText}>ביטול</Text>
