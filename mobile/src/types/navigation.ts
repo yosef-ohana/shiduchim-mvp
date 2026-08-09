@@ -1,5 +1,5 @@
 import { NavigatorScreenParams } from '@react-navigation/native';
-import { MainStackParamList } from '../navigation/MainStack';
+import type { DiscoverPool, UserWeddingResponse, CandidateProfileSourceType, PoolType } from './api';
 
 export type RootOutcome = 'restoring' | 'logged_out' | 'USER' | 'ADMIN' | 'EVENT_MANAGER';
 
@@ -72,7 +72,7 @@ export type EventManagerStackParamList = {
 
 export type UserDiscoverStackParamList = {
   PoolSelection: undefined;
-  Discover: MainStackParamList['Discover'];
+  Discover: { pool: DiscoverPool; weddingId?: number };
 };
 
 export type UserConnectionsStackParamList = {
@@ -101,24 +101,71 @@ export type UserTabsParamList = {
 
 export type UserShellStackParamList = {
   UserTabs: NavigatorScreenParams<UserTabsParamList> | undefined;
-  CandidateProfile: MainStackParamList['CandidateProfile'];
+  CandidateProfile: {
+    userId: number;
+    sourceContext?: 'OPENING_LIST' | 'OPENING_DETAILS';
+    contextLabel?: string;
+    sourceType?: CandidateProfileSourceType;
+    sourceId?: number;
+    poolType?: PoolType;
+    weddingId?: number;
+  };
   Notifications: undefined;
-  ReportUser: MainStackParamList['ReportUser'];
+  ReportUser: { userId: number };
   Lists: undefined;
   OpeningMessages: undefined;
-  OpeningConversationDetails: MainStackParamList['OpeningConversationDetails'];
+  OpeningConversationDetails: {
+    conversationId: number;
+    otherUserName?: string;
+  };
   Matches: undefined;
-  MatchDetails: MainStackParamList['MatchDetails'];
-  Chat: MainStackParamList['Chat'];
-  JoinWedding: MainStackParamList['JoinWedding'];
-  Profile: MainStackParamList['Profile'];
-  BasicProfile: MainStackParamList['BasicProfile'];
-  FullProfile: MainStackParamList['FullProfile'];
-  Photos: MainStackParamList['Photos'];
+  MatchDetails: { matchId: number };
+  Chat: { matchId: number };
+  JoinWedding:
+    | {
+        accessCode?: string;
+        weddingId?: number;
+        weddingSnapshot?: UserWeddingResponse;
+        source?: 'code' | 'deepLink' | 'myWeddings' | 'returnFlow';
+      }
+    | undefined;
+  Profile:
+    | {
+        focusSection?: 'profile' | 'photos' | 'full';
+        intent?:
+          | 'onboarding_basic'
+          | 'onboarding_full'
+          | 'complete_full'
+          | 'repair_full'
+          | 'view';
+      }
+    | undefined;
+  BasicProfile:
+    | {
+        returnToWedding?: boolean;
+        returnWeddingId?: number;
+        returnWeddingSnapshot?: UserWeddingResponse;
+        source?: 'weddingHub' | 'returnFlow';
+        continueToFullAfterBasic?: boolean;
+        returnToProfile?: boolean;
+      }
+    | undefined;
+  FullProfile:
+    | {
+        continueToPhotosAfterFull?: boolean;
+      }
+    | undefined;
+  Photos:
+    | {
+        returnToWedding?: boolean;
+        returnWeddingId?: number;
+        returnWeddingSnapshot?: UserWeddingResponse;
+        source?: 'weddingHub' | 'returnFlow';
+      }
+    | undefined;
   BlockedUsers: undefined;
   SendProductFeedback: undefined;
-  MyProductFeedback: MainStackParamList['MyProductFeedback'];
+  MyProductFeedback:
+    | { focusKind?: 'ProductFeedback' | 'UserReport'; focusId?: number }
+    | undefined;
 };
-
-export type { MainStackParamList };
-
