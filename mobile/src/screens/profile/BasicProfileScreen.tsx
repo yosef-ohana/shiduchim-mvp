@@ -35,6 +35,10 @@ export const BasicProfileScreen = ({ navigation, route }: any) => {
   const returnToWedding = route.params?.returnToWedding;
   const returnWeddingId = route.params?.returnWeddingId;
   const returnWeddingSnapshot = route.params?.returnWeddingSnapshot;
+  const accessCode = route.params?.accessCode;
+  const originalSource = route.params?.originalSource;
+  const source = route.params?.source;
+  const continueToPhotosAfterFull = route.params?.continueToPhotosAfterFull;
   const [fullName, setFullName] = useState('');
   const [age, setAge] = useState('');
   const [heightCm, setHeightCm] = useState('');
@@ -164,7 +168,15 @@ export const BasicProfileScreen = ({ navigation, route }: any) => {
                 </View>
                 <AppButton
                   title="המשך למילוי פרופיל מלא"
-                  onPress={() => navigation.navigate('FullProfile', { continueToPhotosAfterFull: true })}
+                  onPress={() => navigation.navigate('FullProfile', {
+                    continueToPhotosAfterFull,
+                    returnToWedding,
+                    returnWeddingId,
+                    returnWeddingSnapshot,
+                    accessCode,
+                    originalSource,
+                    source,
+                  })}
                   style={styles.successButton}
                 />
                 <AppButton
@@ -178,6 +190,8 @@ export const BasicProfileScreen = ({ navigation, route }: any) => {
                     onPress={() => navigation.navigate('JoinWedding', {
                       weddingId: returnWeddingId,
                       weddingSnapshot: returnWeddingSnapshot,
+                      accessCode,
+                      originalSource,
                       source: 'returnFlow'
                     })}
                     style={styles.successButton}
@@ -192,6 +206,8 @@ export const BasicProfileScreen = ({ navigation, route }: any) => {
                     onPress={() => navigation.navigate('JoinWedding', {
                       weddingId: returnWeddingId,
                       weddingSnapshot: returnWeddingSnapshot,
+                      accessCode,
+                      originalSource,
                       source: 'returnFlow'
                     })}
                     style={styles.successButton}

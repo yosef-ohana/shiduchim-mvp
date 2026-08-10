@@ -178,6 +178,15 @@ export type ReportUserReturnIntent = {
   parentReturnIntent?: CandidateProfileReturnIntent;
 };
 
+export type WeddingRepairReturnIntent = {
+  returnToWedding?: boolean;
+  returnWeddingId?: number;
+  returnWeddingSnapshot?: UserWeddingResponse;
+  accessCode?: string;
+  originalSource?: 'code' | 'deepLink' | 'myWeddings' | 'returnFlow';
+  source?: 'weddingHub' | 'returnFlow';
+};
+
 export type UserShellStackParamList = {
   UserTabs: NavigatorScreenParams<UserTabsParamList> | undefined;
   CandidateProfile: {
@@ -217,6 +226,7 @@ export type UserShellStackParamList = {
         weddingId?: number;
         weddingSnapshot?: UserWeddingResponse;
         source?: 'code' | 'deepLink' | 'myWeddings' | 'returnFlow';
+        originalSource?: 'code' | 'deepLink' | 'myWeddings' | 'returnFlow';
       }
     | undefined;
   Profile:
@@ -231,27 +241,19 @@ export type UserShellStackParamList = {
       }
     | undefined;
   BasicProfile:
-    | {
-        returnToWedding?: boolean;
-        returnWeddingId?: number;
-        returnWeddingSnapshot?: UserWeddingResponse;
-        source?: 'weddingHub' | 'returnFlow';
+    | (WeddingRepairReturnIntent & {
         continueToFullAfterBasic?: boolean;
+        continueToPhotosAfterFull?: boolean;
         returnToProfile?: boolean;
-      }
+      })
     | undefined;
   FullProfile:
-    | {
+    | (WeddingRepairReturnIntent & {
         continueToPhotosAfterFull?: boolean;
-      }
+      })
     | undefined;
   Photos:
-    | {
-        returnToWedding?: boolean;
-        returnWeddingId?: number;
-        returnWeddingSnapshot?: UserWeddingResponse;
-        source?: 'weddingHub' | 'returnFlow';
-      }
+    | WeddingRepairReturnIntent
     | undefined;
   BlockedUsers: undefined;
   SendProductFeedback: undefined;

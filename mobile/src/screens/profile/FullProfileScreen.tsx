@@ -34,6 +34,12 @@ const translateFieldName = (field: string) => {
 export const FullProfileScreen = ({ navigation, route }: any) => {
   const { refreshMe } = useAuth();
   const continueToPhotosAfterFull = route.params?.continueToPhotosAfterFull;
+  const returnToWedding = route.params?.returnToWedding;
+  const returnWeddingId = route.params?.returnWeddingId;
+  const returnWeddingSnapshot = route.params?.returnWeddingSnapshot;
+  const accessCode = route.params?.accessCode;
+  const originalSource = route.params?.originalSource;
+  const source = route.params?.source;
   const [education, setEducation] = useState('');
   const [occupation, setOccupation] = useState('');
   const [selfDescription, setSelfDescription] = useState('');
@@ -131,7 +137,15 @@ export const FullProfileScreen = ({ navigation, route }: any) => {
           <Text style={styles.blockedText}>קודם צריך להשלים פרופיל בסיסי.</Text>
           <AppButton
             title="מעבר לפרופיל בסיסי"
-            onPress={() => navigation.navigate('BasicProfile', { continueToFullAfterBasic: true })}
+            onPress={() => navigation.navigate('BasicProfile', {
+              continueToFullAfterBasic: true,
+              returnToWedding,
+              returnWeddingId,
+              returnWeddingSnapshot,
+              accessCode,
+              originalSource,
+              source,
+            })}
             style={styles.blockedButton}
           />
         </View>
@@ -184,9 +198,29 @@ export const FullProfileScreen = ({ navigation, route }: any) => {
                 </View>
                 <AppButton
                   title="המשך להעלאת תמונה ראשית"
-                  onPress={() => navigation.navigate('Profile', { focusSection: 'photos' })}
+                  onPress={() => navigation.navigate('Photos', {
+                    returnToWedding,
+                    returnWeddingId,
+                    returnWeddingSnapshot,
+                    accessCode,
+                    originalSource,
+                    source,
+                  })}
                   style={styles.successButton}
                 />
+                {returnToWedding && returnWeddingId ? (
+                  <AppButton
+                    title="חזרה לפרטי החתונה"
+                    onPress={() => navigation.navigate('JoinWedding', {
+                      weddingId: returnWeddingId,
+                      weddingSnapshot: returnWeddingSnapshot,
+                      accessCode,
+                      originalSource,
+                      source: 'returnFlow',
+                    })}
+                    style={styles.successButton}
+                  />
+                ) : null}
                 <AppButton
                   title="מעבר לפרופיל שלי"
                   onPress={() => navigation.navigate('Profile')}
@@ -200,6 +234,19 @@ export const FullProfileScreen = ({ navigation, route }: any) => {
               </>
             ) : (
               <>
+                {returnToWedding && returnWeddingId ? (
+                  <AppButton
+                    title="חזרה לפרטי החתונה"
+                    onPress={() => navigation.navigate('JoinWedding', {
+                      weddingId: returnWeddingId,
+                      weddingSnapshot: returnWeddingSnapshot,
+                      accessCode,
+                      originalSource,
+                      source: 'returnFlow',
+                    })}
+                    style={styles.successButton}
+                  />
+                ) : null}
                 <AppButton
                   title="מעבר לפרופיל שלי"
                   onPress={() => navigation.navigate('Profile')}

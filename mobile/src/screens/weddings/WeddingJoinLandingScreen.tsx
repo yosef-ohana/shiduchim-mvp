@@ -37,7 +37,7 @@ export const WeddingJoinLandingScreen = () => {
     setPartialJoinState(null);
   }, []);
 
-  const effectiveWeddingId = myWedding?.weddingId ?? validationDetails?.weddingId ?? null;
+  const effectiveWeddingId = myWedding?.weddingId ?? validationDetails?.weddingId ?? route.params?.weddingId ?? null;
   const effectiveWeddingName = myWedding?.weddingName ?? validationDetails?.weddingName ?? null;
   const effectiveCity = myWedding?.city ?? validationDetails?.city ?? null;
   const effectiveWeddingDate = myWedding?.weddingDate ?? validationDetails?.weddingDate ?? null;
@@ -286,6 +286,9 @@ export const WeddingJoinLandingScreen = () => {
       readiness.state === 'JOINED_MISSING_PRIMARY_PHOTO' ||
       readiness.state === 'JOINED_MISSING_BOTH'
     ) {
+      const originalSource = route.params?.originalSource || (route.params?.source !== 'returnFlow' ? route.params?.source : undefined);
+      const currentAccessCode = accessCode || initialCode || route.params?.accessCode || undefined;
+
       return (
         <View style={styles.noticeCardWarning}>
           <AppIcon name="alert-circle" size={24} color={tokens.colors.statusWarning} style={styles.cardIcon} />
@@ -297,7 +300,11 @@ export const WeddingJoinLandingScreen = () => {
                 returnToWedding: true,
                 returnWeddingId: effectiveWeddingId || undefined,
                 returnWeddingSnapshot: myWedding || undefined,
+                accessCode: currentAccessCode,
+                originalSource: originalSource,
                 source: 'weddingHub',
+                continueToFullAfterBasic: true,
+                continueToPhotosAfterFull: readiness.state === 'JOINED_MISSING_BOTH',
               })}
               style={styles.actionButton}
             />
@@ -309,6 +316,8 @@ export const WeddingJoinLandingScreen = () => {
                 returnToWedding: true,
                 returnWeddingId: effectiveWeddingId || undefined,
                 returnWeddingSnapshot: myWedding || undefined,
+                accessCode: currentAccessCode,
+                originalSource: originalSource,
                 source: 'weddingHub',
               })}
               style={styles.actionButton}

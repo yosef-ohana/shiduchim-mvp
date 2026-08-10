@@ -9,6 +9,8 @@ export const PhotosScreen = ({ navigation, route }: any) => {
   const returnToWedding = route.params?.returnToWedding;
   const returnWeddingId = route.params?.returnWeddingId;
   const returnWeddingSnapshot = route.params?.returnWeddingSnapshot;
+  const accessCode = route.params?.accessCode;
+  const originalSource = route.params?.originalSource;
 
   return (
     <Screen>
@@ -21,6 +23,8 @@ export const PhotosScreen = ({ navigation, route }: any) => {
             onPress={() => navigation.navigate('JoinWedding', {
               weddingId: returnWeddingId,
               weddingSnapshot: returnWeddingSnapshot,
+              accessCode,
+              originalSource,
               source: 'returnFlow'
             })}
             style={styles.returnButton}
