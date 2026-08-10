@@ -7,7 +7,9 @@
  */
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, CompositeNavigationProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { UserShellStackParamList, UserConnectionsStackParamList } from '../../types/navigation';
 import { ScreenContainer } from '../../components/foundation/ScreenContainer';
 import { Card } from '../../components/foundation/Card';
 import { Button } from '../../components/foundation/Button';
@@ -20,6 +22,11 @@ import { getLikes } from '../../api/listsApi';
 import { getInboxOpeningMessages } from '../../api/openingMessagesApi';
 import { getMatches } from '../../api/matchesApi';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+
+type ConnectionsHubNavProp = CompositeNavigationProp<
+  NativeStackNavigationProp<UserConnectionsStackParamList, 'ConnectionsHub'>,
+  NativeStackNavigationProp<UserShellStackParamList>
+>;
 
 interface DomainState {
   status: 'idle' | 'loading' | 'success' | 'error';
@@ -35,7 +42,7 @@ const initialDomainState: DomainState = {
 
 export const ConnectionsHubScreen: React.FC = () => {
   const { user } = useAuth();
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<ConnectionsHubNavProp>();
 
   // Domain 1: Interest (עניין)
   const [interestState, setInterestState] = useState<DomainState>(initialDomainState);

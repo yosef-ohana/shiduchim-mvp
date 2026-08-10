@@ -118,7 +118,57 @@ export type CandidateProfileReturnIntent =
       role: 'USER';
       sourceRoute: 'Notifications';
       notificationId: number;
+    }
+  | {
+      kind: 'INTEREST_LIST';
+      role: 'USER';
+      sourceRoute: 'Lists';
+    }
+  | {
+      kind: 'OPENING_LIST';
+      role: 'USER';
+      sourceRoute: 'OpeningMessages';
+    }
+  | {
+      kind: 'OPENING_DETAILS';
+      role: 'USER';
+      sourceRoute: 'OpeningConversationDetails';
+      conversationId: number;
+    }
+  | {
+      kind: 'MATCHES_LIST';
+      role: 'USER';
+      sourceRoute: 'Matches';
+    }
+  | {
+      kind: 'MATCH_DETAILS';
+      role: 'USER';
+      sourceRoute: 'MatchDetails';
+      matchId: number;
+    }
+  | {
+      kind: 'CHATS_LIST';
+      role: 'USER';
+      sourceRoute: 'Chats';
+    }
+  | {
+      kind: 'ACTIVE_CHAT';
+      role: 'USER';
+      sourceRoute: 'Chat';
+      matchId: number;
     };
+
+export type MatchDetailsReturnIntent =
+  | { kind: 'OPENING_CONVERSATION_DETAILS'; conversationId: number }
+  | { kind: 'OPENING_MESSAGES' }
+  | { kind: 'MATCHES' };
+
+export type ChatReturnIntent =
+  | { kind: 'CHATS' }
+  | { kind: 'MATCH_DETAILS'; matchId: number }
+  | { kind: 'INTEREST_LIST' }
+  | { kind: 'OPENING_DETAILS'; conversationId: number }
+  | { kind: 'OPENING_MESSAGES' };
 
 export type ReportUserReturnIntent = {
   kind: 'CANDIDATE_PROFILE';
@@ -152,8 +202,15 @@ export type UserShellStackParamList = {
     otherUserName?: string;
   };
   Matches: undefined;
-  MatchDetails: { matchId: number };
-  Chat: { matchId: number };
+  MatchDetails: {
+    matchId: number;
+    sourceIntent?: 'OPENING_TO_MATCH';
+    returnIntent?: MatchDetailsReturnIntent;
+  };
+  Chat: {
+    matchId: number;
+    returnIntent?: ChatReturnIntent;
+  };
   JoinWedding:
     | {
         accessCode?: string;

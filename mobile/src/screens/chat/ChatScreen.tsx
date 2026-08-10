@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { ScreenContainer } from '../../components/foundation/ScreenContainer';
@@ -22,26 +23,47 @@ import { ChatMessageResponse, MatchDetailsResponse } from '../../types/api';
 import { ChatMessageBubble } from '../../components/ChatMessageBubble';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 import { getImageUrl } from '../../utils/imageUrl';
+import axios from 'axios';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { UserShellStackParamList } from '../../types/navigation';
 import { getPoolTypeLabel } from '../../utils/displayLabels';
 
-export const ChatScreen = ({ route, navigation }: any) => {
-  const { matchId } = route.params || {};
+type Props = NativeStackScreenProps<UserShellStackParamList, 'Chat'>;
+
+export const ChatScreen = ({ route, navigation }: Props) => {
+  const { matchId, returnIntent } = route.params || {};
 
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
+
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else if (returnIntent?.kind === 'MATCH_DETAILS') {
+      navigation.navigate('MatchDetails', { matchId: returnIntent.matchId });
+    } else if (returnIntent?.kind === 'OPENING_DETAILS') {
+      navigation.navigate('OpeningConversationDetails', { conversationId: returnIntent.conversationId });
+    } else if (returnIntent?.kind === 'OPENING_MESSAGES') {
+      navigation.navigate('OpeningMessages');
+    } else {
+      navigation.navigate('UserTabs', { screen: 'ChatsRoot' });
+    }
+  };
 
   const [messages, setMessages] = useState<ChatMessageResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDenied, setIsDenied] = useState(false);
+  const [isChatAccessUnavailable, setIsChatAccessUnavailable] = useState(false);
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
   const [matchDetails, setMatchDetails] = useState<MatchDetailsResponse | null>(null);
   const flatListRef = useRef<FlatList>(null);
   const fetchingRef = useRef(false);
   const isFirstLoad = useRef(true);
+  const hasHandledTerminalExitRef = useRef(false);
 
   const handleMarkAsRead = async () => {
     if (!matchId) return;
@@ -67,6 +89,26 @@ export const ChatScreen = ({ route, navigation }: any) => {
       ]);
 
       setMatchDetails(detailsData);
+      if (detailsData && detailsData.status === 'ACTIVE') {
+        setIsChatAccessUnavailable(false);
+        hasHandledTerminalExitRef.current = false;
+      } else if (detailsData && detailsData.status !== 'ACTIVE') {
+        setIsChatAccessUnavailable(true);
+        if (!hasHandledTerminalExitRef.current) {
+          hasHandledTerminalExitRef.current = true;
+          Alert.alert(
+            'השידוך אינו פעיל',
+            'השידוך בוטל ולא ניתן להמשיך בשיחה.',
+            [
+              {
+                text: 'אישור',
+                onPress: handleBack,
+              },
+            ]
+          );
+        }
+      }
+
       const sorted = [...messagesData.messages].sort(
         (a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime()
       );
@@ -79,19 +121,33 @@ export const ChatScreen = ({ route, navigation }: any) => {
       }, 100);
 
       await handleMarkAsRead();
-    } catch (err: any) {
-      const statusCode = err?.response?.status;
-      if (statusCode === 403 || statusCode === 401) {
-        // Clear protected conversation data before rendering denial StateSurface
-        setMatchDetails(null);
-        setMessages([]);
-        setIsDenied(true);
+    } catch (err: unknown) {
+      let statusCode: number | undefined;
+      if (axios.isAxiosError(err)) {
+        statusCode = err.response?.status;
+      }
+
+      if (statusCode === 404 || statusCode === 403 || statusCode === 401) {
+        // Authoritative server rejection: Chat context is unavailable (no status fabrication)
+        setIsChatAccessUnavailable(true);
+        if (!hasHandledTerminalExitRef.current) {
+          hasHandledTerminalExitRef.current = true;
+          Alert.alert(
+            'השידוך אינו פעיל',
+            'השידוך בוטל ולא ניתן להמשיך בשיחה.',
+            [
+              {
+                text: 'אישור',
+                onPress: handleBack,
+              },
+            ]
+          );
+        }
       } else {
         const friendlyMsg = getFriendlyErrorMessage(err, 'טעינת הודעות הצ׳אט נכשלה.');
         if (showLoadingIndicator || messages.length === 0) {
           setError(friendlyMsg);
         } else {
-          // Refresh / poll failure when valid history exists: partial error banner without clearing valid history
           setError(friendlyMsg);
         }
       }
@@ -128,7 +184,7 @@ export const ChatScreen = ({ route, navigation }: any) => {
 
   const handleSend = async () => {
     const trimmed = inputText.trim();
-    if (!trimmed || sending || !matchDetails || matchDetails.status !== 'ACTIVE') return;
+    if (!trimmed || sending || !matchDetails || matchDetails.status !== 'ACTIVE' || isChatAccessUnavailable) return;
 
     setSending(true);
     setError(null);
@@ -141,7 +197,7 @@ export const ChatScreen = ({ route, navigation }: any) => {
       }, 50);
 
       fetchMessages(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(getFriendlyErrorMessage(err, 'שליחת ההודעה נכשלה.'));
     } finally {
       setSending(false);
@@ -158,7 +214,7 @@ export const ChatScreen = ({ route, navigation }: any) => {
           message="אין לך הרשאה לצפות בצ׳אט זה."
           primaryAction={{
             label: 'חזרה',
-            onPress: () => navigation.goBack(),
+            onPress: handleBack,
           }}
         />
       </ScreenContainer>
@@ -195,7 +251,7 @@ export const ChatScreen = ({ route, navigation }: any) => {
     );
   }
 
-  const isMatchActive = matchDetails?.status === 'ACTIVE';
+  const isMatchActive = matchDetails?.status === 'ACTIVE' && !isChatAccessUnavailable;
   const isMatchBlocked = matchDetails?.status === 'BLOCKED';
   const isUnknownStatus = matchDetails !== null && !isMatchActive && !isMatchBlocked;
 
@@ -209,7 +265,7 @@ export const ChatScreen = ({ route, navigation }: any) => {
         <View style={styles.headerRightGroup}>
           <IconButton
             icon="arrow-left"
-            onPress={() => navigation.goBack()}
+            onPress={handleBack}
             accessibilityLabel="חזרה"
             variant="header"
             testID="chat-back-button"
@@ -224,6 +280,12 @@ export const ChatScreen = ({ route, navigation }: any) => {
                     sourceId: matchDetails.matchId,
                     poolType: matchDetails.poolType,
                     weddingId: matchDetails.weddingId ?? undefined,
+                    returnIntent: {
+                      kind: 'ACTIVE_CHAT',
+                      role: 'USER',
+                      sourceRoute: 'Chat',
+                      matchId: matchDetails.matchId,
+                    },
                   });
                 }
               }}

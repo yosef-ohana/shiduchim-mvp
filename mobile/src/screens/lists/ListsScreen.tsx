@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { UserShellStackParamList } from '../../types/navigation';
 import { Screen } from '../../components/Screen';
 import { CandidateCard } from '../../components/CandidateCard';
 import { AppButton } from '../../components/AppButton';
@@ -13,8 +15,9 @@ import { sendOpeningMessage } from '../../api/openingMessagesApi';
 import { getMatches } from '../../api/matchesApi';
 
 type TabType = 'likes' | 'dislikes' | 'freezes' | 'liked-me';
+type Props = NativeStackScreenProps<UserShellStackParamList, 'Lists'>;
 
-export const ListsScreen = ({ navigation }: any) => {
+export const ListsScreen = ({ navigation }: Props) => {
   const [activeTab, setActiveTab] = useState<TabType>('likes');
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,8 +67,9 @@ export const ListsScreen = ({ navigation }: any) => {
       try {
         const response = await likeUser(targetUserId, { poolType, weddingId });
         await fetchList(activeTab);
-        if (response.matchCreated) {
-          if (response.matchId) {
+        if (response.matchCreated && !response.matchBlocked) {
+          const createdMatchId = response.matchId;
+          if (createdMatchId) {
             Alert.alert(
               'נוצרה התאמה!',
               'נוצרה התאמה! אפשר להמשיך לצ׳אט.',
@@ -73,13 +77,18 @@ export const ListsScreen = ({ navigation }: any) => {
                 { text: 'סגור', style: 'cancel' },
                 {
                   text: 'מעבר לצ׳אט',
-                  onPress: () => navigation.navigate('Chat', { matchId: response.matchId }),
+                  onPress: () => navigation.navigate('Chat', {
+                    matchId: createdMatchId,
+                    returnIntent: { kind: 'INTEREST_LIST' },
+                  }),
                 },
               ]
             );
           } else {
             Alert.alert('נוצרה התאמה!', 'עכשיו אתם יכולים להתכתב.');
           }
+        } else if (response.matchBlocked) {
+          Alert.alert('השידוך אינו פעיל', 'השידוך בוטל ולא ניתן להמשיך לצ׳אט.');
         } else {
           Alert.alert(
             'הלייק נשלח',
@@ -179,6 +188,11 @@ export const ListsScreen = ({ navigation }: any) => {
       sourceType: 'ACTION_LIST',
       poolType,
       weddingId: poolType === 'WEDDING' ? weddingId : undefined,
+      returnIntent: {
+        kind: 'INTEREST_LIST',
+        role: 'USER',
+        sourceRoute: 'Lists',
+      },
     });
   };
 
@@ -332,7 +346,7 @@ export const ListsScreen = ({ navigation }: any) => {
               if (isStaleMatch) {
                 try {
                   const activeMatches = await getMatches();
-                  const match = activeMatches.find(m => m.otherUserId === composerTarget.userId);
+                  const match = activeMatches.find(m => m.otherUserId === composerTarget.userId && m.status === 'ACTIVE');
                   if (match && match.matchId) {
                     Alert.alert(
                       'כבר נוצרה התאמה',
@@ -341,7 +355,10 @@ export const ListsScreen = ({ navigation }: any) => {
                         { text: 'סגור', style: 'cancel' },
                         {
                           text: 'מעבר לצ׳אט',
-                          onPress: () => navigation.navigate('Chat', { matchId: match.matchId }),
+                          onPress: () => navigation.navigate('Chat', {
+                            matchId: match.matchId,
+                            returnIntent: { kind: 'INTEREST_LIST' },
+                          }),
                         },
                       ]
                     );

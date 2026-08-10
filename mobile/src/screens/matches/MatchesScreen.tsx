@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { UserShellStackParamList } from '../../types/navigation';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
 import { theme } from '../../theme/theme';
@@ -10,7 +12,9 @@ import { getImageUrl } from '../../utils/imageUrl';
 import { getPoolTypeLabel, formatDisplayDate } from '../../utils/displayLabels';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
-export const MatchesScreen = ({ navigation }: any) => {
+type Props = NativeStackScreenProps<UserShellStackParamList, 'Matches'>;
+
+export const MatchesScreen = ({ navigation }: Props) => {
   const [matches, setMatches] = useState<MatchResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -62,7 +66,12 @@ export const MatchesScreen = ({ navigation }: any) => {
             sourceType: 'MATCH',
             sourceId: item.matchId,
             poolType: item.poolType,
-            weddingId: item.weddingId ?? undefined
+            weddingId: item.weddingId ?? undefined,
+            returnIntent: {
+              kind: 'MATCHES_LIST',
+              role: 'USER',
+              sourceRoute: 'Matches',
+            },
           })}
           activeOpacity={0.7}
         >
@@ -83,7 +92,12 @@ export const MatchesScreen = ({ navigation }: any) => {
                 sourceType: 'MATCH',
                 sourceId: item.matchId,
                 poolType: item.poolType,
-                weddingId: item.weddingId ?? undefined
+                weddingId: item.weddingId ?? undefined,
+                returnIntent: {
+                  kind: 'MATCHES_LIST',
+                  role: 'USER',
+                  sourceRoute: 'Matches',
+                },
               })}
               activeOpacity={0.7}
               style={{ flex: 1 }}
@@ -98,7 +112,10 @@ export const MatchesScreen = ({ navigation }: any) => {
           </View>
           
           <TouchableOpacity
-            onPress={() => navigation.navigate('MatchDetails', { matchId: item.matchId })}
+            onPress={() => navigation.navigate('MatchDetails', {
+              matchId: item.matchId,
+              returnIntent: { kind: 'MATCHES' },
+            })}
             activeOpacity={0.7}
           >
             <Text style={styles.dateText}>

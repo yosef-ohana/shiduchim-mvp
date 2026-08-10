@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { UserShellStackParamList } from '../../types/navigation';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
 import { theme } from '../../theme/theme';
@@ -10,8 +12,10 @@ import { getYesNoLabel, getEmptyLabel } from '../../utils/displayLabels';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 import { blockUser } from '../../api/blocksApi';
 
-export const MatchDetailsScreen = ({ route, navigation }: any) => {
-  const { matchId } = route.params || {};
+type Props = NativeStackScreenProps<UserShellStackParamList, 'MatchDetails'>;
+
+export const MatchDetailsScreen = ({ route, navigation }: Props) => {
+  const { matchId, sourceIntent, returnIntent } = route.params || {};
   const [details, setDetails] = useState<MatchDetailsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +54,13 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
           {
             text: 'אישור',
             onPress: () => {
-              navigation.goBack();
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              } else if (returnIntent?.kind === 'OPENING_MESSAGES') {
+                navigation.navigate('OpeningMessages');
+              } else {
+                navigation.navigate('Matches');
+              }
             },
           },
         ]
@@ -121,6 +131,7 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
   }
 
   const profile = details.otherUserProfile;
+  const isMatchActive = details.status === 'ACTIVE';
 
   const renderRow = (label: string, value: any, isLongText = false) => {
     const displayValue =
@@ -155,6 +166,12 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
               sourceId: details.matchId,
               poolType: details.poolType,
               weddingId: details.weddingId ?? undefined,
+              returnIntent: {
+                kind: 'MATCH_DETAILS',
+                role: 'USER',
+                sourceRoute: 'MatchDetails',
+                matchId: details.matchId,
+              },
             })}
             activeOpacity={0.7}
             style={styles.photoContainer}
@@ -177,6 +194,12 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
             sourceId: details.matchId,
             poolType: details.poolType,
             weddingId: details.weddingId ?? undefined,
+            returnIntent: {
+              kind: 'MATCH_DETAILS',
+              role: 'USER',
+              sourceRoute: 'MatchDetails',
+              matchId: details.matchId,
+            },
           })}
           activeOpacity={0.7}
           style={styles.headerInfo}
@@ -189,15 +212,27 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
 
         {/* Informational Match Banner */}
         <View style={styles.infoBanner}>
-          <Text style={styles.infoBannerText}>נוצרה התאמה — אפשר להמשיך את השיחה בצ׳אט</Text>
+          <Text style={styles.infoBannerText}>
+            {isMatchActive
+              ? 'נוצרה התאמה — אפשר להמשיך את השיחה בצ׳אט'
+              : 'ההתאמה אינה פעילה'}
+          </Text>
         </View>
 
         {/* Button Actions Section */}
         <View style={styles.actionsSection}>
           <AppButton
             title="💬 פתיחת צ׳אט"
-            onPress={() => navigation.navigate('Chat', { matchId: details.matchId })}
+            onPress={() => {
+              if (isMatchActive) {
+                navigation.navigate('Chat', {
+                  matchId: details.matchId,
+                  returnIntent: { kind: 'MATCH_DETAILS', matchId: details.matchId },
+                });
+              }
+            }}
             style={styles.chatButton}
+            disabled={!isMatchActive}
           />
           {profile.userId ? (
             <AppButton
@@ -208,6 +243,12 @@ export const MatchDetailsScreen = ({ route, navigation }: any) => {
                 sourceId: details.matchId,
                 poolType: details.poolType,
                 weddingId: details.weddingId ?? undefined,
+                returnIntent: {
+                  kind: 'MATCH_DETAILS',
+                  role: 'USER',
+                  sourceRoute: 'MatchDetails',
+                  matchId: details.matchId,
+                },
               })}
               style={styles.profileButton}
             />

@@ -16,13 +16,18 @@ import { AppButton } from '../../components/AppButton';
 import { colors, spacing, radii, sizing } from '../../theme/tokens';
 import { typography } from '../../theme/typography';
 import { getOpeningConversationDetails, replyToOpeningMessage } from '../../api/openingMessagesApi';
+import { getMatchDetails } from '../../api/matchesApi';
 import { getPublicProfile } from '../../api/profileApi';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { UserShellStackParamList } from '../../types/navigation';
 import { OpeningConversationDetailsResponse, OpeningMessageResponse, PublicProfileResponse } from '../../types/api';
 import { useAuth } from '../../context/AuthContext';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 import { getImageUrl } from '../../utils/imageUrl';
 
-export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => {
+type Props = NativeStackScreenProps<UserShellStackParamList, 'OpeningConversationDetails'>;
+
+export const OpeningConversationDetailsScreen = ({ route, navigation }: Props) => {
   const { conversationId, otherUserName } = route.params || {};
   const { user } = useAuth();
   const [details, setDetails] = useState<OpeningConversationDetailsResponse | null>(null);
@@ -81,7 +86,8 @@ export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => 
         confirmCreateMatch,
       });
 
-      if (response.matchCreated && response.matchId) {
+      const createdMatchId = response.matchId;
+      if (response.matchCreated && createdMatchId) {
         Alert.alert(
           'נוצרה התאמה!',
           'נוצרה התאמה. כעת אפשר להמשיך בצ׳אט.',
@@ -89,7 +95,11 @@ export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => 
             {
               text: 'אישור',
               onPress: () => {
-                navigation.replace('MatchDetails', { matchId: response.matchId });
+                navigation.replace('MatchDetails', {
+                  matchId: createdMatchId,
+                  sourceIntent: 'OPENING_TO_MATCH',
+                  returnIntent: { kind: 'OPENING_MESSAGES' },
+                });
               },
             },
           ]
@@ -223,6 +233,12 @@ export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => 
                 weddingId: details.weddingId ?? undefined,
                 sourceContext: 'OPENING_DETAILS',
                 contextLabel: 'הגעת מפרטי הודעת פתיחה',
+                returnIntent: {
+                  kind: 'OPENING_DETAILS',
+                  role: 'USER',
+                  sourceRoute: 'OpeningConversationDetails',
+                  conversationId,
+                },
               });
             }
           }}
@@ -314,12 +330,31 @@ export const OpeningConversationDetailsScreen = ({ route, navigation }: any) => 
             נוצרה התאמה. כעת אפשר להמשיך בצ׳אט.
           </Text>
           {details?.matchId ? (
-            <AppButton
-              title="מעבר לצ׳אט"
-              onPress={() => navigation.navigate('Chat', { matchId: details.matchId })}
-              style={styles.chatButton}
-              accessibilityLabel="מעבר לצ׳אט"
-            />
+            (() => {
+              const activeMatchId = details.matchId;
+              return (
+                <AppButton
+                  title="מעבר לצ׳אט"
+                  onPress={async () => {
+                    try {
+                      const matchData = await getMatchDetails(activeMatchId);
+                      if (matchData && matchData.status === 'ACTIVE') {
+                        navigation.navigate('Chat', {
+                          matchId: activeMatchId,
+                          returnIntent: { kind: 'OPENING_DETAILS', conversationId },
+                        });
+                      } else {
+                        Alert.alert('השידוך אינו פעיל', 'השידוך בוטל ולא ניתן לפתוח את השיחה.');
+                      }
+                    } catch (err) {
+                      Alert.alert('שגיאה', getFriendlyErrorMessage(err, 'לא ניתן לוודא את סטטוס השידוך כרגע.'));
+                    }
+                  }}
+                  style={styles.chatButton}
+                  accessibilityLabel="מעבר לצ׳אט"
+                />
+              );
+            })()
           ) : null}
         </View>
       )}

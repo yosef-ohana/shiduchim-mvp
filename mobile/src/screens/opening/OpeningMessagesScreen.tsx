@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { UserShellStackParamList } from '../../types/navigation';
 import { Screen } from '../../components/Screen';
 import { AppButton } from '../../components/AppButton';
 import { theme } from '../../theme/theme';
@@ -11,8 +13,9 @@ import { getPoolTypeLabel, formatDisplayDate } from '../../utils/displayLabels';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 type Tab = 'INBOX' | 'SENT';
+type Props = NativeStackScreenProps<UserShellStackParamList, 'OpeningMessages'>;
 
-export const OpeningMessagesScreen = ({ navigation }: any) => {
+export const OpeningMessagesScreen = ({ navigation }: Props) => {
   const [tab, setTab] = useState<Tab>('INBOX');
   const [conversations, setConversations] = useState<OpeningConversationSummaryResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,7 +76,12 @@ export const OpeningMessagesScreen = ({ navigation }: any) => {
               poolType: item.poolType,
               weddingId: item.weddingId ?? undefined,
               sourceContext: 'OPENING_LIST',
-              contextLabel: 'הגעת מרשימת הודעות פתיחה'
+              contextLabel: 'הגעת מרשימת הודעות פתיחה',
+              returnIntent: {
+                kind: 'OPENING_LIST',
+                role: 'USER',
+                sourceRoute: 'OpeningMessages',
+              },
             })}
             activeOpacity={0.7}
           >

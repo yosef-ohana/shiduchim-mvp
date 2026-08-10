@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Image, TouchableOpacity, Alert } from 'react-native';
+import { useFocusEffect, CompositeNavigationProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { UserShellStackParamList, UserChatsStackParamList } from '../../types/navigation';
 import { ScreenContainer } from '../../components/foundation/ScreenContainer';
 import { AppButton } from '../../components/AppButton';
 import { theme } from '../../theme/theme';
@@ -29,7 +31,12 @@ const formatLastMessageTime = (isoString?: string | null) => {
   }
 };
 
-export const ChatsScreen = ({ navigation }: any) => {
+type ChatsNavProp = CompositeNavigationProp<
+  NativeStackNavigationProp<UserChatsStackParamList, 'Chats'>,
+  NativeStackNavigationProp<UserShellStackParamList>
+>;
+
+export const ChatsScreen = ({ navigation }: { navigation: ChatsNavProp }) => {
   const [chats, setChats] = useState<ConversationResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -92,7 +99,16 @@ export const ChatsScreen = ({ navigation }: any) => {
       <View style={styles.card}>
         <TouchableOpacity
           style={StyleSheet.absoluteFill}
-          onPress={() => navigation.navigate('Chat', { matchId: item.matchId })}
+          onPress={() => {
+            if (item.matchStatus === 'ACTIVE') {
+              navigation.navigate('Chat', {
+                matchId: item.matchId,
+                returnIntent: { kind: 'CHATS' },
+              });
+            } else {
+              Alert.alert('השידוך אינו פעיל', 'השידוך בוטל ולא ניתן לפתוח את השיחה.');
+            }
+          }}
           activeOpacity={0.7}
         />
         <View style={styles.cardHeader} pointerEvents="box-none">
@@ -103,6 +119,11 @@ export const ChatsScreen = ({ navigation }: any) => {
               sourceId: item.matchId,
               poolType: item.poolType,
               weddingId: item.weddingId ?? undefined,
+              returnIntent: {
+                kind: 'CHATS_LIST',
+                role: 'USER',
+                sourceRoute: 'Chats',
+              },
             })}
             activeOpacity={0.7}
           >
@@ -124,6 +145,11 @@ export const ChatsScreen = ({ navigation }: any) => {
                   sourceId: item.matchId,
                   poolType: item.poolType,
                   weddingId: item.weddingId ?? undefined,
+                  returnIntent: {
+                    kind: 'CHATS_LIST',
+                    role: 'USER',
+                    sourceRoute: 'Chats',
+                  },
                 })}
                 activeOpacity={0.7}
               >
