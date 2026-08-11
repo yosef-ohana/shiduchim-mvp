@@ -91,7 +91,15 @@ export const AdminReportDetailsScreen = () => {
             onPress={() => navigation.navigate('StaffParticipantDetails', {
               userId: report.reporterUserId,
               mode: 'ADMIN',
-              source: 'ADMIN_REPORTS'
+              source: 'ADMIN_REPORTS',
+              returnContext: {
+                role: 'ADMIN',
+                domain: 'OPERATIONS',
+                sourceRoute: 'AdminReportDetails',
+                returnRoute: 'AdminReportDetails',
+                reportId: report.id,
+                userId: report.reporterUserId,
+              },
             })}
           >
             <Text style={styles.inlineButtonText}>פתח פרופיל מדווח</Text>
@@ -111,7 +119,15 @@ export const AdminReportDetailsScreen = () => {
             onPress={() => navigation.navigate('StaffParticipantDetails', {
               userId: report.reportedUserId,
               mode: 'ADMIN',
-              source: 'ADMIN_REPORTS'
+              source: 'ADMIN_REPORTS',
+              returnContext: {
+                role: 'ADMIN',
+                domain: 'OPERATIONS',
+                sourceRoute: 'AdminReportDetails',
+                returnRoute: 'AdminReportDetails',
+                reportId: report.id,
+                userId: report.reportedUserId,
+              },
             })}
           >
             <Text style={styles.inlineButtonText}>פתח פרופיל נילון</Text>

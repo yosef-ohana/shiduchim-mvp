@@ -28,12 +28,174 @@ export const ADMIN_DOMAINS: AdminDomainItem[] = [
 ];
 
 /**
+ * Validates explicit ADMIN N5E return/domain context for AdminEventManagerDetails.
+ * Rejects malformed, wrong-role, inconsistent or illegal explicit context.
+ * Returns valid AdminDomain or undefined (fails closed to canonical mapping).
+ */
+export function validateAdminEventManagerContext(context: any): AdminDomain | undefined {
+  if (!context || typeof context !== 'object') return undefined;
+
+  // 1. Role must be ADMIN
+  if (context.role !== 'ADMIN') return undefined;
+
+  // 2. Validate source/domain/return pairing and entity IDs
+  if (
+    context.sourceRoute === 'AdminUsers' &&
+    context.domain === 'USERS' &&
+    context.returnRoute === 'AdminUsers'
+  ) {
+    return 'USERS';
+  }
+
+  if (
+    context.sourceRoute === 'AdminWeddings' &&
+    context.domain === 'WEDDINGS' &&
+    context.returnRoute === 'AdminWeddings'
+  ) {
+    return 'WEDDINGS';
+  }
+
+  if (
+    context.sourceRoute === 'AdminWeddingDetails' &&
+    context.domain === 'WEDDINGS' &&
+    context.returnRoute === 'AdminWeddingDetails' &&
+    typeof context.weddingId === 'number' &&
+    !isNaN(context.weddingId) &&
+    context.weddingId > 0
+  ) {
+    return 'WEDDINGS';
+  }
+
+  if (
+    context.sourceRoute === 'CreateAdminWedding' &&
+    context.domain === 'WEDDINGS' &&
+    context.returnRoute === 'CreateAdminWedding'
+  ) {
+    return 'WEDDINGS';
+  }
+
+  if (
+    context.sourceRoute === 'AdminEventManagers' &&
+    context.domain === 'OPERATIONS' &&
+    context.returnRoute === 'AdminEventManagers'
+  ) {
+    return 'OPERATIONS';
+  }
+
+  return undefined;
+}
+
+export function validateAdminWeddingContext(context: any): AdminDomain | undefined {
+  if (!context || typeof context !== 'object') return undefined;
+  if (context.role !== 'ADMIN') return undefined;
+
+  if (
+    context.sourceRoute === 'AdminEventManagerDetails' &&
+    context.returnRoute === 'AdminEventManagerDetails' &&
+    typeof context.managerId === 'number' &&
+    !isNaN(context.managerId) &&
+    context.managerId > 0
+  ) {
+    if (context.domain === 'USERS' || context.domain === 'WEDDINGS' || context.domain === 'OPERATIONS') {
+      return context.domain;
+    }
+  }
+
+  return undefined;
+}
+
+export function validateAdminReportDetailsContext(context: any): AdminDomain | undefined {
+  if (!context || typeof context !== 'object') return undefined;
+  if (context.role !== 'ADMIN') return undefined;
+
+  if (
+    context.sourceRoute === 'AdminReports' &&
+    context.domain === 'OPERATIONS' &&
+    context.returnRoute === 'AdminReports'
+  ) {
+    return 'OPERATIONS';
+  }
+
+  return undefined;
+}
+
+export function validateAdminProductFeedbackDetailsContext(context: any): AdminDomain | undefined {
+  if (!context || typeof context !== 'object') return undefined;
+  if (context.role !== 'ADMIN') return undefined;
+
+  if (
+    context.sourceRoute === 'AdminProductFeedback' &&
+    context.domain === 'OPERATIONS' &&
+    context.returnRoute === 'AdminProductFeedback'
+  ) {
+    return 'OPERATIONS';
+  }
+
+  return undefined;
+}
+
+export function validateStaffParticipantDetailsContext(context: any): AdminDomain | undefined {
+  if (!context || typeof context !== 'object') return undefined;
+  if (context.role !== 'ADMIN') return undefined;
+
+  if (
+    (context.sourceRoute === 'AdminReportDetails' ||
+      context.sourceRoute === 'AdminProductFeedbackDetails' ||
+      context.sourceRoute === 'AdminProductFeedback') &&
+    context.domain === 'OPERATIONS' &&
+    (context.returnRoute === 'AdminReportDetails' ||
+      context.returnRoute === 'AdminProductFeedbackDetails' ||
+      context.returnRoute === 'AdminProductFeedback')
+  ) {
+    return 'OPERATIONS';
+  }
+
+  return undefined;
+}
+
+/**
  * Derives the active ADMIN selected domain strictly from route name + params.
  * Selection MUST be derived from route + canonical route params/source, NEVER visible text.
  * Returns undefined for unknown / unmapped routes or sources (fails closed).
  */
 export function getAdminSelectedDomain(routeName?: string, params?: any): AdminDomain | undefined {
   if (!routeName) return undefined;
+
+  // 0. Valid explicit N5E return/domain context (Precedence 1)
+  if (routeName === 'AdminEventManagerDetails' && params?.returnContext) {
+    const validatedDomain = validateAdminEventManagerContext(params.returnContext);
+    if (validatedDomain) {
+      return validatedDomain;
+    }
+  }
+
+  if (routeName === 'AdminWeddingDetails' && params?.returnContext) {
+    const validatedDomain = validateAdminWeddingContext(params.returnContext);
+    if (validatedDomain) {
+      return validatedDomain;
+    }
+  }
+
+  if (routeName === 'AdminReportDetails' && params?.returnContext) {
+    const validatedDomain = validateAdminReportDetailsContext(params.returnContext);
+    if (validatedDomain) {
+      return validatedDomain;
+    }
+  }
+
+  if (routeName === 'AdminProductFeedbackDetails' && params?.returnContext) {
+    const validatedDomain = validateAdminProductFeedbackDetailsContext(params.returnContext);
+    if (validatedDomain) {
+      return validatedDomain;
+    }
+  }
+
+  if (routeName === 'StaffParticipantDetails' && params?.returnContext) {
+    const validatedDomain = validateStaffParticipantDetailsContext(params.returnContext);
+    if (validatedDomain) {
+      return validatedDomain;
+    }
+  }
 
   // 1. HOME domain mapping
   if (routeName === 'AdminHome') {
@@ -71,6 +233,12 @@ export function getAdminSelectedDomain(routeName?: string, params?: any): AdminD
     routeName === 'AdminReportDetails' ||
     routeName === 'AdminProductFeedback' ||
     routeName === 'AdminProductFeedbackDetails'
+  ) {
+    return 'OPERATIONS';
+  }
+  if (
+    routeName === 'StaffParticipantDetails' &&
+    (params?.source === 'ADMIN_REPORTS' || params?.source === 'ADMIN_PRODUCT_FEEDBACK')
   ) {
     return 'OPERATIONS';
   }

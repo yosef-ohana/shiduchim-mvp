@@ -177,7 +177,15 @@ export const CreateAdminWeddingScreen = () => {
 
                   <TouchableOpacity
                     style={styles.managerDetailsAction}
-                    onPress={() => navigation.navigate('AdminEventManagerDetails', { managerId: manager.id })}
+                    onPress={() => navigation.navigate('AdminEventManagerDetails', {
+                      managerId: manager.id,
+                      returnContext: {
+                        role: 'ADMIN',
+                        domain: 'WEDDINGS',
+                        sourceRoute: 'CreateAdminWedding',
+                        returnRoute: 'CreateAdminWedding',
+                      },
+                    })}
                   >
                     <Text style={styles.managerDetailsActionText}>פרטים ➔</Text>
                   </TouchableOpacity>

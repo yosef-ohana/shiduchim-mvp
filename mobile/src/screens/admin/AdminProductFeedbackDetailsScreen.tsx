@@ -116,7 +116,15 @@ export const AdminProductFeedbackDetailsScreen = ({ route, navigation }: any) =>
               onPress={() => navigation.navigate('StaffParticipantDetails', {
                 userId: item.senderUserId,
                 mode: 'ADMIN',
-                source: 'ADMIN_PRODUCT_FEEDBACK'
+                source: 'ADMIN_PRODUCT_FEEDBACK',
+                returnContext: {
+                  role: 'ADMIN',
+                  domain: 'OPERATIONS',
+                  sourceRoute: 'AdminProductFeedbackDetails',
+                  returnRoute: 'AdminProductFeedbackDetails',
+                  feedbackId: item.id,
+                  userId: item.senderUserId,
+                },
               })}
             >
               <Text style={styles.inlineButtonText}>פתח פרופיל שולח</Text>

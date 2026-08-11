@@ -44,7 +44,17 @@ export const EventManagerWeddingsScreen = ({ navigation }: any) => {
   const renderItem = ({ item }: { item: WeddingResponse }) => (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => navigation.navigate('EventManagerWeddingDetails', { weddingId: item.id })}
+      onPress={() =>
+        navigation.navigate('EventManagerWeddingDetails', {
+          weddingId: item.id,
+          returnContext: {
+            role: 'EVENT_MANAGER',
+            sourceRoute: 'EventManagerWeddings',
+            returnRoute: 'EventManagerWeddings',
+            weddingId: item.id,
+          },
+        })
+      }
     >
       <Text style={styles.name}>{item.name}</Text>
       <Text style={styles.detail}>עיר/תאריך: {item.city} - {formatDisplayDate(item.weddingDate)}</Text>

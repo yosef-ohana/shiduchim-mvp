@@ -49,7 +49,18 @@ export const AdminProductFeedbackScreen = ({ navigation }: any) => {
   const renderItem = ({ item }: { item: ProductFeedbackListItemResponse }) => (
     <View style={styles.card}>
       <TouchableOpacity
-        onPress={() => navigation.navigate('AdminProductFeedbackDetails', { feedbackId: item.id })}
+        onPress={() =>
+          navigation.navigate('AdminProductFeedbackDetails', {
+            feedbackId: item.id,
+            returnContext: {
+              role: 'ADMIN',
+              domain: 'OPERATIONS',
+              sourceRoute: 'AdminProductFeedback',
+              returnRoute: 'AdminProductFeedback',
+              feedbackId: item.id,
+            },
+          })
+        }
         activeOpacity={0.7}
       >
         <View style={styles.cardHeader}>
@@ -84,11 +95,21 @@ export const AdminProductFeedbackScreen = ({ navigation }: any) => {
         <Text style={styles.cardLabel}>פרופיל:</Text>
         <TouchableOpacity
           style={styles.inlineButton}
-          onPress={() => navigation.navigate('StaffParticipantDetails', {
-            userId: item.senderUserId,
-            mode: 'ADMIN',
-            source: 'ADMIN_PRODUCT_FEEDBACK'
-          })}
+          onPress={() =>
+            navigation.navigate('StaffParticipantDetails', {
+              userId: item.senderUserId,
+              mode: 'ADMIN',
+              source: 'ADMIN_PRODUCT_FEEDBACK',
+              returnContext: {
+                role: 'ADMIN',
+                domain: 'OPERATIONS',
+                sourceRoute: 'AdminProductFeedback',
+                returnRoute: 'AdminProductFeedback',
+                feedbackId: item.id,
+                userId: item.senderUserId,
+              },
+            })
+          }
         >
           <Text style={styles.inlineButtonText}>פתח פרופיל שולח</Text>
         </TouchableOpacity>

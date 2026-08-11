@@ -10,6 +10,8 @@ import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 import { getWeddingStatusLabel, getUserRoleLabel, formatDisplayDate } from '../../utils/displayLabels';
 
+import { validateAdminEventManagerContext } from '../../navigation/staff/StaffNavigation';
+
 type DetailsRouteProp = RouteProp<AdminStackParamList, 'AdminEventManagerDetails'>;
 type NavigationProp = NativeStackNavigationProp<AdminStackParamList, 'AdminEventManagerDetails'>;
 
@@ -228,7 +230,24 @@ export const AdminEventManagerDetailsScreen = () => {
 
         <TouchableOpacity
           style={styles.weddingDetailsContainer}
-          onPress={() => navigation.navigate('AdminWeddingDetails', { weddingId: item.id })}
+          onPress={() => {
+            const incomingReturnContext = route.params?.returnContext;
+            const validated = incomingReturnContext ? validateAdminEventManagerContext(incomingReturnContext) : undefined;
+            const currentDomain: 'USERS' | 'WEDDINGS' | 'OPERATIONS' =
+              (validated === 'USERS' || validated === 'WEDDINGS') ? validated : 'OPERATIONS';
+
+            navigation.navigate('AdminWeddingDetails', {
+              weddingId: item.id,
+              returnContext: {
+                role: 'ADMIN',
+                domain: currentDomain,
+                sourceRoute: 'AdminEventManagerDetails',
+                returnRoute: 'AdminEventManagerDetails',
+                managerId,
+                weddingId: item.id,
+              },
+            });
+          }}
         >
           <Text style={styles.weddingName}>{item.name}</Text>
           <Text style={styles.weddingInfo}>עיר: {item.city}</Text>

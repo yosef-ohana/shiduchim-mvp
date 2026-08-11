@@ -53,7 +53,18 @@ export const AdminReportsScreen = () => {
   const renderItem = ({ item }: { item: UserReportSummaryResponse }) => (
     <TouchableOpacity 
       style={styles.card}
-      onPress={() => navigation.navigate('AdminReportDetails', { reportId: item.id })}
+      onPress={() =>
+        navigation.navigate('AdminReportDetails', {
+          reportId: item.id,
+          returnContext: {
+            role: 'ADMIN',
+            domain: 'OPERATIONS',
+            sourceRoute: 'AdminReports',
+            returnRoute: 'AdminReports',
+            reportId: item.id,
+          },
+        })
+      }
     >
       <View style={styles.cardHeader}>
         <Text style={[styles.status, item.status === 'NEW' ? styles.statusNew : styles.statusResolved]}>

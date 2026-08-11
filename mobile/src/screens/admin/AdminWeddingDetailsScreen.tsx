@@ -299,7 +299,16 @@ export const AdminWeddingDetailsScreen = () => {
             </Text>
             {wedding.ownerUserId && eventManagers.some(em => em.id === wedding.ownerUserId) && (
               <TouchableOpacity
-                onPress={() => navigation.navigate('AdminEventManagerDetails', { managerId: wedding.ownerUserId })}
+                onPress={() => navigation.navigate('AdminEventManagerDetails', {
+                  managerId: wedding.ownerUserId,
+                  returnContext: {
+                    role: 'ADMIN',
+                    domain: 'WEDDINGS',
+                    sourceRoute: 'AdminWeddingDetails',
+                    returnRoute: 'AdminWeddingDetails',
+                    weddingId: wedding.id,
+                  },
+                })}
                 style={styles.ownerDetailsLink}
               >
                 <Text style={styles.ownerDetailsLinkText}>פרטים וניהול</Text>
@@ -394,7 +403,16 @@ export const AdminWeddingDetailsScreen = () => {
 
                     <TouchableOpacity
                       style={styles.managerDetailsAction}
-                      onPress={() => navigation.navigate('AdminEventManagerDetails', { managerId: manager.id })}
+                      onPress={() => navigation.navigate('AdminEventManagerDetails', {
+                        managerId: manager.id,
+                        returnContext: {
+                          role: 'ADMIN',
+                          domain: 'WEDDINGS',
+                          sourceRoute: 'AdminWeddingDetails',
+                          returnRoute: 'AdminWeddingDetails',
+                          weddingId: wedding.id,
+                        },
+                      })}
                     >
                       <Text style={styles.managerDetailsActionText}>פרטים ➔</Text>
                     </TouchableOpacity>

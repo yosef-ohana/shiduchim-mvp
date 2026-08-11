@@ -59,6 +59,9 @@ export const WeddingParticipantsScreen = () => {
     } catch (error) {
       console.error(error);
       Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'טעינת רשימת המשתתפים נכשלה.'));
+      if (mode === 'EVENT_MANAGER') {
+        navigation.navigate('EventManagerWeddings');
+      }
     } finally {
       setLoading(false);
     }
@@ -181,6 +184,7 @@ export const WeddingParticipantsScreen = () => {
             mode,
             weddingName,
             weddingStatus,
+            source: 'PARTICIPANTS',
           });
         }}
         activeOpacity={0.7}

@@ -58,7 +58,17 @@ export const AdminEventManagersScreen = () => {
         <View style={styles.actions}>
           <AppButton
             title="פרטים וניהול"
-            onPress={() => navigation.navigate('AdminEventManagerDetails', { managerId: item.id })}
+            onPress={() =>
+              navigation.navigate('AdminEventManagerDetails', {
+                managerId: item.id,
+                returnContext: {
+                  role: 'ADMIN',
+                  domain: 'OPERATIONS',
+                  sourceRoute: 'AdminEventManagers',
+                  returnRoute: 'AdminEventManagers',
+                },
+              })
+            }
             style={styles.button}
           />
         </View>

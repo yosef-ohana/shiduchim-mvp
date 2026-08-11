@@ -12,25 +12,139 @@ export type AuthStackParamList = {
   WeddingCodeEntry: { accessCode?: string; pendingWeddingCode?: string } | undefined;
 };
 
+export type AdminEventManagerReturnContext =
+  | {
+      role: 'ADMIN';
+      domain: 'USERS';
+      sourceRoute: 'AdminUsers';
+      returnRoute: 'AdminUsers';
+    }
+  | {
+      role: 'ADMIN';
+      domain: 'WEDDINGS';
+      sourceRoute: 'AdminWeddings';
+      returnRoute: 'AdminWeddings';
+    }
+  | {
+      role: 'ADMIN';
+      domain: 'WEDDINGS';
+      sourceRoute: 'AdminWeddingDetails';
+      returnRoute: 'AdminWeddingDetails';
+      weddingId: number;
+    }
+  | {
+      role: 'ADMIN';
+      domain: 'WEDDINGS';
+      sourceRoute: 'CreateAdminWedding';
+      returnRoute: 'CreateAdminWedding';
+    }
+  | {
+      role: 'ADMIN';
+      domain: 'OPERATIONS';
+      sourceRoute: 'AdminEventManagers';
+      returnRoute: 'AdminEventManagers';
+    };
+
+export type AdminWeddingDetailsReturnContext =
+  | {
+      role: 'ADMIN';
+      domain: 'USERS' | 'WEDDINGS' | 'OPERATIONS';
+      sourceRoute: 'AdminEventManagerDetails';
+      returnRoute: 'AdminEventManagerDetails';
+      managerId: number;
+      weddingId?: number;
+    };
+
+export type AdminReportDetailsReturnContext =
+  | {
+      role: 'ADMIN';
+      domain: 'OPERATIONS';
+      sourceRoute: 'AdminReports';
+      returnRoute: 'AdminReports';
+      reportId?: number;
+    };
+
+export type AdminProductFeedbackDetailsReturnContext =
+  | {
+      role: 'ADMIN';
+      domain: 'OPERATIONS';
+      sourceRoute: 'AdminProductFeedback';
+      returnRoute: 'AdminProductFeedback';
+      feedbackId?: number;
+    };
+
+export type StaffParticipantDetailsReturnContext =
+  | {
+      role: 'ADMIN';
+      domain: 'OPERATIONS';
+      sourceRoute: 'AdminReportDetails';
+      returnRoute: 'AdminReportDetails';
+      reportId: number;
+      userId?: number;
+    }
+  | {
+      role: 'ADMIN';
+      domain: 'OPERATIONS';
+      sourceRoute: 'AdminProductFeedbackDetails';
+      returnRoute: 'AdminProductFeedbackDetails';
+      feedbackId: number;
+      userId?: number;
+    }
+  | {
+      role: 'ADMIN';
+      domain: 'OPERATIONS';
+      sourceRoute: 'AdminProductFeedback';
+      returnRoute: 'AdminProductFeedback';
+      feedbackId?: number;
+      userId?: number;
+    };
+
+export type EventManagerWeddingDetailsReturnContext =
+  | {
+      role: 'EVENT_MANAGER';
+      sourceRoute: 'EventManagerWeddings';
+      returnRoute: 'EventManagerWeddings';
+      weddingId: number;
+    }
+  | {
+      role: 'EVENT_MANAGER';
+      sourceRoute: 'EventManagerWeddingDetails';
+      returnRoute: 'EventManagerWeddingDetails';
+      weddingId: number;
+    };
+
 export type AdminStackParamList = {
   AdminHome: undefined;
   AdminUsers: { focusUserId?: number } | undefined;
   AdminWeddings: undefined;
-  AdminWeddingDetails: { weddingId: number };
+  AdminWeddingDetails: {
+    weddingId: number;
+    returnContext?: AdminWeddingDetailsReturnContext;
+  };
   CreateAdminWedding: undefined;
   AdminOperations: undefined;
   AdminEventManagers: undefined;
-  AdminEventManagerDetails: { managerId: number };
+  AdminEventManagerDetails: {
+    managerId: number;
+    returnContext?: AdminEventManagerReturnContext;
+  };
   CreateEventManager: undefined;
   AdminReports: undefined;
-  AdminReportDetails: { reportId: number };
+  AdminReportDetails: {
+    reportId: number;
+    returnContext?: AdminReportDetailsReturnContext;
+  };
   AdminProductFeedback: undefined;
-  AdminProductFeedbackDetails: { feedbackId: number };
+  AdminProductFeedbackDetails: {
+    feedbackId: number;
+    returnContext?: AdminProductFeedbackDetailsReturnContext;
+  };
   WeddingParticipants: {
     weddingId: number;
     mode: 'ADMIN' | 'EVENT_MANAGER';
     weddingName?: string;
     weddingStatus?: string;
+    returnContext?: EventManagerWeddingDetailsReturnContext;
   };
   StaffParticipantDetails: {
     userId: number;
@@ -43,18 +157,23 @@ export type AdminStackParamList = {
       | 'PARTICIPANTS'
       | 'ADMIN_REPORTS'
       | 'ADMIN_PRODUCT_FEEDBACK';
+    returnContext?: StaffParticipantDetailsReturnContext;
   };
 };
 
 export type EventManagerStackParamList = {
   EventManagerWeddings: undefined;
   CreateWedding: undefined;
-  EventManagerWeddingDetails: { weddingId: number };
+  EventManagerWeddingDetails: {
+    weddingId: number;
+    returnContext?: EventManagerWeddingDetailsReturnContext;
+  };
   WeddingParticipants: {
     weddingId: number;
     mode: 'ADMIN' | 'EVENT_MANAGER';
     weddingName?: string;
     weddingStatus?: string;
+    returnContext?: EventManagerWeddingDetailsReturnContext;
   };
   StaffParticipantDetails: {
     userId: number;
@@ -67,6 +186,7 @@ export type EventManagerStackParamList = {
       | 'PARTICIPANTS'
       | 'ADMIN_REPORTS'
       | 'ADMIN_PRODUCT_FEEDBACK';
+    returnContext?: StaffParticipantDetailsReturnContext;
   };
 };
 

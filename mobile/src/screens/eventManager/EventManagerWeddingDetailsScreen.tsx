@@ -48,6 +48,7 @@ export const EventManagerWeddingDetailsScreen = ({ route, navigation }: any) => 
     } catch (error) {
       console.error(error);
       Alert.alert('שגיאה', getFriendlyErrorMessage(error, 'טעינת פרטי החתונה נכשלה.'));
+      navigation.navigate('EventManagerWeddings');
     } finally {
       setLoading(false);
     }
@@ -287,7 +288,13 @@ export const EventManagerWeddingDetailsScreen = ({ route, navigation }: any) => 
                   weddingId: wedding.id,
                   mode: 'EVENT_MANAGER',
                   weddingName: wedding.name,
-                  weddingStatus: wedding.status
+                  weddingStatus: wedding.status,
+                  returnContext: {
+                    role: 'EVENT_MANAGER',
+                    sourceRoute: 'EventManagerWeddingDetails',
+                    returnRoute: 'EventManagerWeddingDetails',
+                    weddingId: wedding.id,
+                  },
                 })}
                 style={styles.participantsButton}
               />

@@ -72,7 +72,15 @@ export const AdminWeddingsScreen = () => {
         {isOwnerEventManager ? (
           <TouchableOpacity
             style={styles.ownerActionContainer}
-            onPress={() => navigation.navigate('AdminEventManagerDetails', { managerId: item.ownerUserId })}
+            onPress={() => navigation.navigate('AdminEventManagerDetails', {
+              managerId: item.ownerUserId,
+              returnContext: {
+                role: 'ADMIN',
+                domain: 'WEDDINGS',
+                sourceRoute: 'AdminWeddings',
+                returnRoute: 'AdminWeddings',
+              },
+            })}
             activeOpacity={0.7}
           >
             <View style={styles.ownerHeaderRow}>
