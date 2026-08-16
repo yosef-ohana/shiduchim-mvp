@@ -83,7 +83,13 @@ export const LoginScreen = ({ route, navigation }: any) => {
         testID="login-header-back"
       />
 
-      <ScreenContainer scroll keyboardAware containerStyle={styles.containerStyle} contentStyle={styles.contentStyle}>
+      <ScreenContainer
+        scroll
+        keyboardAware
+        safeEdges={['bottom', 'left', 'right']}
+        containerStyle={styles.containerStyle}
+        contentStyle={styles.contentStyle}
+      >
         <View style={styles.titleSection}>
           <Text style={[typography.display, styles.pageTitleText]} accessibilityRole="header">
             התחברות

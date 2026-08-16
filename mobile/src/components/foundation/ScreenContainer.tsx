@@ -13,6 +13,8 @@ import {
   ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets, Edge } from 'react-native-safe-area-context';
+import { HeaderShownContext } from '@react-navigation/elements';
+import { BottomTabBarHeightContext } from '@react-navigation/bottom-tabs';
 import { colors, sizing, visual } from '../../theme/tokens';
 import { useResponsive } from '../../utils/responsive';
 
@@ -46,8 +48,12 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
   const insets = useSafeAreaInsets();
   const { gutter } = useResponsive();
 
-  const paddingTop = safeEdges.includes('top') ? insets.top : 0;
-  const paddingBottom = safeEdges.includes('bottom') ? insets.bottom : 0;
+  const isHeaderShown = React.useContext(HeaderShownContext) || Boolean(header);
+  const tabBarHeight = React.useContext(BottomTabBarHeightContext);
+  const isTabBarVisible = typeof tabBarHeight === 'number' && tabBarHeight > 0;
+
+  const paddingTop = safeEdges.includes('top') && !isHeaderShown ? insets.top : 0;
+  const paddingBottom = safeEdges.includes('bottom') && !isTabBarVisible ? insets.bottom : 0;
   const paddingLeft = safeEdges.includes('left') ? insets.left : 0;
   const paddingRight = safeEdges.includes('right') ? insets.right : 0;
 
