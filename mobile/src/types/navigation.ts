@@ -350,7 +350,7 @@ export type UserShellStackParamList = {
       }
     | undefined;
   Profile:
-    | {
+    | (WeddingRepairReturnIntent & {
         focusSection?: 'profile' | 'photos' | 'full';
         intent?:
           | 'onboarding_basic'
@@ -358,7 +358,7 @@ export type UserShellStackParamList = {
           | 'complete_full'
           | 'repair_full'
           | 'view';
-      }
+      })
     | undefined;
   BasicProfile:
     | (WeddingRepairReturnIntent & {

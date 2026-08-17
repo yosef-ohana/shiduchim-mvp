@@ -1,57 +1,95 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { Screen } from '../../components/Screen';
-import { AppButton } from '../../components/AppButton';
+/**
+ * ProfileScreen — Screen Record PROF-01 (Flow 2)
+ * Personal profile view and unified editing in the approved dark personal shell & warm ivory cards.
+ */
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  Alert,
+  ActivityIndicator,
+  Switch,
+} from 'react-native';
+import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { UserShellStackParamList } from '../../types/navigation';
 import { getMyProfile, updateUnifiedProfile } from '../../api/profileApi';
-import { ProfileMeResponse } from '../../types/api';
-import { theme } from '../../theme/theme';
-import { getGenderLabel, getUserRoleLabel } from '../../utils/displayLabels';
-import { getFriendlyErrorMessage } from '../../utils/errorMessage';
-import { ProfilePhotosManager } from '../../components/ProfilePhotosManager';
+import { getMyPhotos } from '../../api/photosApi';
+import { ProfileMeResponse, UnifiedProfileUpdateRequest, ProfileStatus } from '../../types/api';
 import { useAuth } from '../../context/AuthContext';
-import { BasicProfileForm } from '../../components/profile/BasicProfileForm';
-import { FullProfileForm } from '../../components/profile/FullProfileForm';
+import { getGenderLabel } from '../../utils/displayLabels';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
+import { ScreenContainer } from '../../components/foundation/ScreenContainer';
+import { Card } from '../../components/foundation/Card';
+import { TextField } from '../../components/foundation/TextField';
+import { Button } from '../../components/foundation/Button';
+import { ResponsiveActionGroup } from '../../components/foundation/ResponsiveActionGroup';
+import { AppIcon } from '../../components/foundation/AppIcon';
+import { BidiText } from '../../components/foundation/BidiText';
+import {
+  colors,
+  spacing,
+  radii,
+  visual,
+  text,
+  gold,
+  status as statusTokens,
+  field,
+} from '../../theme/tokens';
+import { typography } from '../../theme/typography';
 
-const getProfileStatusLabel = (status: string) => {
-  switch (status) {
-    case 'NONE': return 'לא הוגדר';
-    case 'BASIC': return 'פרופיל בסיסי';
-    case 'FULL': return 'פרופיל מלא';
-    case 'FULL_INCOMPLETE_BLOCKED': return 'פרופיל מלא חסר (חסום)';
-    default: return status;
+type ProfileScreenNavigationProp = NativeStackNavigationProp<UserShellStackParamList, 'Profile'>;
+type ProfileScreenRouteProp = RouteProp<UserShellStackParamList, 'Profile'>;
+
+const getProfileStatusLabel = (profileStatus?: ProfileStatus | string) => {
+  switch (profileStatus) {
+    case 'NONE':
+      return 'טרם הוגדר פרופיל';
+    case 'BASIC':
+      return 'פרופיל בסיסי';
+    case 'FULL':
+      return 'פרופיל מלא';
+    case 'FULL_INCOMPLETE_BLOCKED':
+      return 'פרופיל חסר (דרוש תיקון)';
+    default:
+      return profileStatus || 'לא צוין';
   }
 };
 
-export const ProfileScreen = ({ navigation, route }: any) => {
+export const ProfileScreen: React.FC = () => {
+  const navigation = useNavigation<ProfileScreenNavigationProp>();
+  const route = useRoute<ProfileScreenRouteProp>();
   const { refreshMe } = useAuth();
 
   const [profile, setProfile] = useState<ProfileMeResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [primaryPhotoUrl, setPrimaryPhotoUrl] = useState<string | null>(null);
 
-  // Photos expansion state
-  const [photosExpanded, setPhotosExpanded] = useState(false);
-
-  // Unified editing state
+  // Edit Mode state
   const [isEditing, setIsEditing] = useState(false);
   const [targetLevel, setTargetLevel] = useState<'BASIC' | 'FULL'>('BASIC');
 
-  // Form states and submission status
+  // Form submission and feedback
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrorMsg, setFormErrorMsg] = useState('');
   const [formSuccessMsg, setFormSuccessMsg] = useState('');
+  const [syncWarning, setSyncWarning] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  // Controlled Basic Profile fields
+  // Controlled BASIC fields
   const [fullName, setFullName] = useState('');
+  const [gender, setGender] = useState<string | null>(null);
   const [age, setAge] = useState('');
   const [heightCm, setHeightCm] = useState('');
   const [areaOfResidence, setAreaOfResidence] = useState('');
   const [religiousLevel, setReligiousLevel] = useState('');
   const [phone, setPhone] = useState('');
-  const [gender, setGender] = useState<string | null>(null);
 
-  // Controlled Full Profile fields
+  // Controlled FULL fields
   const [education, setEducation] = useState('');
   const [occupation, setOccupation] = useState('');
   const [headCovering, setHeadCovering] = useState('');
@@ -61,105 +99,357 @@ export const ProfileScreen = ({ navigation, route }: any) => {
   const [lookingFor, setLookingFor] = useState('');
   const [familyDescription, setFamilyDescription] = useState('');
 
-  const fetchProfile = async () => {
+  const isDirtyRef = useRef(false);
+  const bypassBackRef = useRef(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const sectionOffsets = useRef<{ basic: number; full: number; photos: number }>({
+    basic: 0,
+    full: 0,
+    photos: 0,
+  });
+
+  const setBaselineFromProfile = useCallback((data: ProfileMeResponse) => {
+    setFullName(data.fullName || '');
+    setGender(data.gender || null);
+    setAge(data.age ? String(data.age) : '');
+    setHeightCm(data.heightCm ? String(data.heightCm) : '');
+    setAreaOfResidence(data.areaOfResidence || '');
+    setReligiousLevel(data.religiousLevel || '');
+    setPhone(data.phone || '');
+
+    setEducation(data.education || '');
+    setOccupation(data.occupation || '');
+    setHeadCovering(data.headCovering || '');
+    setHasDrivingLicense(data.hasDrivingLicense ?? false);
+    setSelfDescription(data.selfDescription || '');
+    setHobbies(data.hobbies || '');
+    setLookingFor(data.lookingFor || '');
+    setFamilyDescription(data.familyDescription || '');
+  }, []);
+
+  const isDirty = useMemo(() => {
+    if (!isEditing || !profile) return false;
+
+    const basicDirty =
+      fullName !== (profile.fullName || '') ||
+      age !== (profile.age ? String(profile.age) : '') ||
+      heightCm !== (profile.heightCm ? String(profile.heightCm) : '') ||
+      areaOfResidence !== (profile.areaOfResidence || '') ||
+      religiousLevel !== (profile.religiousLevel || '') ||
+      phone !== (profile.phone || '');
+
+    if (targetLevel === 'BASIC') {
+      return basicDirty;
+    }
+
+    const fullDirty =
+      education !== (profile.education || '') ||
+      occupation !== (profile.occupation || '') ||
+      headCovering !== (profile.headCovering || '') ||
+      hasDrivingLicense !== (profile.hasDrivingLicense ?? false) ||
+      selfDescription !== (profile.selfDescription || '') ||
+      hobbies !== (profile.hobbies || '') ||
+      lookingFor !== (profile.lookingFor || '') ||
+      familyDescription !== (profile.familyDescription || '');
+
+    return basicDirty || fullDirty;
+  }, [
+    isEditing,
+    profile,
+    targetLevel,
+    fullName,
+    age,
+    heightCm,
+    areaOfResidence,
+    religiousLevel,
+    phone,
+    education,
+    occupation,
+    headCovering,
+    hasDrivingLicense,
+    selfDescription,
+    hobbies,
+    lookingFor,
+    familyDescription,
+  ]);
+
+  useEffect(() => {
+    isDirtyRef.current = isDirty;
+  }, [isDirty]);
+
+  const fetchProfile = useCallback(async () => {
     try {
       setError(null);
       const data = await getMyProfile();
       setProfile(data);
+      setBaselineFromProfile(data);
 
-      // Initialize form fields
-      setFullName(data.fullName || '');
-      setAge(data.age ? String(data.age) : '');
-      setHeightCm(data.heightCm ? String(data.heightCm) : '');
-      setAreaOfResidence(data.areaOfResidence || '');
-      setReligiousLevel(data.religiousLevel || '');
-      setPhone(data.phone || '');
-      setGender(data.gender || null);
-
-      setEducation(data.education || '');
-      setOccupation(data.occupation || '');
-      setHeadCovering(data.headCovering || '');
-      setHasDrivingLicense(data.hasDrivingLicense ?? false);
-      setSelfDescription(data.selfDescription || '');
-      setHobbies(data.hobbies || '');
-      setLookingFor(data.lookingFor || '');
-      setFamilyDescription(data.familyDescription || '');
+      // Auxiliary portrait load
+      let photoUrl: string | null = null;
+      try {
+        const photos = await getMyPhotos();
+        const primary = photos.find((p) => p.isPrimary);
+        if (primary) {
+          photoUrl = primary.imageUrl;
+        } else if (photos.length > 0) {
+          photoUrl = photos[0].imageUrl;
+        }
+      } catch {
+        // Non-critical auxiliary portrait load failure; fallback cleanly
+      }
+      setPrimaryPhotoUrl(photoUrl);
     } catch (err: any) {
       setError(getFriendlyErrorMessage(err, 'טעינת הפרופיל נכשלה.'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [setBaselineFromProfile]);
+
+  const scrollToSection = useCallback((section: 'profile' | 'full' | 'photos') => {
+    const y =
+      section === 'profile'
+        ? sectionOffsets.current.basic
+        : section === 'full'
+        ? sectionOffsets.current.full
+        : sectionOffsets.current.photos;
+
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y: Math.max(0, y - 16), animated: true });
+    }, 100);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      fetchProfile();
+      // Focus safety: do not overwrite dirty in-progress form
+      if (!isDirtyRef.current) {
+        fetchProfile();
+      }
+
       setFormErrorMsg('');
       setFormSuccessMsg('');
 
-      const focusSection = route.params?.focusSection;
       const intent = route.params?.intent;
-
-      if (focusSection === 'photos') {
-        setPhotosExpanded(true);
-      }
+      const focusSection = route.params?.focusSection;
 
       if (intent) {
         if (intent === 'onboarding_basic') {
           setIsEditing(true);
           setTargetLevel('BASIC');
-        } else if (intent === 'onboarding_full' || intent === 'complete_full' || intent === 'repair_full') {
+        } else if (
+          intent === 'onboarding_full' ||
+          intent === 'complete_full' ||
+          intent === 'repair_full'
+        ) {
           setIsEditing(true);
           setTargetLevel('FULL');
         } else if (intent === 'view') {
           setIsEditing(false);
         }
-        // clear consumed parameters so they do not retrigger on every focus
-        navigation.setParams({ focusSection: undefined, intent: undefined });
       }
-    }, [route.params])
+
+      if (focusSection) {
+        scrollToSection(focusSection);
+      }
+
+      if (intent || focusSection) {
+        const preservedWeddingParams: any = {};
+        if (route.params?.returnToWedding !== undefined) {
+          preservedWeddingParams.returnToWedding = route.params.returnToWedding;
+        }
+        if (route.params?.returnWeddingId !== undefined) {
+          preservedWeddingParams.returnWeddingId = route.params.returnWeddingId;
+        }
+        if (route.params?.returnWeddingSnapshot !== undefined) {
+          preservedWeddingParams.returnWeddingSnapshot = route.params.returnWeddingSnapshot;
+        }
+        if (route.params?.accessCode !== undefined) {
+          preservedWeddingParams.accessCode = route.params.accessCode;
+        }
+        if (route.params?.originalSource !== undefined) {
+          preservedWeddingParams.originalSource = route.params.originalSource;
+        }
+        if (route.params?.source !== undefined) {
+          preservedWeddingParams.source = route.params.source;
+        }
+
+        navigation.setParams({
+          ...preservedWeddingParams,
+          focusSection: undefined,
+          intent: undefined,
+        });
+      }
+    }, [fetchProfile, navigation, route.params, scrollToSection])
   );
+
+  // Dirty navigation interception for Stack Header Back
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
+      if (bypassBackRef.current || !isDirtyRef.current) {
+        return;
+      }
+
+      e.preventDefault();
+
+      Alert.alert(
+        'ביטול שינויים',
+        'ישנם שינויים שלא נשמרו. האם לצאת ללא שמירה?',
+        [
+          { text: 'המשך עריכה', style: 'cancel' },
+          {
+            text: 'צא ללא שמירה',
+            style: 'destructive',
+            onPress: () => {
+              bypassBackRef.current = true;
+              if (profile) {
+                setBaselineFromProfile(profile);
+              }
+              navigation.dispatch(e.data.action);
+            },
+          },
+        ]
+      );
+    });
+
+    return unsubscribe;
+  }, [navigation, profile, setBaselineFromProfile]);
+
+  const navigateToPhotos = useCallback(() => {
+    const weddingParams: any = {};
+    if (route.params?.returnToWedding !== undefined) {
+      weddingParams.returnToWedding = route.params.returnToWedding;
+    }
+    if (route.params?.returnWeddingId !== undefined) {
+      weddingParams.returnWeddingId = route.params.returnWeddingId;
+    }
+    if (route.params?.returnWeddingSnapshot !== undefined) {
+      weddingParams.returnWeddingSnapshot = route.params.returnWeddingSnapshot;
+    }
+    if (route.params?.accessCode !== undefined) {
+      weddingParams.accessCode = route.params.accessCode;
+    }
+    if (route.params?.originalSource !== undefined) {
+      weddingParams.originalSource = route.params.originalSource;
+    }
+    if (route.params?.source !== undefined) {
+      weddingParams.source = route.params.source;
+    }
+
+    navigation.navigate('Photos', weddingParams);
+  }, [navigation, route.params]);
+
+  const handleManagePhotos = () => {
+    if (isDirty) {
+      Alert.alert(
+        'מעבר לניהול תמונות',
+        'ישנם שינויים שלא נשמרו בטופס הפרופיל. האם לצאת לניהול תמונות ולבטל את השינויים?',
+        [
+          { text: 'הישאר בטופס', style: 'cancel' },
+          {
+            text: 'עבור לניהול תמונות',
+            style: 'destructive',
+            onPress: () => {
+              if (profile) {
+                setBaselineFromProfile(profile);
+              }
+              setIsEditing(false);
+              navigateToPhotos();
+            },
+          },
+        ]
+      );
+    } else {
+      navigateToPhotos();
+    }
+  };
+
+  const handleCancel = () => {
+    if (isDirty) {
+      Alert.alert(
+        'ביטול שינויים',
+        'האם לבטל את השינויים שביצעת ולחזור לצפייה בפרופיל?',
+        [
+          { text: 'המשך עריכה', style: 'cancel' },
+          {
+            text: 'בטל שינויים',
+            style: 'destructive',
+            onPress: () => {
+              if (profile) {
+                setBaselineFromProfile(profile);
+              }
+              setIsEditing(false);
+              setFormErrorMsg('');
+              setFormSuccessMsg('');
+              setFieldErrors({});
+            },
+          },
+        ]
+      );
+    } else {
+      setIsEditing(false);
+      setFormErrorMsg('');
+      setFormSuccessMsg('');
+      setFieldErrors({});
+    }
+  };
+
+  const handleStartEdit = () => {
+    setFormErrorMsg('');
+    setFormSuccessMsg('');
+    setFieldErrors({});
+    if (profile?.profileStatus === 'FULL' || profile?.profileStatus === 'FULL_INCOMPLETE_BLOCKED') {
+      setTargetLevel('FULL');
+    } else {
+      setTargetLevel('BASIC');
+    }
+    setIsEditing(true);
+  };
 
   const handleSaveUnified = async () => {
     setFormErrorMsg('');
     setFormSuccessMsg('');
+    setSyncWarning(null);
 
-    // Local Basic Validation
-    if (!fullName.trim() || !age.trim() || !heightCm.trim() || !areaOfResidence.trim() || !religiousLevel.trim() || !phone.trim()) {
-      setFormErrorMsg('כל שדות הפרופיל הבסיסי הם שדות חובה');
-      return;
-    }
+    const errors: Record<string, string> = {};
+
+    // BASIC validations
+    if (!fullName.trim()) errors.fullName = 'שדה חובה';
+    if (!age.trim()) errors.age = 'שדה חובה';
+    if (!heightCm.trim()) errors.heightCm = 'שדה חובה';
+    if (!areaOfResidence.trim()) errors.areaOfResidence = 'שדה חובה';
+    if (!religiousLevel.trim()) errors.religiousLevel = 'שדה חובה';
+    if (!phone.trim()) errors.phone = 'שדה חובה';
 
     const parsedAge = parseInt(age, 10);
     const parsedHeight = parseInt(heightCm, 10);
 
-    if (isNaN(parsedAge) || parsedAge <= 0) {
-      setFormErrorMsg('אנא הזן מספר חיובי תקין עבור גיל');
-      return;
+    if (age.trim() && (isNaN(parsedAge) || parsedAge <= 0)) {
+      errors.age = 'אנא הזן גיל חיובי תקין';
     }
 
-    if (isNaN(parsedHeight) || parsedHeight <= 0) {
-      setFormErrorMsg('אנא הזן מספר חיובי תקין עבור גובה');
-      return;
+    if (heightCm.trim() && (isNaN(parsedHeight) || parsedHeight <= 0)) {
+      errors.heightCm = 'אנא הזן גובה חיובי תקין';
     }
 
-    // Local Full Validation
+    // FULL validations
     if (targetLevel === 'FULL') {
-      if (
-        !education.trim() ||
-        !occupation.trim() ||
-        !selfDescription.trim() ||
-        !hobbies.trim() ||
-        !lookingFor.trim()
-      ) {
-        setFormErrorMsg('השדות השכלה, עיסוק, תיאור עצמי, תחביבים ומה אני מחפש/ת הם שדות חובה');
-        return;
-      }
+      if (!education.trim()) errors.education = 'שדה חובה';
+      if (!occupation.trim()) errors.occupation = 'שדה חובה';
+      if (!selfDescription.trim()) errors.selfDescription = 'שדה חובה';
+      if (!hobbies.trim()) errors.hobbies = 'שדה חובה';
+      if (!lookingFor.trim()) errors.lookingFor = 'שדה חובה';
     }
 
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setFormErrorMsg('יש למלא את כל שדות החובה כנדרש');
+      return;
+    }
+
+    setFieldErrors({});
     setIsSubmitting(true);
+
     try {
-      const payload: any = {
+      const payload: UnifiedProfileUpdateRequest = {
         targetLevel,
         fullName: fullName.trim(),
         age: parsedAge,
@@ -180,16 +470,23 @@ export const ProfileScreen = ({ navigation, route }: any) => {
         payload.hasDrivingLicense = hasDrivingLicense;
       }
 
+      // Step 1: PUT /profile/me
       const updatedProfile = await updateUnifiedProfile(payload);
 
-      // Apply updated Profile response directly to local state
+      // Step 2 & 3: Authoritative state & baseline update
       setProfile(updatedProfile);
+      setBaselineFromProfile(updatedProfile);
 
-      // Update auth context
-      await refreshMe();
+      // Step 4: Separate secondary try/catch for refreshMe()
+      try {
+        await refreshMe();
+      } catch (refreshErr) {
+        setSyncWarning('הפרופיל נשמר בהצלחה, אך עדכון המוכנות הראשי יתעדכן בחיבור הבא.');
+      }
 
-      setFormSuccessMsg('הפרופיל נשמר בהצלחה!');
+      // Step 5 & 6: Return to view & show success feedback
       setIsEditing(false);
+      setFormSuccessMsg('הפרופיל נשמר בהצלחה');
     } catch (err: any) {
       setFormErrorMsg(getFriendlyErrorMessage(err, 'שמירת הפרופיל נכשלה.'));
     } finally {
@@ -199,705 +496,873 @@ export const ProfileScreen = ({ navigation, route }: any) => {
 
   if (loading) {
     return (
-      <Screen style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>טוען פרופיל...</Text>
-      </Screen>
+      <ScreenContainer appearance="darkShell" testID="profile-loading-screen">
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={gold.action.default} />
+          <Text style={[typography.bodyMedium, styles.loadingText]}>טוען פרופיל...</Text>
+        </View>
+      </ScreenContainer>
     );
   }
 
   if (error || !profile) {
     return (
-      <Screen style={styles.centerContainer}>
-        <Text style={styles.errorText}>{error || 'טעינת הפרופיל נכשלה.'}</Text>
-        <AppButton title="נסה שוב" onPress={fetchProfile} style={styles.retryButton} />
-      </Screen>
+      <ScreenContainer appearance="darkShell" testID="profile-error-screen">
+        <View style={styles.centerContainer}>
+          <Text style={[typography.bodyLarge, styles.errorText]}>
+            {error || 'טעינת הפרופיל נכשלה.'}
+          </Text>
+          <Button
+            label="נסה שוב"
+            onPress={fetchProfile}
+            variant="primary"
+            visualAppearance="gold"
+            style={styles.retryButton}
+          />
+        </View>
+      </ScreenContainer>
     );
   }
 
-  const renderRow = (label: string, value: any, isLongText = false) => {
-    let displayValue = 'לא צוין';
-    if (value !== null && value !== undefined && value !== '') {
-      const stringVal = String(value);
-      if (stringVal === 'MALE' || stringVal === 'FEMALE') {
-        displayValue = getGenderLabel(stringVal);
-      } else if (stringVal === 'USER' || stringVal === 'EVENT_MANAGER' || stringVal === 'ADMIN') {
-        displayValue = getUserRoleLabel(stringVal);
-      } else if (stringVal === 'NONE' || stringVal === 'BASIC' || stringVal === 'FULL' || stringVal === 'FULL_INCOMPLETE_BLOCKED') {
-        displayValue = getProfileStatusLabel(stringVal);
-      } else if (stringVal === 'Yes' || stringVal === 'true' || value === true) {
-        displayValue = 'כן';
-      } else if (stringVal === 'No' || stringVal === 'false' || value === false) {
-        displayValue = 'לא';
-      } else if (stringVal === 'Not specified') {
-        displayValue = 'לא צוין';
-      } else {
-        displayValue = stringVal;
-      }
-    }
-
-    if (isLongText) {
-      return (
-        <View style={styles.longTextContainer} key={label}>
-          <Text style={styles.rowLabel}>{label}</Text>
-          <Text style={styles.longTextValue}>{displayValue}</Text>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.row} key={label}>
-        <Text style={styles.rowLabel}>{label}:</Text>
-        <Text style={styles.rowValue}>{displayValue}</Text>
-      </View>
-    );
-  };
-
-  const status = profile.profileStatus;
-
-  const getMissingFields = () => {
-    const missing = [];
-    if (!profile.education || !profile.education.trim()) missing.push('השכלה');
-    if (!profile.occupation || !profile.occupation.trim()) missing.push('עיסוק');
-    if (!profile.selfDescription || !profile.selfDescription.trim()) missing.push('עליי / תיאור עצמי');
-    if (!profile.hobbies || !profile.hobbies.trim()) missing.push('תחביבים');
-    if (!profile.lookingFor || !profile.lookingFor.trim()) missing.push('מה אני מחפש/ת');
-    if (!profile.hasPrimaryPhoto) missing.push('תמונה ראשית');
-    return missing;
-  };
-
-  const missingFields = status === 'FULL_INCOMPLETE_BLOCKED' ? getMissingFields() : [];
+  // Server-authoritative readiness (Profile Status & Primary Photo only)
+  const isBasicComplete =
+    profile.profileStatus === 'BASIC' || profile.profileStatus === 'FULL';
+  const isFullComplete = profile.profileStatus === 'FULL';
+  const hasPrimaryPhoto = Boolean(profile.hasPrimaryPhoto);
 
   return (
-    <Screen>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>הפרופיל שלי</Text>
-
-        {/* Global form alerts/errors */}
+    <ScreenContainer
+      appearance="darkShell"
+      keyboardAware
+      safeEdges={['bottom', 'left', 'right']}
+      testID="profile-screen-container"
+    >
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.scrollViewFlex}
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Bounded Notifications / Alerts */}
         {formErrorMsg ? (
-          <View style={styles.formErrorCard}>
-            <Text style={styles.formErrorText}>{formErrorMsg}</Text>
+          <View style={styles.alertErrorCard}>
+            <AppIcon name="alert-circle" size={18} color={statusTokens.error.onIvory} />
+            <Text style={[typography.bodyMedium, styles.alertErrorText]}>{formErrorMsg}</Text>
           </View>
         ) : null}
 
         {formSuccessMsg ? (
-          <View style={styles.formSuccessCard}>
-            <Text style={styles.formSuccessText}>{formSuccessMsg}</Text>
+          <View style={styles.alertSuccessCard}>
+            <AppIcon name="check" size={18} color={statusTokens.success.onIvory} />
+            <Text style={[typography.bodyMedium, styles.alertSuccessText]}>{formSuccessMsg}</Text>
           </View>
         ) : null}
 
-        {/* Compact Photos Card / Manager Section */}
-        <View style={styles.section}>
-          {photosExpanded ? (
-            <View style={styles.photoManagerContainer}>
-              <View style={styles.photoManagerHeader}>
-                <Text style={styles.photoManagerTitle}>ניהול תמונות פרופיל</Text>
-                <TouchableOpacity onPress={() => setPhotosExpanded(false)}>
-                  <Text style={styles.photoCollapseAction}>סגירה ✗</Text>
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.photoNoteText}>
-                שינויי תמונות נשמרים באופן מיידי.
-              </Text>
-              <ProfilePhotosManager onPhotosChanged={fetchProfile} />
-            </View>
-          ) : (
-            <TouchableOpacity style={styles.photoCard} onPress={() => setPhotosExpanded(true)}>
-              <View style={styles.photoCardRow}>
-                <Text style={styles.photoCardTitle}>תמונות פרופיל</Text>
-                <Text style={styles.photoCardAction}>נהל/י תמונות ✎</Text>
-              </View>
-              <View style={styles.photoCardRow}>
-                <Text style={styles.photoCardMetadata}>
-                  הועלו {profile.photoCount} מתוך 2 תמונות
-                </Text>
-                <Text style={[styles.photoCardStatus, !profile.hasPrimaryPhoto && styles.photoCardStatusMissing]}>
-                  {profile.hasPrimaryPhoto ? '✓ תמונה ראשית הוגדרה' : '✗ חסרה תמונה ראשית'}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Edit Mode vs View Mode */}
-        {isEditing ? (
-          <View style={styles.card}>
-            {targetLevel === 'FULL' ? (
-              <>
-                <BasicProfileForm
-                  isEmbedded={true}
-                  fullName={fullName}
-                  setFullName={setFullName}
-                  gender={gender}
-                  age={age}
-                  setAge={setAge}
-                  heightCm={heightCm}
-                  setHeightCm={setHeightCm}
-                  areaOfResidence={areaOfResidence}
-                  setAreaOfResidence={setAreaOfResidence}
-                  religiousLevel={religiousLevel}
-                  setReligiousLevel={setReligiousLevel}
-                  phone={phone}
-                  setPhone={setPhone}
-                />
-                <View style={styles.sectionSeparator} />
-                <FullProfileForm
-                  isEmbedded={true}
-                  education={education}
-                  setEducation={setEducation}
-                  occupation={occupation}
-                  setOccupation={setOccupation}
-                  headCovering={headCovering}
-                  setHeadCovering={setHeadCovering}
-                  hasDrivingLicense={hasDrivingLicense}
-                  setHasDrivingLicense={setHasDrivingLicense}
-                  selfDescription={selfDescription}
-                  setSelfDescription={setSelfDescription}
-                  hobbies={hobbies}
-                  setHobbies={setHobbies}
-                  lookingFor={lookingFor}
-                  setLookingFor={setLookingFor}
-                  familyDescription={familyDescription}
-                  setFamilyDescription={setFamilyDescription}
-                  profileStatus={status}
-                />
-              </>
-            ) : (
-              <BasicProfileForm
-                isEmbedded={true}
-                fullName={fullName}
-                setFullName={setFullName}
-                gender={gender}
-                age={age}
-                setAge={setAge}
-                heightCm={heightCm}
-                setHeightCm={setHeightCm}
-                areaOfResidence={areaOfResidence}
-                setAreaOfResidence={setAreaOfResidence}
-                religiousLevel={religiousLevel}
-                setReligiousLevel={setReligiousLevel}
-                phone={phone}
-                setPhone={setPhone}
-              />
-            )}
-
-            <AppButton
-              title="שמירת שינויים"
-              onPress={handleSaveUnified}
-              loading={isSubmitting}
-              style={styles.button}
-            />
-            <AppButton
-              title="ביטול"
-              variant="secondary"
-              onPress={() => {
-                setIsEditing(false);
-                setFormErrorMsg('');
-                setFormSuccessMsg('');
-                fetchProfile(); // Reset fields to DB values
-              }}
-              style={styles.cancelButton}
-            />
+        {syncWarning ? (
+          <View style={styles.alertWarningCard}>
+            <AppIcon name="info" size={18} color={statusTokens.warning.onIvory} />
+            <Text style={[typography.bodyMedium, styles.alertWarningText]}>{syncWarning}</Text>
           </View>
-        ) : (
-          /* View Mode */
-          <View>
-            {/* Account Info Section */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>פרטי החשבון</Text>
-              <View style={styles.card}>
-                {renderRow('שם מלא', profile.fullName)}
-                {renderRow('אימייל', profile.email)}
-                {renderRow('מגדר', profile.gender)}
-                {renderRow('תפקיד', profile.role)}
-                {renderRow('סטטוס פרופיל', profile.profileStatus)}
-                {renderRow('חסום על ידי מנהל', profile.adminBlocked)}
-              </View>
-            </View>
+        ) : null}
 
-            {/* Case NONE: show guidance card to complete Profile */}
-            {status === 'NONE' && (
-              <View style={styles.guidedCard}>
-                <Text style={styles.guidedTitle}>השלמת הפרופיל שלך</Text>
-                <Text style={styles.guidedText}>
-                  כדי להשתמש במאגרים צריך להשלים פרופיל ותמונה ראשית. תמונה ראשית היא חלק מתנאי הזכאות למאגרים.
-                </Text>
-                <Text style={styles.guidedBullet}>
-                  • <Text style={styles.boldText}>פרופיל בסיסי + תמונה ראשית</Text> מאפשרים שימוש במאגרי חתונה (מאגר מקומי).
-                </Text>
-                <Text style={styles.guidedBullet}>
-                  • <Text style={styles.boldText}>פרופיל מלא</Text> כולל קודם את הפרופיל הבסיסי, ויחד עם תמונה ראשית מאפשר גם את המאגר הגלובלי.
-                </Text>
-
-                <AppButton
-                  title="מסלול בסיסי (פרופיל בסיסי ותמונה)"
-                  onPress={() => {
-                    setIsEditing(true);
-                    setTargetLevel('BASIC');
-                    setFormErrorMsg('');
-                    setFormSuccessMsg('');
-                  }}
-                  style={styles.guidedButton}
+        {/* 1. Identity Card */}
+        <Card appearance="ivory" style={styles.cardSpacing} testID="profile-identity-card">
+          <View style={styles.identityRow}>
+            <View style={styles.avatarContainer}>
+              {primaryPhotoUrl ? (
+                <Image
+                  source={{ uri: primaryPhotoUrl }}
+                  style={styles.avatarImage}
+                  resizeMode="cover"
                 />
-
-                <AppButton
-                  title="מסלול מלא (פרופיל בסיסי, מלא ותמונה)"
-                  onPress={() => {
-                    setIsEditing(true);
-                    setTargetLevel('FULL');
-                    setFormErrorMsg('');
-                    setFormSuccessMsg('');
-                  }}
-                  style={[styles.guidedButton, styles.guidedButtonPrimary]}
-                />
-              </View>
-            )}
-
-            {/* Case FULL_INCOMPLETE_BLOCKED: show warning card listing missing fields */}
-            {status === 'FULL_INCOMPLETE_BLOCKED' && (
-              <View style={styles.warningCard}>
-                <Text style={styles.warningTitle}>פרופיל מלא חסר (חסום)</Text>
-                <Text style={styles.warningText}>
-                  הפרופיל המלא שלך אינו שלם. עליך להשלים את כל שדות החובה ולהעלות תמונה ראשית כדי להשתלב במאגרים.
-                </Text>
-                {missingFields.length > 0 && (
-                  <View style={styles.missingList}>
-                    <Text style={[styles.warningText, { fontWeight: 'bold', marginBottom: theme.spacing.s }]}>
-                      הפרטים החסרים:
-                    </Text>
-                    {missingFields.map((field, idx) => (
-                      <Text key={idx} style={styles.missingItem}>• {field}</Text>
-                    ))}
-                  </View>
-                )}
-                <AppButton
-                  title="לתיקון והשלמת הפרופיל"
-                  onPress={() => {
-                    setIsEditing(true);
-                    setTargetLevel('FULL');
-                    setFormErrorMsg('');
-                    setFormSuccessMsg('');
-                  }}
-                  style={styles.guidedButton}
-                />
-              </View>
-            )}
-
-            {/* Unified Profile Card (for BASIC, FULL, FULL_INCOMPLETE_BLOCKED) */}
-            {status !== 'NONE' && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>פרטי הפרופיל</Text>
-                <View style={styles.card}>
-                  {renderRow('גיל', profile.age)}
-                  {renderRow('גובה (ס״מ)', profile.heightCm)}
-                  {renderRow('אזור מגורים', profile.areaOfResidence)}
-                  {renderRow('רמה דתית', profile.religiousLevel)}
-                  {renderRow('טלפון', profile.phone)}
-
-                  {(status === 'FULL' || status === 'FULL_INCOMPLETE_BLOCKED') && (
-                    <>
-                      <View style={styles.sectionSeparator} />
-                      {renderRow('השכלה', profile.education)}
-                      {renderRow('עיסוק', profile.occupation)}
-                      {renderRow('כיסוי ראש', profile.headCovering)}
-                      {renderRow('רישיון נהיגה', profile.hasDrivingLicense)}
-                      {renderRow('עליי (תיאור עצמי)', profile.selfDescription, true)}
-                      {renderRow('תחביבים', profile.hobbies, true)}
-                      {renderRow('מה אני מחפש/ת', profile.lookingFor, true)}
-                      {renderRow('רקע משפחתי (אופציונלי)', profile.familyDescription, true)}
-                    </>
-                  )}
+              ) : (
+                <View style={styles.avatarFallback}>
+                  <AppIcon name="user" size={36} color={text.onIvory.secondary} />
                 </View>
-              </View>
-            )}
+              )}
+            </View>
 
-            {/* Upgrade Card for BASIC users */}
-            {status === 'BASIC' && (
-              <View style={styles.upgradeCard}>
-                <Text style={styles.upgradeTitle}>השלמה לפרופיל מלא</Text>
-                <Text style={styles.upgradeText}>
-                  פרופיל מלא פותח עבורך את האפשרות להיכנס למאגר השידוכים הגלובלי (בכפוף להעלאת תמונה ראשית תקינה).
+            <View style={styles.identityDetails}>
+              <View style={styles.nameRow}>
+                <Text style={[typography.titleLarge, styles.userNameText]}>
+                  {profile.fullName || 'משתמש'}
                 </Text>
-                <AppButton
-                  title="המשך למילוי פרופיל מלא"
-                  onPress={() => {
-                    setIsEditing(true);
-                    setTargetLevel('FULL');
-                    setFormErrorMsg('');
-                    setFormSuccessMsg('');
-                  }}
-                  style={styles.upgradeButton}
+                <AppIcon name="user" size={20} color={text.onIvory.secondary} />
+              </View>
+
+              <View style={styles.identityInfoRow}>
+                <AppIcon name="home" size={14} color={text.onIvory.secondary} />
+                <Text style={[typography.bodyMedium, styles.identityLocationText]}>
+                  {profile.areaOfResidence || 'לא צוין'}
+                </Text>
+              </View>
+
+              <View style={styles.statusBadgeRow}>
+                <AppIcon name="shield" size={14} color={gold.border.strong} />
+                <Text style={[typography.caption, styles.statusBadgeText]}>
+                  {getProfileStatusLabel(profile.profileStatus)}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.ornamentContainer}>
+            <View style={styles.ornamentLine} />
+            <Text style={styles.ornamentDiamond}>❖</Text>
+            <View style={styles.ornamentLine} />
+          </View>
+        </Card>
+
+        {/* 2. Readiness Summary Card ("המוכנות שלי") */}
+        <Card appearance="ivory" style={styles.cardSpacing} testID="profile-readiness-card">
+          <View style={styles.readinessHeaderRow}>
+            <Text style={[typography.titleMedium, styles.cardTitleText]}>המוכנות שלי</Text>
+            <AppIcon name="star" size={20} color={gold.border.strong} />
+          </View>
+
+          <View style={styles.readinessColumnsRow}>
+            {/* Column 1: BASIC readiness */}
+            <View style={styles.readinessColumn}>
+              <AppIcon
+                name="shield"
+                size={22}
+                color={isBasicComplete ? statusTokens.success.onIvory : text.onIvory.secondary}
+              />
+              <Text style={[typography.caption, styles.readinessColumnTitle]}>
+                {isBasicComplete ? 'פרופיל בסיסי הושלם' : 'פרופיל בסיסי חסר'}
+              </Text>
+            </View>
+
+            <View style={styles.readinessVerticalDivider} />
+
+            {/* Column 2: FULL readiness */}
+            <View style={styles.readinessColumn}>
+              <AppIcon
+                name="shield"
+                size={22}
+                color={isFullComplete ? statusTokens.success.onIvory : text.onIvory.secondary}
+              />
+              <Text style={[typography.caption, styles.readinessColumnTitle]}>
+                {isFullComplete ? 'פרופיל מלא הושלם' : 'פרופיל מלא חסר'}
+              </Text>
+            </View>
+
+            <View style={styles.readinessVerticalDivider} />
+
+            {/* Column 3: Primary Photo readiness */}
+            <View style={styles.readinessColumn}>
+              <AppIcon
+                name="eye"
+                size={22}
+                color={hasPrimaryPhoto ? statusTokens.success.onIvory : text.onIvory.secondary}
+              />
+              <Text style={[typography.caption, styles.readinessColumnTitle]}>
+                {hasPrimaryPhoto ? 'תמונה ראשית קיימת' : 'חסרה תמונה ראשית'}
+              </Text>
+            </View>
+          </View>
+        </Card>
+
+        {isEditing ? (
+          /* EDIT MODE COMPOSITION */
+          <>
+            {/* 3. BASIC Form Fields */}
+            <View
+              onLayout={(e) => {
+                sectionOffsets.current.basic = e.nativeEvent.layout.y;
+              }}
+            >
+              <Card appearance="ivory" style={styles.cardSpacing} testID="profile-basic-edit-card">
+                <View style={styles.cardHeaderWithBadge}>
+                  <Text style={[typography.titleMedium, styles.cardTitleText]}>פרטים אישיים</Text>
+                  <View style={styles.badgePill}>
+                    <Text style={styles.badgePillText}>BASIC</Text>
+                  </View>
+                </View>
+
+                <TextField
+                  label="שם מלא"
+                  value={fullName}
+                  onChangeText={setFullName}
+                  appearance="ivory"
+                  required
+                  error={fieldErrors.fullName}
+                  containerStyle={styles.fieldSpacing}
                 />
+
+                <TextField
+                  label="מגדר"
+                  value={gender ? getGenderLabel(gender) : 'לא צוין'}
+                  onChangeText={() => {}}
+                  disabled
+                  appearance="ivory"
+                  helper="שדה לקריאה בלבד"
+                  containerStyle={styles.fieldSpacing}
+                />
+
+                <TextField
+                  label="גיל"
+                  value={age}
+                  onChangeText={setAge}
+                  inputModeType="phone"
+                  keyboardType="numeric"
+                  appearance="ivory"
+                  required
+                  error={fieldErrors.age}
+                  containerStyle={styles.fieldSpacing}
+                />
+
+                <TextField
+                  label="גובה (ס״מ)"
+                  value={heightCm}
+                  onChangeText={setHeightCm}
+                  inputModeType="phone"
+                  keyboardType="numeric"
+                  appearance="ivory"
+                  required
+                  error={fieldErrors.heightCm}
+                  containerStyle={styles.fieldSpacing}
+                />
+
+                <TextField
+                  label="אזור מגורים"
+                  value={areaOfResidence}
+                  onChangeText={setAreaOfResidence}
+                  appearance="ivory"
+                  required
+                  error={fieldErrors.areaOfResidence}
+                  containerStyle={styles.fieldSpacing}
+                />
+
+                <TextField
+                  label="רמה דתית"
+                  value={religiousLevel}
+                  onChangeText={setReligiousLevel}
+                  appearance="ivory"
+                  required
+                  error={fieldErrors.religiousLevel}
+                  containerStyle={styles.fieldSpacing}
+                />
+
+                <TextField
+                  label="מספר טלפון"
+                  value={phone}
+                  onChangeText={setPhone}
+                  inputModeType="phone"
+                  keyboardType="phone-pad"
+                  bidiType="phone"
+                  appearance="ivory"
+                  required
+                  error={fieldErrors.phone}
+                  containerStyle={styles.fieldSpacing}
+                />
+              </Card>
+            </View>
+
+            {/* 4. FULL Form Fields (when FULL edit is active) */}
+            {targetLevel === 'FULL' && (
+              <View
+                onLayout={(e) => {
+                  sectionOffsets.current.full = e.nativeEvent.layout.y;
+                }}
+              >
+                <Card appearance="ivory" style={styles.cardSpacing} testID="profile-full-edit-card">
+                  <View style={styles.cardHeaderWithBadge}>
+                    <Text style={[typography.titleMedium, styles.cardTitleText]}>פרטים מורחבים</Text>
+                    <View style={styles.badgePill}>
+                      <Text style={styles.badgePillText}>FULL</Text>
+                    </View>
+                  </View>
+
+                  <TextField
+                    label="השכלה"
+                    value={education}
+                    onChangeText={setEducation}
+                    appearance="ivory"
+                    required
+                    error={fieldErrors.education}
+                    containerStyle={styles.fieldSpacing}
+                  />
+
+                  <TextField
+                    label="עיסוק"
+                    value={occupation}
+                    onChangeText={setOccupation}
+                    appearance="ivory"
+                    required
+                    error={fieldErrors.occupation}
+                    containerStyle={styles.fieldSpacing}
+                  />
+
+                  <TextField
+                    label="כיסוי ראש (אופציונלי)"
+                    value={headCovering}
+                    onChangeText={setHeadCovering}
+                    appearance="ivory"
+                    containerStyle={styles.fieldSpacing}
+                  />
+
+                  <View style={[styles.switchRow, styles.fieldSpacing]}>
+                    <Text style={[typography.bodyMedium, styles.switchLabel]}>יש רישיון נהיגה</Text>
+                    <Switch
+                      value={hasDrivingLicense}
+                      onValueChange={setHasDrivingLicense}
+                      trackColor={{ false: colors.secondarySubtle, true: gold.action.default }}
+                      thumbColor={visual.surface.light}
+                    />
+                  </View>
+
+                  <TextField
+                    label="עליי (תיאור עצמי)"
+                    value={selfDescription}
+                    onChangeText={setSelfDescription}
+                    multiline
+                    numberOfLines={3}
+                    appearance="ivory"
+                    required
+                    error={fieldErrors.selfDescription}
+                    containerStyle={styles.fieldSpacing}
+                  />
+
+                  <TextField
+                    label="תחביבים"
+                    value={hobbies}
+                    onChangeText={setHobbies}
+                    multiline
+                    numberOfLines={2}
+                    appearance="ivory"
+                    required
+                    error={fieldErrors.hobbies}
+                    containerStyle={styles.fieldSpacing}
+                  />
+
+                  <TextField
+                    label="מה אני מחפש/ת"
+                    value={lookingFor}
+                    onChangeText={setLookingFor}
+                    multiline
+                    numberOfLines={3}
+                    appearance="ivory"
+                    required
+                    error={fieldErrors.lookingFor}
+                    containerStyle={styles.fieldSpacing}
+                  />
+
+                  <TextField
+                    label="רקע משפחתי (אופציונלי)"
+                    value={familyDescription}
+                    onChangeText={setFamilyDescription}
+                    multiline
+                    numberOfLines={2}
+                    appearance="ivory"
+                    containerStyle={styles.fieldSpacing}
+                  />
+                </Card>
               </View>
             )}
 
-            {/* Action Buttons in View Mode */}
-            {status === 'BASIC' && (
-              <AppButton
-                title="עריכת פרופיל בסיסי"
-                onPress={() => {
-                  setIsEditing(true);
-                  setTargetLevel('BASIC');
-                  setFormErrorMsg('');
-                  setFormSuccessMsg('');
-                }}
-                style={styles.button}
-              />
-            )}
+            {/* 5. Primary Photo Summary & Manage Photos Entry */}
+            <View
+              onLayout={(e) => {
+                sectionOffsets.current.photos = e.nativeEvent.layout.y;
+              }}
+            >
+              <Card appearance="ivory" style={styles.cardSpacing} testID="profile-photos-edit-card">
+                <Text style={[typography.titleMedium, styles.cardTitleText]}>תמונה ראשית</Text>
+                <View style={styles.photosEditRow}>
+                  <Text style={[typography.bodyMedium, styles.photosSubtitleText]}>
+                    {profile.photoCount} תמונות •{' '}
+                    {profile.hasPrimaryPhoto ? 'תמונה ראשית קיימת' : 'חסרה תמונה ראשית'}
+                  </Text>
+                  <Button
+                    label="ניהול תמונות"
+                    variant="secondary"
+                    onPress={handleManagePhotos}
+                    style={styles.photosManageSmallBtn}
+                  />
+                </View>
+              </Card>
+            </View>
 
-            {(status === 'FULL' || status === 'FULL_INCOMPLETE_BLOCKED') && (
-              <AppButton
-                title="עריכת פרופיל"
-                onPress={() => {
-                  setIsEditing(true);
-                  setTargetLevel('FULL');
-                  setFormErrorMsg('');
-                  setFormSuccessMsg('');
-                }}
-                style={styles.button}
-              />
-            )}
+            {/* 6. Edit Actions (Save & Cancel) */}
+            <View style={styles.actionsContainer}>
+              <ResponsiveActionGroup alignment="stacked">
+                <Button
+                  label="שמירת שינויים"
+                  variant="primary"
+                  visualAppearance="gold"
+                  loading={isSubmitting}
+                  disabled={isSubmitting}
+                  onPress={handleSaveUnified}
+                  testID="profile-save-btn"
+                />
+                <Button
+                  label="ביטול"
+                  variant="secondary"
+                  disabled={isSubmitting}
+                  onPress={handleCancel}
+                  testID="profile-cancel-btn"
+                />
+              </ResponsiveActionGroup>
+            </View>
+          </>
+        ) : (
+          /* VIEW MODE COMPOSITION */
+          <>
+            {/* 3. BASIC Information Card */}
+            <View
+              onLayout={(e) => {
+                sectionOffsets.current.basic = e.nativeEvent.layout.y;
+              }}
+            >
+              <Card appearance="ivory" style={styles.cardSpacing} testID="profile-basic-view-card">
+                <Text style={[typography.titleMedium, styles.cardTitleText, styles.cardTitleMargin]}>
+                  פרטים אישיים
+                </Text>
 
-            {(status === 'BASIC' || status === 'FULL') && (
-              <AppButton
-                title="חיפוש מועמדים"
-                onPress={() => navigation.navigate('PoolSelection')}
-                style={styles.button}
-              />
-            )}
+                <View style={styles.infoTableRow}>
+                  <Text style={[typography.bodyMedium, styles.infoTableLabel]}>שם מלא</Text>
+                  <Text style={[typography.bodyMedium, styles.infoTableValue]}>
+                    {profile.fullName || 'לא צוין'}
+                  </Text>
+                </View>
 
-            {/* Safe Exit to MeScreen */}
-            {(status === 'BASIC' || status === 'FULL' || status === 'FULL_INCOMPLETE_BLOCKED') && (
-              <AppButton
-                title="סיום ומעבר לאזור שלי"
-                onPress={() => {
-                  navigation.reset({
-                    index: 0,
-                    routes: [{ name: 'Me' }],
-                  });
-                }}
-                style={[styles.button, styles.safeExitButton]}
-              />
-            )}
-          </View>
+                <View style={styles.infoTableRow}>
+                  <Text style={[typography.bodyMedium, styles.infoTableLabel]}>מגדר</Text>
+                  <Text style={[typography.bodyMedium, styles.infoTableValue]}>
+                    {profile.gender ? getGenderLabel(profile.gender) : 'לא צוין'}
+                  </Text>
+                </View>
+
+                <View style={styles.infoTableRow}>
+                  <Text style={[typography.bodyMedium, styles.infoTableLabel]}>גיל</Text>
+                  <Text style={[typography.bodyMedium, styles.infoTableValue]}>
+                    {profile.age ? String(profile.age) : 'לא צוין'}
+                  </Text>
+                </View>
+
+                <View style={styles.infoTableRow}>
+                  <Text style={[typography.bodyMedium, styles.infoTableLabel]}>גובה</Text>
+                  <Text style={[typography.bodyMedium, styles.infoTableValue]}>
+                    {profile.heightCm ? `ס״מ ${profile.heightCm}` : 'לא צוין'}
+                  </Text>
+                </View>
+
+                <View style={styles.infoTableRow}>
+                  <Text style={[typography.bodyMedium, styles.infoTableLabel]}>אזור מגורים</Text>
+                  <Text style={[typography.bodyMedium, styles.infoTableValue]}>
+                    {profile.areaOfResidence || 'לא צוין'}
+                  </Text>
+                </View>
+
+                <View style={styles.infoTableRow}>
+                  <Text style={[typography.bodyMedium, styles.infoTableLabel]}>רמה דתית</Text>
+                  <Text style={[typography.bodyMedium, styles.infoTableValue]}>
+                    {profile.religiousLevel || 'לא צוין'}
+                  </Text>
+                </View>
+
+                <View style={[styles.infoTableRow, styles.infoTableRowLast]}>
+                  <Text style={[typography.bodyMedium, styles.infoTableLabel]}>מספר טלפון</Text>
+                  <BidiText
+                    value={profile.phone || 'לא צוין'}
+                    kind="phone"
+                    style={[typography.bodyMedium, styles.infoTableValue]}
+                  />
+                </View>
+              </Card>
+            </View>
+
+            {/* 4. FULL Information Card */}
+            <View
+              onLayout={(e) => {
+                sectionOffsets.current.full = e.nativeEvent.layout.y;
+              }}
+            >
+              <Card appearance="ivory" style={styles.cardSpacing} testID="profile-full-view-card">
+                <Text style={[typography.titleMedium, styles.cardTitleText, styles.cardTitleMargin]}>
+                  פרטים מורחבים
+                </Text>
+
+                <View style={styles.infoTableRow}>
+                  <Text style={[typography.bodyMedium, styles.infoTableLabel]}>השכלה</Text>
+                  <Text style={[typography.bodyMedium, styles.infoTableValue]}>
+                    {profile.education || 'לא צוין'}
+                  </Text>
+                </View>
+
+                <View style={styles.infoTableRow}>
+                  <Text style={[typography.bodyMedium, styles.infoTableLabel]}>עיסוק</Text>
+                  <Text style={[typography.bodyMedium, styles.infoTableValue]}>
+                    {profile.occupation || 'לא צוין'}
+                  </Text>
+                </View>
+
+                <View style={styles.infoTableRow}>
+                  <Text style={[typography.bodyMedium, styles.infoTableLabel]}>כיסוי ראש</Text>
+                  <Text style={[typography.bodyMedium, styles.infoTableValue]}>
+                    {profile.headCovering || '-'}
+                  </Text>
+                </View>
+
+                <View style={styles.infoTableRow}>
+                  <Text style={[typography.bodyMedium, styles.infoTableLabel]}>רישיון נהיגה</Text>
+                  <Text style={[typography.bodyMedium, styles.infoTableValue]}>
+                    {profile.hasDrivingLicense ? 'יש' : profile.hasDrivingLicense === false ? 'אין' : 'לא צוין'}
+                  </Text>
+                </View>
+
+                <View style={styles.infoTableColumnRow}>
+                  <Text style={[typography.bodyMedium, styles.infoTableLabel]}>עליי</Text>
+                  <Text style={[typography.bodyMedium, styles.infoTableLongValue]}>
+                    {profile.selfDescription || 'לא צוין'}
+                  </Text>
+                </View>
+
+                <View style={styles.infoTableColumnRow}>
+                  <Text style={[typography.bodyMedium, styles.infoTableLabel]}>תחביבים</Text>
+                  <Text style={[typography.bodyMedium, styles.infoTableLongValue]}>
+                    {profile.hobbies || 'לא צוין'}
+                  </Text>
+                </View>
+
+                <View style={styles.infoTableColumnRow}>
+                  <Text style={[typography.bodyMedium, styles.infoTableLabel]}>מה אני מחפש/ת</Text>
+                  <Text style={[typography.bodyMedium, styles.infoTableLongValue]}>
+                    {profile.lookingFor || 'לא צוין'}
+                  </Text>
+                </View>
+
+                <View style={[styles.infoTableColumnRow, styles.infoTableRowLast]}>
+                  <Text style={[typography.bodyMedium, styles.infoTableLabel]}>רקע משפחתי</Text>
+                  <Text style={[typography.bodyMedium, styles.infoTableLongValue]}>
+                    {profile.familyDescription || 'לא צוין'}
+                  </Text>
+                </View>
+              </Card>
+            </View>
+
+            {/* 5. Photos Summary Card */}
+            <View
+              onLayout={(e) => {
+                sectionOffsets.current.photos = e.nativeEvent.layout.y;
+              }}
+            >
+              <Card appearance="ivory" style={styles.cardSpacing} testID="profile-photos-summary-card">
+                <Text style={[typography.titleMedium, styles.cardTitleText]}>תמונות</Text>
+                <Text style={[typography.bodyMedium, styles.photosSubtitleText]}>
+                  {profile.photoCount} תמונות •{' '}
+                  {profile.hasPrimaryPhoto ? 'תמונה ראשית קיימת' : 'חסרה תמונה ראשית'}
+                </Text>
+              </Card>
+            </View>
+
+            {/* 6. View Mode Actions */}
+            <View style={styles.actionsContainer}>
+              <ResponsiveActionGroup alignment="stacked">
+                <Button
+                  label="עריכת הפרופיל"
+                  variant="primary"
+                  visualAppearance="gold"
+                  onPress={handleStartEdit}
+                  testID="profile-edit-btn"
+                />
+                <Button
+                  label="ניהול תמונות"
+                  variant="secondary"
+                  onPress={handleManagePhotos}
+                  testID="profile-photos-btn"
+                />
+              </ResponsiveActionGroup>
+            </View>
+          </>
         )}
       </ScrollView>
-    </Screen>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
+  scrollViewFlex: {
+    flex: 1,
+  },
   container: {
-    padding: theme.spacing.m,
-    flexGrow: 1,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.sm,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: theme.spacing.l,
+    padding: spacing.xxl,
   },
   loadingText: {
-    marginTop: theme.spacing.m,
-    color: theme.colors.textSecondary,
-    fontSize: 16,
+    marginTop: spacing.md,
+    color: text.onDark.secondary,
     textAlign: 'center',
   },
   errorText: {
-    color: theme.colors.error,
-    fontSize: 16,
+    color: statusTokens.error.onIvory,
     textAlign: 'center',
-    marginBottom: theme.spacing.m,
+    marginBottom: spacing.lg,
   },
   retryButton: {
-    width: '60%',
+    minWidth: 160,
   },
-  title: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.l,
-    textAlign: 'center',
+  cardSpacing: {
+    marginBottom: spacing.lg,
   },
-  section: {
-    marginBottom: theme.spacing.l,
+  fieldSpacing: {
+    marginBottom: spacing.md,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.s,
-    paddingRight: theme.spacing.s,
-    textAlign: 'right',
-  },
-  card: {
-    backgroundColor: theme.colors.surface,
-    paddingHorizontal: theme.spacing.m,
-    paddingVertical: theme.spacing.s,
-    borderRadius: theme.borderRadius.m,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+
+  // Alert Cards
+  alertErrorCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: visual.surface.ivoryMuted,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: statusTokens.error.onIvory,
+    borderRadius: radii.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    gap: spacing.sm,
   },
-  row: {
-    flexDirection: 'row-reverse',
-    justifyContent: 'space-between',
-    paddingVertical: theme.spacing.m,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.border,
-  },
-  rowLabel: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    fontWeight: '600',
-    textAlign: 'right',
-  },
-  rowValue: {
-    fontSize: 14,
-    color: theme.colors.text,
-    fontWeight: '500',
-    textAlign: 'left',
+  alertErrorText: {
     flex: 1,
-    marginRight: theme.spacing.m,
-  },
-  longTextContainer: {
-    paddingVertical: theme.spacing.m,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.border,
-  },
-  longTextValue: {
-    fontSize: 14,
-    color: theme.colors.text,
-    marginTop: theme.spacing.s,
-    lineHeight: 20,
+    color: statusTokens.error.onIvory,
     textAlign: 'right',
   },
-  button: {
-    marginTop: theme.spacing.m,
-  },
-  cancelButton: {
-    marginTop: theme.spacing.s,
-    marginBottom: theme.spacing.xl,
-  },
-  guidedCard: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.m,
-    borderRadius: theme.borderRadius.m,
-    borderWidth: 1,
-    borderColor: theme.colors.primary,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-    marginBottom: theme.spacing.l,
-  },
-  guidedTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.s,
-    textAlign: 'right',
-  },
-  guidedText: {
-    fontSize: 14,
-    color: theme.colors.text,
-    lineHeight: 20,
-    textAlign: 'right',
-    marginBottom: theme.spacing.s,
-  },
-  guidedBullet: {
-    fontSize: 14,
-    color: theme.colors.text,
-    lineHeight: 20,
-    textAlign: 'right',
-    marginBottom: theme.spacing.s,
-    paddingRight: theme.spacing.s,
-  },
-  boldText: {
-    fontWeight: 'bold',
-  },
-  guidedButton: {
-    marginTop: theme.spacing.m,
-  },
-  guidedButtonPrimary: {
-    backgroundColor: theme.colors.primary,
-  },
-  warningCard: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.m,
-    borderRadius: theme.borderRadius.m,
-    borderWidth: 1,
-    borderColor: theme.colors.error,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-    marginBottom: theme.spacing.l,
-  },
-  warningTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.colors.error,
-    marginBottom: theme.spacing.s,
-    textAlign: 'right',
-  },
-  warningText: {
-    fontSize: 14,
-    color: theme.colors.text,
-    lineHeight: 20,
-    textAlign: 'right',
-  },
-  missingList: {
-    marginTop: theme.spacing.s,
-    marginBottom: theme.spacing.m,
-  },
-  missingItem: {
-    fontSize: 14,
-    color: theme.colors.text,
-    textAlign: 'right',
-    marginRight: theme.spacing.s,
-    lineHeight: 20,
-  },
-  upgradeCard: {
-    backgroundColor: '#F1F8FE',
-    padding: theme.spacing.m,
-    borderRadius: theme.borderRadius.m,
-    borderWidth: 1,
-    borderColor: '#90CAF9',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-    marginBottom: theme.spacing.l,
-  },
-  upgradeTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1565C0',
-    marginBottom: theme.spacing.s,
-    textAlign: 'right',
-  },
-  upgradeText: {
-    fontSize: 14,
-    color: theme.colors.text,
-    lineHeight: 20,
-    textAlign: 'right',
-  },
-  upgradeButton: {
-    marginTop: theme.spacing.m,
-    backgroundColor: '#1976D2',
-  },
-  formErrorCard: {
-    backgroundColor: '#FFEBEE',
-    padding: theme.spacing.m,
-    borderRadius: theme.borderRadius.m,
-    borderWidth: 1,
-    borderColor: '#FFCDD2',
-    marginBottom: theme.spacing.m,
-  },
-  formErrorText: {
-    color: theme.colors.error,
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  formSuccessCard: {
-    backgroundColor: '#E8F5E9',
-    padding: theme.spacing.m,
-    borderRadius: theme.borderRadius.m,
-    borderWidth: 1,
-    borderColor: '#C8E6C9',
-    marginBottom: theme.spacing.m,
-  },
-  formSuccessText: {
-    color: '#2E7D32',
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  photoCard: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.m,
-    borderRadius: theme.borderRadius.m,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-    marginBottom: theme.spacing.m,
-  },
-  photoCardRow: {
-    flexDirection: 'row-reverse',
-    justifyContent: 'space-between',
+  alertSuccessCard: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 4,
+    backgroundColor: visual.surface.ivoryHighlight,
+    borderWidth: 1,
+    borderColor: statusTokens.success.onIvory,
+    borderRadius: radii.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    gap: spacing.sm,
   },
-  photoCardTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-  },
-  photoCardAction: {
-    fontSize: 14,
-    color: theme.colors.primary,
-    fontWeight: '600',
-  },
-  photoCardMetadata: {
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-  },
-  photoCardStatus: {
-    fontSize: 13,
-    color: '#2E7D32',
-    fontWeight: '600',
-  },
-  photoCardStatusMissing: {
-    color: theme.colors.error,
-  },
-  photoManagerContainer: {
-    marginBottom: theme.spacing.m,
-  },
-  photoManagerHeader: {
-    flexDirection: 'row-reverse',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.s,
-    paddingHorizontal: theme.spacing.s,
-  },
-  photoManagerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-  },
-  photoCollapseAction: {
-    fontSize: 14,
-    color: theme.colors.error,
-    fontWeight: '600',
-  },
-  photoNoteText: {
-    fontSize: 13,
-    color: theme.colors.textSecondary,
+  alertSuccessText: {
+    flex: 1,
+    color: statusTokens.success.onIvory,
     textAlign: 'right',
-    marginBottom: theme.spacing.s,
-    paddingHorizontal: theme.spacing.s,
-    fontStyle: 'italic',
   },
-  sectionSeparator: {
+  alertWarningCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: visual.surface.ivoryHighlight,
+    borderWidth: 1,
+    borderColor: statusTokens.warning.onIvory,
+    borderRadius: radii.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    gap: spacing.sm,
+  },
+  alertWarningText: {
+    flex: 1,
+    color: statusTokens.warning.onIvory,
+    textAlign: 'right',
+  },
+
+  // Identity Card
+  identityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
+  },
+  avatarContainer: {
+    width: 76,
+    height: 76,
+    borderRadius: radii.full,
+    borderWidth: 2,
+    borderColor: gold.border.strong,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: visual.surface.ivoryMuted,
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarFallback: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  identityDetails: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  userNameText: {
+    color: text.onIvory.primary,
+    fontWeight: '700',
+  },
+  identityInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  identityLocationText: {
+    color: text.onIvory.secondary,
+  },
+  statusBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  statusBadgeText: {
+    color: gold.border.restrained,
+    fontWeight: '600',
+  },
+  ornamentContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.md,
+    gap: spacing.sm,
+  },
+  ornamentLine: {
+    flex: 1,
     height: 1,
-    backgroundColor: theme.colors.border,
-    marginVertical: theme.spacing.m,
+    backgroundColor: gold.border.restrained,
+    opacity: 0.4,
   },
-  safeExitButton: {
-    backgroundColor: '#3E5C76',
-    marginTop: theme.spacing.m,
+  ornamentDiamond: {
+    color: gold.border.strong,
+    fontSize: 12,
+  },
+
+  // Readiness Card
+  readinessHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  cardTitleText: {
+    color: text.onIvory.primary,
+    fontWeight: '700',
+    textAlign: 'right',
+  },
+  cardTitleMargin: {
+    marginBottom: spacing.sm,
+  },
+  readinessColumnsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingVertical: spacing.xs,
+  },
+  readinessColumn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+  },
+  readinessColumnTitle: {
+    color: text.onIvory.primary,
+    textAlign: 'center',
+    fontSize: 12,
+  },
+  readinessVerticalDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: visual.surface.ivoryMuted,
+  },
+
+  // Information Table (View Mode)
+  infoTableRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: visual.surface.ivoryMuted,
+  },
+  infoTableRowLast: {
+    borderBottomWidth: 0,
+  },
+  infoTableLabel: {
+    color: text.onIvory.secondary,
+    textAlign: 'right',
+  },
+  infoTableValue: {
+    color: text.onIvory.primary,
+    textAlign: 'left',
+    fontWeight: '500',
+  },
+  infoTableColumnRow: {
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: visual.surface.ivoryMuted,
+    gap: spacing.xs,
+  },
+  infoTableLongValue: {
+    color: text.onIvory.primary,
+    textAlign: 'right',
+    lineHeight: 22,
+  },
+
+  // Card Header with Badge (Edit Mode)
+  cardHeaderWithBadge: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  badgePill: {
+    backgroundColor: visual.surface.ivoryMuted,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+    borderRadius: radii.sm,
+  },
+  badgePillText: {
+    ...typography.caption,
+    color: text.onIvory.secondary,
+    fontWeight: '700',
+  },
+
+  // Switch Row (Edit Mode)
+  switchRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+  },
+  switchLabel: {
+    color: text.onIvory.primary,
+  },
+
+  // Photos Card
+  photosSubtitleText: {
+    color: text.onIvory.secondary,
+    marginTop: spacing.xs,
+    textAlign: 'right',
+  },
+  photosEditRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+    gap: spacing.sm,
+  },
+  photosManageSmallBtn: {
+    minHeight: 36,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+  },
+
+  // Bottom Actions
+  actionsContainer: {
+    marginTop: spacing.sm,
+    marginBottom: spacing.xl,
   },
 });
