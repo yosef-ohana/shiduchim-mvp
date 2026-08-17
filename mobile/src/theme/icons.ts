@@ -35,6 +35,8 @@ export const ICON_REGISTRY = {
   'trash': { glyph: 'delete', isDirectional: false },
   'shield': { glyph: 'shield', isDirectional: false },
   'star': { glyph: 'star', isDirectional: false },
+  'camera': { glyph: 'camera', isDirectional: false },
+  'refresh': { glyph: 'refresh', isDirectional: false },
 
   // N2 Navigation Icons (Non-directional)
   'navDiscover': { glyph: 'magnify', isDirectional: false },

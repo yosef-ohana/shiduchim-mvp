@@ -1,9 +1,10 @@
 import React from 'react';
 import { StyleSheet, ScrollView } from 'react-native';
-import { Screen } from '../../components/Screen';
-import { AppButton } from '../../components/AppButton';
+import { ScreenContainer } from '../../components/foundation/ScreenContainer';
+import { Button } from '../../components/foundation/Button';
 import { ProfilePhotosManager } from '../../components/ProfilePhotosManager';
 import { theme } from '../../theme/theme';
+import { tokens } from '../../theme/tokens';
 
 export const PhotosScreen = ({ navigation, route }: any) => {
   const returnToWedding = route.params?.returnToWedding;
@@ -13,13 +14,13 @@ export const PhotosScreen = ({ navigation, route }: any) => {
   const originalSource = route.params?.originalSource;
 
   return (
-    <Screen>
+    <ScreenContainer appearance="darkShell">
       <ScrollView contentContainerStyle={styles.container}>
         <ProfilePhotosManager />
 
         {returnToWedding && returnWeddingId ? (
-          <AppButton
-            title="חזרה לפרטי החתונה"
+          <Button
+            label="חזרה לפרטי החתונה"
             onPress={() => navigation.navigate('JoinWedding', {
               weddingId: returnWeddingId,
               weddingSnapshot: returnWeddingSnapshot,
@@ -28,19 +29,29 @@ export const PhotosScreen = ({ navigation, route }: any) => {
               source: 'returnFlow'
             })}
             style={styles.returnButton}
+            labelStyle={styles.returnButtonText}
+            variant="primary"
+            iconStart="log-out"
+            fullWidth
           />
         ) : null}
       </ScrollView>
-    </Screen>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    padding: theme.spacing.l,
+    padding: theme.spacing.m,
     flexGrow: 1,
   },
   returnButton: {
-    marginTop: theme.spacing.m,
+    marginTop: theme.spacing.l,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: tokens.gold.border.strong,
+  },
+  returnButtonText: {
+    color: tokens.gold.border.strong,
   },
 });
