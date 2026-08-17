@@ -151,7 +151,27 @@ export const UserShellStack: React.FC = () => {
       <Stack.Screen
         name="BasicProfile"
         component={BasicProfileScreen}
-        options={{ title: 'פרטים בסיסיים' }}
+        options={({ navigation }) => ({
+          title: 'פרטים בסיסיים',
+          header: ({ options, back }) => (
+            <AppHeader
+              title={options.title || 'פרטים בסיסיים'}
+              back={!!back}
+              onBack={back ? () => navigation.goBack() : undefined}
+              appearance="dark"
+              trailingActions={
+                <IconButton
+                  icon="notifications"
+                  onPress={() => navigation.navigate('Notifications')}
+                  accessibilityLabel="התראות"
+                  variant="header"
+                  appearance="onDark"
+                  testID="basic-profile-notifications-btn"
+                />
+              }
+            />
+          ),
+        })}
       />
       <Stack.Screen
         name="FullProfile"
