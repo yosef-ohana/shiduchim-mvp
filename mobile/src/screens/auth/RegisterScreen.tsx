@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView } from 'react-native';
 import { ScreenContainer } from '../../components/foundation/ScreenContainer';
-import { AppHeader } from '../../components/foundation/AppHeader';
 import { AppIcon } from '../../components/foundation/AppIcon';
 import { AppButton } from '../../components/AppButton';
 import { useAuth } from '../../context/AuthContext';
@@ -39,15 +38,6 @@ export const RegisterScreen = ({ route, navigation }: any) => {
 
   return (
     <View style={styles.darkCanvas}>
-      {/* 1. Existing Auth header/back region */}
-      <AppHeader
-        title="שידוכים"
-        back
-        onBack={() => navigation.goBack()}
-        appearance="dark"
-        testID="register-header-back"
-      />
-
       <ScreenContainer
         scroll={false}
         keyboardAware={true}
