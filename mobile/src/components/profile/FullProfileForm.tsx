@@ -2,7 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet, Switch } from 'react-native';
 import { AppInput } from '../AppInput';
 import { AppButton } from '../AppButton';
-import { theme } from '../../theme/theme';
+import { Card } from '../foundation/Card';
+import { visual, spacing, gold, text, borderWidths } from '../../theme/tokens';
+import { typography } from '../../theme/typography';
 
 export interface FullProfileFormProps {
   education: string;
@@ -23,6 +25,7 @@ export interface FullProfileFormProps {
   setFamilyDescription: (text: string) => void;
   onSave?: () => void;
   isSubmitting?: boolean;
+  disabled?: boolean;
   profileStatus: string | null;
   isEmbedded?: boolean;
 }
@@ -46,24 +49,25 @@ export const FullProfileForm = ({
   setFamilyDescription,
   onSave,
   isSubmitting = false,
-  profileStatus,
+  disabled = false,
   isEmbedded = false,
 }: FullProfileFormProps) => {
   const content = (
     <>
-      {isEmbedded && <Text style={styles.sectionHeading}>עליי ומה אני מחפש/ת</Text>}
-      {!isEmbedded && profileStatus === 'BASIC' && (
-        <View style={styles.noteCard}>
-          <Text style={styles.noteText}>
-            לתשומת לבך: ניתן לעצור את מילוי הפרטים בכל שלב. הפרופיל שלך יישאר בסטטוס "פרופיל בסיסי" בלבד, ולא ישתנה לפרופיל מלא עד לשמירת הטופס.
-          </Text>
-        </View>
+      {isEmbedded && (
+        <Text style={[typography.titleMedium, styles.sectionHeading]}>
+          עליי ומה אני מחפש/ת
+        </Text>
       )}
+
       <AppInput
         label="השכלה"
         placeholder="לדוגמה: ישיבה / מדרשה / תואר אקדמי"
         value={education}
         onChangeText={setEducation}
+        disabled={disabled || isSubmitting}
+        containerStyle={styles.fieldSpacing}
+        testID="full-profile-education-input"
       />
 
       <AppInput
@@ -71,6 +75,9 @@ export const FullProfileForm = ({
         placeholder="לדוגמה: מהנדס תוכנה"
         value={occupation}
         onChangeText={setOccupation}
+        disabled={disabled || isSubmitting}
+        containerStyle={styles.fieldSpacing}
+        testID="full-profile-occupation-input"
       />
 
       <AppInput
@@ -78,15 +85,20 @@ export const FullProfileForm = ({
         placeholder="לדוגמה: כיפה / מטפחת / ללא"
         value={headCovering}
         onChangeText={setHeadCovering}
+        disabled={disabled || isSubmitting}
+        containerStyle={styles.fieldSpacing}
+        testID="full-profile-headcovering-input"
       />
 
       <View style={styles.switchRow}>
-        <Text style={styles.switchLabel}>יש רישיון נהיגה</Text>
+        <Text style={[typography.bodyMedium, styles.switchLabel]}>יש רישיון נהיגה</Text>
         <Switch
           value={hasDrivingLicense}
           onValueChange={setHasDrivingLicense}
-          trackColor={{ false: '#767577', true: theme.colors.primary }}
-          thumbColor={hasDrivingLicense ? '#FFFFFF' : '#f4f3f4'}
+          disabled={disabled || isSubmitting}
+          trackColor={{ false: visual.surface.darkRaised, true: gold.border.strong }}
+          thumbColor={hasDrivingLicense ? text.onDark.primary : visual.surface.dark}
+          testID="full-profile-driving-license-switch"
         />
       </View>
 
@@ -95,9 +107,11 @@ export const FullProfileForm = ({
         placeholder="ספר/י לנו קצת על עצמך..."
         multiline
         numberOfLines={4}
-        style={styles.textArea}
         value={selfDescription}
         onChangeText={setSelfDescription}
+        disabled={disabled || isSubmitting}
+        containerStyle={styles.fieldSpacing}
+        testID="full-profile-selfdescription-input"
       />
 
       <AppInput
@@ -105,9 +119,11 @@ export const FullProfileForm = ({
         placeholder="תחביבים ותחומי עניין..."
         multiline
         numberOfLines={3}
-        style={styles.textArea}
         value={hobbies}
         onChangeText={setHobbies}
+        disabled={disabled || isSubmitting}
+        containerStyle={styles.fieldSpacing}
+        testID="full-profile-hobbies-input"
       />
 
       <AppInput
@@ -115,9 +131,11 @@ export const FullProfileForm = ({
         placeholder="מה את/ה מחפש/ת בבן/בת הזוג?"
         multiline
         numberOfLines={4}
-        style={styles.textArea}
         value={lookingFor}
         onChangeText={setLookingFor}
+        disabled={disabled || isSubmitting}
+        containerStyle={styles.fieldSpacing}
+        testID="full-profile-lookingfor-input"
       />
 
       <AppInput
@@ -125,9 +143,11 @@ export const FullProfileForm = ({
         placeholder="מתאר/ת את הרקע המשפחתי שלך..."
         multiline
         numberOfLines={3}
-        style={styles.textArea}
         value={familyDescription}
         onChangeText={setFamilyDescription}
+        disabled={disabled || isSubmitting}
+        containerStyle={styles.fieldSpacing}
+        testID="full-profile-familydescription-input"
       />
 
       {!isEmbedded && onSave && (
@@ -135,7 +155,9 @@ export const FullProfileForm = ({
           title="שמירת פרופיל מלא"
           onPress={onSave}
           loading={isSubmitting}
+          disabled={disabled || isSubmitting}
           style={styles.saveButton}
+          testID="full-profile-save-btn"
         />
       )}
     </>
@@ -145,64 +167,41 @@ export const FullProfileForm = ({
     return <View>{content}</View>;
   }
 
-  return <View style={styles.formCard}>{content}</View>;
+  return (
+    <Card appearance="ivory" style={styles.formCard} testID="full-profile-form-card">
+      {content}
+    </Card>
+  );
 };
 
 const styles = StyleSheet.create({
   formCard: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.m,
-    borderRadius: theme.borderRadius.m,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-    marginBottom: theme.spacing.xl,
+    marginBottom: spacing.xl,
+  },
+  fieldSpacing: {
+    marginBottom: spacing.md,
   },
   switchRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: theme.spacing.m,
-    marginBottom: theme.spacing.m,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.border,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.md,
+    borderBottomWidth: borderWidths.thin,
+    borderBottomColor: visual.surface.darkRaised,
   },
   switchLabel: {
-    fontSize: 14,
-    color: theme.colors.text,
+    color: text.onIvory.primary,
     fontWeight: '600',
     textAlign: 'right',
   },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
   saveButton: {
-    marginTop: theme.spacing.m,
-  },
-  noteCard: {
-    backgroundColor: '#E3F2FD',
-    padding: theme.spacing.m,
-    borderRadius: theme.borderRadius.m,
-    borderWidth: 1,
-    borderColor: '#90CAF9',
-    marginBottom: theme.spacing.m,
-  },
-  noteText: {
-    color: '#0D47A1',
-    fontSize: 14,
-    textAlign: 'right',
-    lineHeight: 20,
+    marginTop: spacing.md,
   },
   sectionHeading: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.m,
+    color: gold.border.strong,
+    fontWeight: '700',
+    marginBottom: spacing.md,
     textAlign: 'right',
   },
 });
