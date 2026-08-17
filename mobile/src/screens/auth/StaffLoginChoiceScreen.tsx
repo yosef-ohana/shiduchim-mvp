@@ -1,42 +1,79 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Screen } from '../../components/Screen';
-import { theme } from '../../theme/theme';
+import { AppIcon } from '../../components/foundation/AppIcon';
+import { colors, spacing, radii, visual, shadow } from '../../theme/tokens';
+import { typography } from '../../theme/typography';
 
 export const StaffLoginChoiceScreen = ({ navigation }: any) => {
-  const handleSelectRole = (role: 'ADMIN' | 'EVENT_MANAGER') => {
-    navigation.navigate('StaffLogin', { role });
+  const handleSelectRole = (expectedRole: 'ADMIN' | 'EVENT_MANAGER') => {
+    navigation.navigate('StaffLogin', { expectedRole });
   };
 
   return (
     <Screen style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>פורטל צוות</Text>
-        <Text style={styles.subtitle}>בחר את פורטל הצוות שלך להתחברות</Text>
+        {/* Title & Flourish Section */}
+        <View style={styles.headerSection}>
+          <Text style={[typography.titleLarge, styles.title]} accessibilityRole="header">
+            כניסת צוות
+          </Text>
+          <View style={styles.goldDivider}>
+            <View style={styles.goldLine} />
+            <AppIcon name="star" size={12} color={colors.accentBorder} />
+            <View style={styles.goldLine} />
+          </View>
+          <Text style={[typography.bodyMedium, styles.subtitle]}>
+            בחרו את סוג הכניסה המתאים כדי להמשיך.
+          </Text>
+        </View>
 
+        {/* Role Cards Stack */}
         <View style={styles.cardContainer}>
           <TouchableOpacity
             style={styles.roleCard}
             onPress={() => handleSelectRole('ADMIN')}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="כניסה כמנהל מערכת"
+            testID="staff-choice-admin"
           >
             <View style={styles.iconCircle}>
-              <Text style={styles.iconText}>🔑</Text>
+              <AppIcon name="shield" size={22} color={colors.accent} />
             </View>
-            <Text style={styles.cardTitle}>פורטל מנהל מערכת</Text>
-            <Text style={styles.cardDesc}>ניהול משתמשים, חתונות ופעולות מערכת גלובליות.</Text>
+            <View style={styles.textContainer}>
+              <Text style={[typography.titleSmall, styles.cardTitle]}>מנהל מערכת</Text>
+              <Text style={[typography.caption, styles.cardDesc]}>
+                כניסה לממשק ניהול המערכת.
+              </Text>
+            </View>
+            <View style={styles.chevronWrapper}>
+              <AppIcon name="chevron-left" size={20} color={colors.accent} />
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.roleCard}
             onPress={() => handleSelectRole('EVENT_MANAGER')}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="כניסה כמנהל אירוע"
+            testID="staff-choice-event-manager"
           >
             <View style={styles.iconCircle}>
-              <Text style={styles.iconText}>📅</Text>
+              <AppIcon name="calendar" size={22} color={colors.accent} />
             </View>
-            <Text style={styles.cardTitle}>פורטל מנהל אירוע</Text>
-            <Text style={styles.cardDesc}>ניהול חתונות, קודי גישה ומשתתפים באירוע.</Text>
+            <View style={styles.textContainer}>
+              <Text style={[typography.titleSmall, styles.cardTitle]}>מנהל אירוע</Text>
+              <Text style={[typography.caption, styles.cardDesc]}>
+                כניסה לניהול חתונה או אירוע במסגרת ההרשאות שלך.
+              </Text>
+            </View>
+            <View style={styles.chevronWrapper}>
+              <AppIcon name="chevron-left" size={20} color={colors.accent} />
+            </View>
           </TouchableOpacity>
         </View>
       </View>
@@ -47,66 +84,99 @@ export const StaffLoginChoiceScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xl,
   },
   content: {
-    flex: 1,
-    justifyContent: 'center',
+    width: '100%',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.xl,
+    gap: spacing.xxl,
+  },
+  headerSection: {
+    alignItems: 'center',
+    width: '100%',
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.s,
+    lineHeight: 36,
+    fontWeight: '700',
+    color: colors.textPrimary,
     textAlign: 'center',
+    marginBottom: spacing.xs,
+  },
+  goldDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 120,
+    gap: spacing.xs,
+    marginVertical: spacing.sm,
+  },
+  goldLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.accentBorder,
   },
   subtitle: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.xl * 1.5,
+    fontSize: 15,
+    lineHeight: 22,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   cardContainer: {
     width: '100%',
-    gap: theme.spacing.l,
+    gap: spacing.md,
   },
   roleCard: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.l,
-    borderRadius: theme.borderRadius.l,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    minHeight: 80,
+    backgroundColor: visual.surface.light,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radii.xl,
+    borderWidth: 1.5,
+    borderColor: colors.accentBorder,
+    flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowColor: shadow.color,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
     shadowRadius: 8,
-    elevation: 2,
+    elevation: 3,
   },
   iconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#FAF6E8',
+    width: 48,
+    height: 48,
+    borderRadius: radii.full,
+    backgroundColor: colors.accentMuted,
+    borderWidth: 1,
+    borderColor: colors.accentBorder,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.m,
   },
-  iconText: {
-    fontSize: 28,
+  textContainer: {
+    flex: 1,
+    marginHorizontal: spacing.md,
+    justifyContent: 'center',
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.s,
+    lineHeight: 24,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    textAlign: 'right',
+    writingDirection: 'rtl',
+    marginBottom: spacing.xxs,
   },
   cardDesc: {
     fontSize: 13,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
     lineHeight: 18,
+    color: colors.textSecondary,
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  chevronWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

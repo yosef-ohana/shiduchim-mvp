@@ -8,14 +8,14 @@ import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 
 export const StaffLoginScreen = ({ route, navigation }: any) => {
-  const { role } = route.params || {};
+  const { expectedRole } = route.params || {};
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { staffLogin } = useAuth();
 
-  const expectedRoleDisplay = role === 'ADMIN' ? 'מנהל מערכת' : 'מנהל אירוע';
+  const expectedRoleDisplay = expectedRole === 'ADMIN' ? 'מנהל מערכת' : 'מנהל אירוע';
 
   const handleLogin = async () => {
     setErrorMsg('');
@@ -29,7 +29,7 @@ export const StaffLoginScreen = ({ route, navigation }: any) => {
       await staffLogin({
         email,
         password,
-        expectedRole: role,
+        expectedRole,
       });
       // Context will automatically update state and trigger navigation to MainStack if successful
     } catch (e: any) {
