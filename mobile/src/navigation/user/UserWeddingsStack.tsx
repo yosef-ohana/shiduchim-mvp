@@ -15,11 +15,13 @@ export const UserWeddingsStack: React.FC = () => {
         header: ({ options, back }) => (
           <AppHeader
             title={options.title || 'החתונות שלי'}
+            appearance="dark"
             back={!!back}
             onBack={back ? () => navigation.goBack() : undefined}
             trailingActions={
               <IconButton
                 icon="notifications"
+                appearance="onDark"
                 onPress={() => ((navigation as any).getParent()?.getParent() || (navigation as any).getParent())?.navigate('Notifications')}
                 accessibilityLabel="התראות"
                 variant="header"

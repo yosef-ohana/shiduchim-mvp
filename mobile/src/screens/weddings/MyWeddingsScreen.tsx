@@ -1,42 +1,131 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
-import { Screen } from '../../components/Screen';
+import React, { useState, useCallback, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+} from 'react-native';
+import { ScreenContainer } from '../../components/foundation/ScreenContainer';
+import { Button } from '../../components/foundation/Button';
+import { AppIcon } from '../../components/foundation/AppIcon';
 import { getMyWeddings } from '../../api/weddingsApi';
 import { UserWeddingResponse } from '../../types/api';
-import { theme } from '../../theme/theme';
 import { getFriendlyErrorMessage } from '../../utils/errorMessage';
-import { getWeddingStatusLabel, getParticipantStatusLabel, formatDisplayDate } from '../../utils/displayLabels';
-import { useAuth } from '../../context/AuthContext';
+import { formatDisplayDate, getParticipantStatusLabel } from '../../utils/displayLabels';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { getWeddingReadiness } from '../../utils/weddingReadiness';
-import { AppButton } from '../../components/AppButton';
+import {
+  spacing,
+  radii,
+  sizing,
+  visual,
+  text,
+  gold,
+  status,
+} from '../../theme/tokens';
+import { FONT_KEYS } from '../../theme/typography';
 
+interface StatusBadgeConfig {
+  label: string;
+  dotColor: string;
+  textColor: string;
+}
+
+const getStatusConfig = (weddingStatus: string): StatusBadgeConfig => {
+  switch (weddingStatus) {
+    case 'ACTIVE':
+      return {
+        label: 'פעילה',
+        dotColor: status.success.onIvory,
+        textColor: status.success.onIvory,
+      };
+    case 'CLOSED':
+      return {
+        label: 'סגורה לצפייה בלבד',
+        dotColor: text.onIvory.secondary,
+        textColor: text.onIvory.secondary,
+      };
+    case 'CANCELLED':
+      return {
+        label: 'מבוטלת לצפייה בלבד',
+        dotColor: status.error.onIvory,
+        textColor: status.error.onIvory,
+      };
+    default:
+      return {
+        label: weddingStatus,
+        dotColor: text.onIvory.secondary,
+        textColor: text.onIvory.secondary,
+      };
+  }
+};
+
+const RefreshErrorBanner: React.FC<{ onRetry: () => void }> = ({ onRetry }) => {
+  return (
+    <View style={styles.refreshErrorCard}>
+      <View style={styles.refreshErrorHeader}>
+        <AppIcon name="alert-circle" size={sizing.iconMd} color={status.error.onIvory} />
+        <Text style={styles.refreshErrorTitle}>לא הצלחנו לרענן</Text>
+      </View>
+      <Text style={styles.refreshErrorText}>המידע האחרון נשאר מוצג</Text>
+      <Text style={styles.refreshErrorText}>אפשר לנסות שוב בלי לאבד הקשר</Text>
+      <Pressable
+        style={styles.retryPillButton}
+        onPress={onRetry}
+        accessibilityRole="button"
+        accessibilityLabel="נסה שוב לרענן"
+      >
+        <AppIcon name="refresh" size={sizing.iconXs} color={text.onDark.primary} />
+        <Text style={styles.retryPillText}>נסה שוב</Text>
+      </Pressable>
+    </View>
+  );
+};
 
 export const MyWeddingsScreen = () => {
   const navigation = useNavigation<any>();
-  const { user } = useAuth();
-  const [weddings, setWeddings] = useState<UserWeddingResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [weddings, setWeddings] = useState<UserWeddingResponse[] | null>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [initialError, setInitialError] = useState<string | null>(null);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
 
-  const fetchWeddings = useCallback(async (isMounted = { current: true }) => {
-    setLoading(true);
-    setErrorMsg('');
+  const weddingsRef = useRef<UserWeddingResponse[] | null>(null);
+  weddingsRef.current = weddings;
+
+  const fetchWeddings = useCallback(async (isRefresh = false, isMounted = { current: true }) => {
+    const hasData = weddingsRef.current !== null;
+    if (isRefresh || hasData) {
+      setIsRefreshing(true);
+      setRefreshError(null);
+    } else {
+      setIsInitialLoading(true);
+      setInitialError(null);
+    }
+
     try {
       const data = await getMyWeddings();
       if (isMounted.current) {
         setWeddings(data);
+        setInitialError(null);
+        setRefreshError(null);
       }
     } catch (error: any) {
-      console.error(error);
+      console.error('[MyWeddingsScreen] fetch error:', error);
       const friendlyError = getFriendlyErrorMessage(error, 'טעינת החתונות נכשלה.');
       if (isMounted.current) {
-        setErrorMsg(friendlyError);
-        Alert.alert('שגיאה', friendlyError);
+        if (weddingsRef.current !== null) {
+          setRefreshError(friendlyError);
+        } else {
+          setInitialError(friendlyError);
+        }
       }
     } finally {
       if (isMounted.current) {
-        setLoading(false);
+        setIsInitialLoading(false);
+        setIsRefreshing(false);
       }
     }
   }, []);
@@ -44,298 +133,397 @@ export const MyWeddingsScreen = () => {
   useFocusEffect(
     useCallback(() => {
       const isMounted = { current: true };
-      fetchWeddings(isMounted);
+      fetchWeddings(weddingsRef.current !== null, isMounted);
       return () => {
         isMounted.current = false;
       };
     }, [fetchWeddings])
   );
 
-  const renderItem = ({ item }: { item: UserWeddingResponse }) => {
-    const formattedDate = formatDisplayDate(item.weddingDate);
-    const formattedJoinedDate = formatDisplayDate(item.joinedAt);
-    const isActive = item.weddingStatus === 'ACTIVE' && item.participantStatus === 'ACTIVE';
-
-    const readiness = getWeddingReadiness({
-      user,
-      weddingStatus: item.weddingStatus,
-      participantStatus: item.participantStatus,
-      isJoined: true,
+  const handleWeddingPress = (item: UserWeddingResponse) => {
+    navigation.navigate('JoinWedding', {
+      weddingId: item.weddingId,
+      weddingSnapshot: item,
+      source: 'myWeddings',
     });
+  };
 
-    const getReadinessText = (state: string) => {
-      switch (state) {
-        case 'READY':
-          return 'זמין למאגר החתונה';
-        case 'JOINED_MISSING_BASIC_PROFILE':
-          return 'חסר פרופיל בסיסי';
-        case 'JOINED_MISSING_PRIMARY_PHOTO':
-          return 'חסרה תמונה ראשית';
-        case 'JOINED_MISSING_BOTH':
-          return 'חסרים פרופיל ותמונה';
-        case 'INACTIVE_WEDDING':
-          return 'החתונה אינה פעילה';
-        case 'INACTIVE_PARTICIPANT':
-          return 'המשתתף אינו פעיל';
-        case 'BLOCKED_USER':
-          return 'המשתמש חסום';
-        default:
-          return 'סטטוס לא ידוע';
-      }
-    };
-
-    const getReadinessColor = (state: string) => {
-      switch (state) {
-        case 'READY':
-          return theme.colors.primary;
-        case 'JOINED_MISSING_BASIC_PROFILE':
-        case 'JOINED_MISSING_PRIMARY_PHOTO':
-        case 'JOINED_MISSING_BOTH':
-          return '#E65100'; // Amber/Orange
-        case 'INACTIVE_WEDDING':
-        case 'INACTIVE_PARTICIPANT':
-          return '#757575'; // Gray
-        case 'BLOCKED_USER':
-          return theme.colors.error;
-        default:
-          return theme.colors.textSecondary;
-      }
-    };
-
-    const readinessLabel = getReadinessText(readiness.state);
-    const readinessColor = getReadinessColor(readiness.state);
-
-    const handlePress = () => {
-      navigation.navigate('JoinWedding', {
-        weddingId: item.weddingId,
-        weddingSnapshot: item,
-        source: 'myWeddings',
-      });
-    };
+  const renderItem = ({ item }: { item: UserWeddingResponse }) => {
+    const statusConfig = getStatusConfig(item.weddingStatus);
+    const formattedDate = formatDisplayDate(item.weddingDate).replace(/\//g, '.');
+    const participantLabel =
+      item.participantStatus === 'ACTIVE'
+        ? 'משתתף פעיל'
+        : `משתתף ${getParticipantStatusLabel(item.participantStatus)}`;
 
     return (
-      <TouchableOpacity
-        style={[styles.card, !isActive && styles.disabledCard]}
-        onPress={handlePress}
-        disabled={!isActive}
-        activeOpacity={0.7}
+      <Pressable
+        style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+        onPress={() => handleWeddingPress(item)}
+        accessibilityRole="button"
+        accessibilityLabel={`${item.weddingName}, ${statusConfig.label}`}
+        testID={`wedding-card-${item.weddingId}`}
       >
-        <Text style={[styles.name, !isActive && styles.disabledName]}>{item.weddingName}</Text>
-        
-        {item.city ? (
-          <View style={styles.row}>
-            <Text style={styles.label}>עיר:</Text>
-            <Text style={styles.value}>{item.city}</Text>
-          </View>
-        ) : null}
-
-        {item.weddingDate ? (
-          <View style={styles.row}>
-            <Text style={styles.label}>תאריך החתונה:</Text>
-            <Text style={styles.value}>{formattedDate}</Text>
-          </View>
-        ) : null}
-
-        <View style={styles.row}>
-          <Text style={styles.label}>סטטוס חתונה:</Text>
-          <Text style={styles.value}>{getWeddingStatusLabel(item.weddingStatus)}</Text>
-        </View>
-
-        <View style={styles.row}>
-          <Text style={styles.label}>סטטוס משתתף:</Text>
-          <Text style={styles.value}>{getParticipantStatusLabel(item.participantStatus)}</Text>
-        </View>
-
-        <View style={styles.row}>
-          <Text style={styles.label}>תאריך הצטרפות:</Text>
-          <Text style={styles.value}>{formattedJoinedDate}</Text>
-        </View>
-
-        <View style={styles.eligibilityContainer}>
-          <Text style={[styles.readinessText, { color: readinessColor }]}>
-            {readinessLabel}
+        <View style={styles.cardHeader}>
+          <Text style={styles.weddingName}>
+            {item.weddingName}
           </Text>
-          {isActive && (
-            <Text style={styles.clickHint}>
-              לחץ למעבר לאזור החתונה
+          <View style={styles.statusBadge}>
+            <View style={[styles.statusDot, { backgroundColor: statusConfig.dotColor }]} />
+            <Text style={[styles.statusText, { color: statusConfig.textColor }]}>
+              {statusConfig.label}
             </Text>
-          )}
+          </View>
         </View>
-      </TouchableOpacity>
+
+        <View style={styles.cardBody}>
+          <View style={styles.metadataCol}>
+            {item.city ? (
+              <View style={styles.metaRow}>
+                <Text style={styles.metaValue}>{item.city}</Text>
+                <Text style={styles.metaLabel}>מיקום</Text>
+              </View>
+            ) : null}
+
+            {item.weddingDate ? (
+              <View style={styles.metaRow}>
+                <Text style={styles.metaValue}>{formattedDate}</Text>
+                <Text style={styles.metaLabel}>תאריך</Text>
+              </View>
+            ) : null}
+
+            {item.participantStatus ? (
+              <Text style={styles.participantText}>{participantLabel}</Text>
+            ) : null}
+          </View>
+
+          <View style={styles.chevronContainer}>
+            <AppIcon name="chevron-left" size={sizing.iconMd} color={gold.border.strong} />
+          </View>
+        </View>
+      </Pressable>
     );
   };
 
-  const hasAnyWeddings = weddings.length > 0;
-  const hasActiveWeddings = weddings.some(w => w.weddingStatus === 'ACTIVE' && w.participantStatus === 'ACTIVE');
-  const showInactiveExplanation = hasAnyWeddings && !hasActiveWeddings;
+  const renderEmptyState = () => {
+    return (
+      <View style={styles.emptyContainer}>
+        {refreshError && (
+          <RefreshErrorBanner onRetry={() => fetchWeddings(true)} />
+        )}
+        <View style={styles.emptyContent}>
+          <View style={styles.ringIconCircle}>
+            <AppIcon name="navWeddings" size={40} color={gold.border.strong} />
+          </View>
+          <Text style={styles.emptyTitle}>עדיין אין לך חתונות</Text>
+          <Text style={styles.emptySubtitle}>
+            אפשר להצטרף לחתונה באמצעות מסך ההצטרפות
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  if (isInitialLoading && weddings === null) {
+    return (
+      <ScreenContainer appearance="darkCanvas" testID="my-weddings-screen">
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={gold.action.default} />
+        </View>
+        <View style={styles.bottomBar}>
+          <Button
+            label="הצטרפות לחתונה"
+            visualAppearance="gold"
+            fullWidth
+            onPress={() => navigation.navigate('JoinWedding')}
+            testID="join-wedding-cta"
+          />
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  if (initialError && weddings === null) {
+    return (
+      <ScreenContainer appearance="darkCanvas" testID="my-weddings-screen">
+        <View style={styles.centerContainer}>
+          <AppIcon name="alert-circle" size={48} color={status.error.onIvory} />
+          <Text style={styles.initialErrorTitle}>לא הצלחנו לטעון את החתונות</Text>
+          <Text style={styles.initialErrorText}>{initialError}</Text>
+          <Button
+            label="נסה שוב"
+            variant="secondary"
+            onPress={() => fetchWeddings(false)}
+            iconStart="refresh"
+            style={styles.initialRetryButton}
+          />
+        </View>
+        <View style={styles.bottomBar}>
+          <Button
+            label="הצטרפות לחתונה"
+            visualAppearance="gold"
+            fullWidth
+            onPress={() => navigation.navigate('JoinWedding')}
+            testID="join-wedding-cta"
+          />
+        </View>
+      </ScreenContainer>
+    );
+  }
 
   return (
-    <Screen>
-      <View style={styles.container}>
-        <Text style={styles.title}>החתונות שלי</Text>
-        
-        {showInactiveExplanation && (
-          <View style={styles.inactiveBanner}>
-            <Text style={styles.inactiveBannerText}>
-              שים לב: אין לך חתונות פעילות כרגע. חתונות סגורות, מבוטלות או חתונות שהוסרת מהן אינן מהוות מאגר שידוכים פעיל.
-            </Text>
-          </View>
-        )}
-
-        {loading ? (
-          <View style={styles.center}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
-          </View>
-        ) : errorMsg ? (
-          <View style={styles.center}>
-            <Text style={styles.errorText}>{errorMsg}</Text>
-          </View>
+    <ScreenContainer appearance="darkCanvas" testID="my-weddings-screen">
+      <View style={styles.contentWrapper}>
+        {weddings && weddings.length === 0 ? (
+          renderEmptyState()
         ) : (
-          <>
-            <FlatList
-              data={weddings}
-              keyExtractor={(item) => item.weddingId.toString()}
-              renderItem={renderItem}
-              contentContainerStyle={styles.list}
-              refreshing={loading}
-              onRefresh={fetchWeddings}
-              ListEmptyComponent={
-                <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>עדיין לא הצטרפת לאף חתונה.</Text>
-                </View>
-              }
-            />
-            <AppButton
-              title="הצטרפות לחתונה"
-              onPress={() => navigation.navigate('JoinWedding')}
-              style={styles.joinButton}
-            />
-          </>
+          <FlatList
+            data={weddings || []}
+            keyExtractor={(item) => String(item.weddingId)}
+            renderItem={renderItem}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            ListHeaderComponent={
+              refreshError ? (
+                <RefreshErrorBanner onRetry={() => fetchWeddings(true)} />
+              ) : null
+            }
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={() => fetchWeddings(true)}
+                tintColor={gold.action.default}
+                colors={[gold.action.default]}
+              />
+            }
+          />
         )}
       </View>
-    </Screen>
+      <View style={styles.bottomBar}>
+        <Button
+          label="הצטרפות לחתונה"
+          visualAppearance="gold"
+          fullWidth
+          onPress={() => navigation.navigate('JoinWedding')}
+          testID="join-wedding-cta"
+        />
+      </View>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  contentWrapper: {
     flex: 1,
-    padding: theme.spacing.m,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.m,
-    textAlign: 'center',
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: theme.spacing.m,
-  },
-  list: {
-    paddingBottom: theme.spacing.xl,
+  listContent: {
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
   },
   card: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.m,
-    borderRadius: theme.borderRadius.m,
-    marginBottom: theme.spacing.m,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    backgroundColor: visual.surface.ivory,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: gold.border.restrained,
+    borderRadius: radii.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    minHeight: sizing.minTouchTarget,
   },
-  disabledCard: {
-    opacity: 0.65,
-    backgroundColor: '#F5F5F5',
-    borderColor: '#E0E0E0',
+  cardPressed: {
+    opacity: 0.9,
   },
-  name: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.s,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    paddingBottom: 4,
-    textAlign: 'right',
-  },
-  disabledName: {
-    color: '#888888',
-    borderBottomColor: '#E0E0E0',
-  },
-  row: {
-    flexDirection: 'row-reverse',
+  cardHeader: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 4,
+    alignItems: 'flex-start',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
-  label: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
+  weddingName: {
+    flex: 1,
+    flexShrink: 1,
+    fontSize: 18,
+    fontFamily: FONT_KEYS.bold,
+    fontWeight: '700',
+    color: text.onIvory.primary,
     textAlign: 'right',
   },
-  value: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.text,
-  },
-  eligibilityContainer: {
-    marginTop: theme.spacing.s,
-    paddingTop: theme.spacing.s,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
+  statusBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  readinessText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  clickHint: {
-    fontSize: 12,
-    color: theme.colors.primary,
-    marginTop: 4,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  inactiveBanner: {
-    backgroundColor: '#F9F6F0',
-    borderColor: '#E0D0B0',
+    gap: spacing.xs,
+    backgroundColor: visual.surface.ivoryHighlight,
     borderWidth: 1,
-    borderRadius: theme.borderRadius.m,
-    padding: theme.spacing.m,
-    marginBottom: theme.spacing.m,
+    borderColor: gold.border.restrained,
+    borderRadius: radii.full,
+    paddingVertical: spacing.xxs,
+    paddingHorizontal: spacing.sm,
+    alignSelf: 'flex-start',
   },
-  inactiveBannerText: {
-    color: '#7C6E52',
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontSize: 12,
+    fontFamily: FONT_KEYS.medium,
     fontWeight: '500',
   },
-  errorText: {
-    color: theme.colors.error,
-    fontSize: 16,
+  cardBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  metadataCol: {
+    flex: 1,
+    alignItems: 'flex-start',
+    gap: spacing.xs,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  metaValue: {
+    fontSize: 14,
+    fontFamily: FONT_KEYS.bold,
+    fontWeight: '700',
+    color: text.onIvory.primary,
+    flexShrink: 1,
+  },
+  metaLabel: {
+    fontSize: 14,
+    fontFamily: FONT_KEYS.regular,
+    fontWeight: '400',
+    color: text.onIvory.secondary,
+    flexShrink: 1,
+  },
+  participantText: {
+    fontSize: 14,
+    fontFamily: FONT_KEYS.regular,
+    fontWeight: '400',
+    color: text.onIvory.secondary,
+    textAlign: 'right',
+    flexShrink: 1,
+  },
+  chevronContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingStart: spacing.xs,
+  },
+  bottomBar: {
+    paddingVertical: spacing.md,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  initialErrorTitle: {
+    fontSize: 18,
+    fontFamily: FONT_KEYS.bold,
+    fontWeight: '700',
+    color: text.onDark.primary,
     textAlign: 'center',
+    marginTop: spacing.md,
+  },
+  initialErrorText: {
+    fontSize: 14,
+    fontFamily: FONT_KEYS.regular,
+    fontWeight: '400',
+    color: text.onDark.secondary,
+    textAlign: 'center',
+    marginTop: spacing.xs,
+    marginBottom: spacing.lg,
+  },
+  initialRetryButton: {
+    minWidth: 140,
   },
   emptyContainer: {
-    alignItems: 'center',
+    flex: 1,
+  },
+  emptyContent: {
+    flex: 1,
     justifyContent: 'center',
-    marginTop: theme.spacing.xl * 2,
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
   },
-  emptyText: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
+  ringIconCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 1,
+    borderColor: gold.border.strong,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.xl,
+  },
+  emptyTitle: {
+    fontSize: 22,
+    fontFamily: FONT_KEYS.bold,
+    fontWeight: '700',
+    color: text.onDark.primary,
     textAlign: 'center',
+    marginBottom: spacing.sm,
   },
-  joinButton: {
-    marginTop: theme.spacing.m,
-    marginBottom: theme.spacing.s,
+  emptySubtitle: {
+    fontSize: 15,
+    fontFamily: FONT_KEYS.regular,
+    fontWeight: '400',
+    color: text.onDark.secondary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  refreshErrorCard: {
+    backgroundColor: visual.surface.ivory,
+    borderWidth: 1,
+    borderColor: gold.border.restrained,
+    borderRadius: radii.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  refreshErrorHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  refreshErrorTitle: {
+    fontSize: 18,
+    fontFamily: FONT_KEYS.bold,
+    fontWeight: '700',
+    color: text.onIvory.primary,
+    textAlign: 'right',
+  },
+  refreshErrorText: {
+    fontSize: 14,
+    fontFamily: FONT_KEYS.regular,
+    fontWeight: '400',
+    color: text.onIvory.secondary,
+    textAlign: 'right',
+    lineHeight: 20,
+  },
+  retryPillButton: {
+    backgroundColor: visual.surface.dark,
+    borderRadius: radii.full,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+    minHeight: sizing.minTouchTarget,
+  },
+  retryPillText: {
+    fontSize: 14,
+    fontFamily: FONT_KEYS.semiBold,
+    fontWeight: '600',
+    color: text.onDark.primary,
   },
 });
