@@ -16,7 +16,7 @@ import { formatDisplayDate } from '../../utils/displayLabels';
 
 export const PoolSelectionScreen = ({ navigation }: any) => {
   const { user } = useAuth();
-  const [selectedPool, setSelectedPool] = useState<DiscoverPool>('GLOBAL');
+  const [selectedPool, setSelectedPool] = useState<DiscoverPool | null>(null);
   const [weddings, setWeddings] = useState<UserWeddingResponse[]>([]);
   const [loadingWeddings, setLoadingWeddings] = useState(false);
   const [selectedWeddingId, setSelectedWeddingId] = useState<number | null>(null);
@@ -36,8 +36,12 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
       const eligible = list.filter(
         (w) => w.isWeddingPoolEligible && w.weddingStatus === 'ACTIVE' && w.participantStatus === 'ACTIVE'
       );
-      if (eligible.length > 0 && !selectedWeddingId) {
-        setSelectedWeddingId(eligible[0].weddingId);
+      if (selectedWeddingId !== null) {
+        const stillEligible = eligible.some((w) => w.weddingId === selectedWeddingId);
+        if (!stillEligible) {
+          setSelectedWeddingId(null);
+          setErrorText('החתונה שנבחרה בעבר אינה זמינה עוד. אנא בחר/י חתונה מחדש.');
+        }
       }
     } catch (err: any) {
       setErrorText(getFriendlyErrorMessage(err, 'טעינת החתונות שנרשמת אליהן נכשלה.'));
@@ -59,6 +63,11 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
   const handleDiscover = () => {
     setErrorText(null);
     setCtaAction(null);
+
+    if (!selectedPool) {
+      setErrorText('אנא בחר/י מאגר מועמדים (כללי או חתונה).');
+      return;
+    }
 
     // 1. Primary photo check
     if (!user?.hasPrimaryPhoto) {
@@ -97,7 +106,7 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
         return;
       }
       navigation.navigate('Discover', { pool: 'GLOBAL' });
-    } else {
+    } else if (selectedPool === 'WEDDING') {
       // 3. Wedding Pool eligibility checks
       if (!user?.profileStatus || user.profileStatus === 'NONE' || user.profileStatus === 'FULL_INCOMPLETE_BLOCKED') {
         setErrorText('אנא השלם/י את הפרופיל הבסיסי לפני השימוש במאגר החתונה.');
@@ -108,6 +117,14 @@ export const PoolSelectionScreen = ({ navigation }: any) => {
         setErrorText('אנא בחר/י חתונה מהרשימה.');
         return;
       }
+
+      const stillEligible = eligibleWeddings.some((w) => w.weddingId === selectedWeddingId);
+      if (!stillEligible) {
+        setSelectedWeddingId(null);
+        setErrorText('החתונה שנבחרה בעבר אינה זמינה עוד. אנא בחר/י חתונה מחדש.');
+        return;
+      }
+
       navigation.navigate('Discover', { pool: 'WEDDING', weddingId: selectedWeddingId });
     }
   };
