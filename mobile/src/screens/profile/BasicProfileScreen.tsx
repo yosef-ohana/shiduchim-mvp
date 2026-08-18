@@ -340,7 +340,7 @@ export const BasicProfileScreen = ({ navigation, route }: any) => {
                   />
                   <Button
                     label="סיום כעת והישארות עם פרופיל בסיסי"
-                    onPress={() => navigation.navigate('Me')}
+                    onPress={() => navigation.navigate('Profile')}
                     variant="secondary"
                     style={styles.buttonSpacing}
                     testID="basic-profile-finish-me-btn"
@@ -404,7 +404,14 @@ export const BasicProfileScreen = ({ navigation, route }: any) => {
                 )}
                 <Button
                   label="חזרה לדף הבית"
-                  onPress={() => navigation.navigate('Me')}
+                  onPress={() =>
+                    navigation.navigate('UserTabs', {
+                      screen: 'MeRoot',
+                      params: {
+                        screen: 'Me',
+                      },
+                    })
+                  }
                   variant="secondary"
                   style={styles.buttonSpacing}
                   testID="basic-profile-go-me-btn"
