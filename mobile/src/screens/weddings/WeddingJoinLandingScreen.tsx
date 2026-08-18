@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, BackHandler, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
+import QRCode from 'react-native-qrcode-svg';
 import { Screen } from '../../components/Screen';
 import { AppInput } from '../../components/AppInput';
 import { AppButton } from '../../components/AppButton';
@@ -377,9 +378,13 @@ export const WeddingJoinLandingScreen = () => {
 
     if (readiness.state === 'READY') {
       return (
-        <View style={styles.noticeCardSuccess}>
-          <AppIcon name="check" size={24} color={tokens.colors.statusSuccess} style={styles.cardIcon} />
-          <Text style={styles.noticeTextSuccess}>{readiness.message}</Text>
+        <View style={styles.a07ReadinessRow}>
+          <View style={styles.a07ReadinessIconCircleSuccess}>
+            <AppIcon name="check" size={16} color={colors.statusSuccess} />
+          </View>
+          <View style={styles.a07ReadinessTextCol}>
+            <Text style={styles.a07ReadinessTitle}>{readiness.message}</Text>
+          </View>
         </View>
       );
     }
@@ -393,39 +398,43 @@ export const WeddingJoinLandingScreen = () => {
       const currentAccessCode = accessCode || initialCode || route.params?.accessCode || undefined;
 
       return (
-        <View style={styles.noticeCardWarning}>
-          <AppIcon name="alert-circle" size={24} color={tokens.colors.statusWarning} style={styles.cardIcon} />
-          <Text style={styles.noticeTextWarning}>{readiness.message}</Text>
-          {readiness.primaryAction === 'EDIT_PROFILE' && (
-            <AppButton
-              title="השלם פרופיל בסיסי"
-              onPress={() => navigation.navigate('BasicProfile', {
-                returnToWedding: true,
-                returnWeddingId: effectiveWeddingId || undefined,
-                returnWeddingSnapshot: myWedding || undefined,
-                accessCode: currentAccessCode,
-                originalSource: originalSource,
-                source: 'weddingHub',
-                continueToFullAfterBasic: true,
-                continueToPhotosAfterFull: readiness.state === 'JOINED_MISSING_BOTH',
-              })}
-              style={styles.actionButton}
-            />
-          )}
-          {readiness.primaryAction === 'UPLOAD_PHOTO' && (
-            <AppButton
-              title="העלה תמונה ראשית"
-              onPress={() => navigation.navigate('Photos', {
-                returnToWedding: true,
-                returnWeddingId: effectiveWeddingId || undefined,
-                returnWeddingSnapshot: myWedding || undefined,
-                accessCode: currentAccessCode,
-                originalSource: originalSource,
-                source: 'weddingHub',
-              })}
-              style={styles.actionButton}
-            />
-          )}
+        <View style={styles.a07ReadinessRow}>
+          <View style={styles.a07ReadinessIconCircleWarning}>
+            <AppIcon name="alert-circle" size={16} color={colors.statusWarning} />
+          </View>
+          <View style={styles.a07ReadinessTextCol}>
+            <Text style={styles.a07ReadinessTitleWarning}>{readiness.message}</Text>
+            {readiness.primaryAction === 'EDIT_PROFILE' && (
+              <AppButton
+                title="השלם פרופיל בסיסי"
+                onPress={() => navigation.navigate('BasicProfile', {
+                  returnToWedding: true,
+                  returnWeddingId: effectiveWeddingId || undefined,
+                  returnWeddingSnapshot: myWedding || undefined,
+                  accessCode: currentAccessCode,
+                  originalSource: originalSource,
+                  source: 'weddingHub',
+                  continueToFullAfterBasic: true,
+                  continueToPhotosAfterFull: readiness.state === 'JOINED_MISSING_BOTH',
+                })}
+                style={styles.a07ActionCompact}
+              />
+            )}
+            {readiness.primaryAction === 'UPLOAD_PHOTO' && (
+              <AppButton
+                title="העלה תמונה ראשית"
+                onPress={() => navigation.navigate('Photos', {
+                  returnToWedding: true,
+                  returnWeddingId: effectiveWeddingId || undefined,
+                  returnWeddingSnapshot: myWedding || undefined,
+                  accessCode: currentAccessCode,
+                  originalSource: originalSource,
+                  source: 'weddingHub',
+                })}
+                style={styles.a07ActionCompact}
+              />
+            )}
+          </View>
         </View>
       );
     }
@@ -433,145 +442,121 @@ export const WeddingJoinLandingScreen = () => {
     return null;
   };
 
+  const renderA07WeddingIdentity = () => {
+    return (
+      <View style={styles.a07IdentityCard}>
+        <View style={styles.a07IdentityBadgeWrapper}>
+          <View style={styles.a07IdentityBadge}>
+            <AppIcon name="heart" size={18} color={gold.border.strong} />
+          </View>
+        </View>
+        {effectiveStatus === 'ACTIVE' && (
+          <View style={styles.a07ActiveStatusBadge}>
+             <Text style={styles.a07ActiveStatusText}>ACTIVE</Text>
+          </View>
+        )}
+        <Text style={styles.a07IdentityName}>{effectiveWeddingName}</Text>
+        <View style={styles.a07IdentityDetailsRow}>
+          {effectiveCity ? (
+            <View style={styles.a07IdentityDetailItem}>
+              <Text style={styles.a07IdentityDetailText}>{effectiveCity}</Text>
+            </View>
+          ) : null}
+          <View style={styles.a07IdentityDetailDivider} />
+          {effectiveWeddingDate ? (
+            <View style={styles.a07IdentityDetailItem}>
+              <AppIcon name="calendar" size={16} color={gold.border.strong} />
+              <Text style={styles.a07IdentityDetailText}>{formatDisplayDate(effectiveWeddingDate)}</Text>
+            </View>
+          ) : null}
+        </View>
+      </View>
+    );
+  };
+
   // Frame S6-A07-F03 — DELETED Tombstone
   if (effectiveStatus === 'DELETED') {
     return (
-      <Screen style={styles.container}>
+      <Screen style={styles.containerLight}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.railContainer}>
-            <View style={styles.tombstoneCard}>
-              <AppIcon name="alert-circle" size={40} color={tokens.colors.statusError} style={styles.cardIconCenter} />
-              <Text style={styles.tombstoneTitle}>חתונה זו נמחקה</Text>
-              <Text style={styles.tombstoneSubtitle}>
-                החתונה שהזנת אינה קיימת במערכת ואין לזהות זו כל מידע פעיל.
-              </Text>
-              <AppButton
-                title="חזרה"
-                onPress={handleGoBack}
-                style={styles.actionButton}
-              />
+            <View style={styles.tombstoneIconWrapper}>
+              <View style={styles.tombstoneIconCircle}>
+                <AppIcon name="trash" size={40} color={tokens.colors.textTertiary} />
+                <View style={styles.tombstoneIconBadge}>
+                  <AppIcon name="x" size={14} color="white" />
+                </View>
+              </View>
             </View>
+            <Text style={styles.tombstoneTitle}>החתונה אינה זמינה</Text>
+            <View style={styles.tombstoneKnotRow}>
+              <KnotOrnament size={14} color={gold.border.strong} />
+            </View>
+            <Text style={styles.tombstoneSubtitle}>
+              החתונה הזו נמחקה על ידי המארגן{'\n'}ואינה זמינה עוד.
+            </Text>
+
+            <View style={styles.noticeCardInfoLight}>
+              <AppIcon name="info" size={20} color={tokens.colors.textSecondary} style={styles.cardIcon} />
+              <Text style={styles.noticeTextInfoLight}>
+                אם לדעתך זו טעות או שיש לך שאלה,{'\n'}פנה למנהל האירוע שלך.
+              </Text>
+            </View>
+
+            <TouchableOpacity style={styles.deletedBackButton} onPress={handleGoBack}>
+              <Text style={styles.deletedBackButtonText}>חזרה לחתונות שלי</Text>
+              <AppIcon name="arrow-left" size={20} color={text.onDark.primary} style={styles.btnIconTrailing} />
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </Screen>
     );
   }
 
-  // Frame S6-A07-F02 — CLOSED Read-only
-  if (effectiveStatus === 'CLOSED') {
+  // Frame S6-A07-F02 — CLOSED / CANCELLED Read-only
+  if (effectiveStatus === 'CLOSED' || effectiveStatus === 'CANCELLED') {
     return (
-      <Screen style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.railContainer}>
-            <Text style={styles.title}>חתונה סגורה</Text>
-
-            <View style={styles.card}>
-              {effectiveImageUri ? (
-                <View style={styles.imageContainer}>
-                  <Image
-                    source={{ uri: getImageUrl(effectiveImageUri) }}
-                    style={styles.backgroundImage}
-                    resizeMode="cover"
-                  />
-                </View>
-              ) : null}
-              <Text style={styles.weddingName}>{effectiveWeddingName}</Text>
-              {effectiveWeddingDate ? (
-                <Text style={styles.weddingDetail}>תאריך: {formatDisplayDate(effectiveWeddingDate)}</Text>
-              ) : null}
-              {effectiveCity ? (
-                <Text style={styles.weddingDetail}>עיר: {effectiveCity}</Text>
-              ) : null}
-              <Text style={styles.weddingDetail}>סטטוס: נסגרה</Text>
+      <Screen style={styles.partialDarkCanvas}>
+        <ScrollView contentContainerStyle={styles.a07ScrollContent}>
+          {effectiveImageUri ? (
+            <View style={styles.a07ImageHeader}>
+              <Image source={{ uri: getImageUrl(effectiveImageUri) }} style={styles.a07Image} resizeMode="cover" />
+              <View style={styles.a07ImageOverlay} />
             </View>
+          ) : (
+            <View style={styles.a07ImageHeaderPlaceholder}>
+              <Text style={styles.a07PlaceholderTitle}>החתונה שלי</Text>
+            </View>
+          )}
+          <View style={styles.a07ContentLayer}>
+            {renderA07WeddingIdentity()}
 
-            <View style={styles.noticeCardInfo}>
+            <View style={styles.noticeCardInfoDark}>
               <AppIcon name="info" size={24} color={tokens.colors.statusInfo} style={styles.cardIcon} />
-              <Text style={styles.noticeTextInfo}>
-                חתונה זו נסגרה. מידע זה מוצג לצפייה בלבד ולא ניתן להצטרף אליה או לצפות במאגר החתונה.
+              <Text style={styles.noticeTextInfoDark}>
+                {effectiveStatus === 'CLOSED' ? 'חתונה זו נסגרה. מידע זה מוצג לצפייה בלבד.' : 'חתונה זו בוטלה.'}
               </Text>
             </View>
 
-            <AppButton
-              title="חזרה"
-              onPress={handleGoBack}
-              style={styles.actionButton}
-            />
+            <TouchableOpacity style={styles.partialDarkOutlineButton} onPress={handleGoBack}>
+              <AppIcon name="arrow-right" size={20} color={gold.border.strong} style={styles.btnIconLeading} mirrorRTL />
+              <Text style={styles.partialDarkOutlineButtonText}>חזרה</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </Screen>
     );
   }
 
-  // Frame S6-A07-F02 variant — CANCELLED Read-only
-  if (effectiveStatus === 'CANCELLED') {
-    return (
-      <Screen style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.railContainer}>
-            <Text style={styles.title}>חתונה שבוטלה</Text>
-
-            <View style={styles.card}>
-              {effectiveImageUri ? (
-                <View style={styles.imageContainer}>
-                  <Image
-                    source={{ uri: getImageUrl(effectiveImageUri) }}
-                    style={styles.backgroundImage}
-                    resizeMode="cover"
-                  />
-                </View>
-              ) : null}
-              <Text style={styles.weddingName}>{effectiveWeddingName}</Text>
-              {effectiveWeddingDate ? (
-                <Text style={styles.weddingDetail}>תאריך: {formatDisplayDate(effectiveWeddingDate)}</Text>
-              ) : null}
-              {effectiveCity ? (
-                <Text style={styles.weddingDetail}>עיר: {effectiveCity}</Text>
-              ) : null}
-              <Text style={styles.weddingDetail}>סטטוס: בוטלה</Text>
-            </View>
-
-            <View style={styles.noticeCardWarning}>
-              <AppIcon name="alert-circle" size={24} color={tokens.colors.statusWarning} style={styles.cardIcon} />
-              <Text style={styles.noticeTextWarning}>
-                חתונה זו בוטלה ולא ניתן להצטרף אליה.
-              </Text>
-            </View>
-
-            <AppButton
-              title="חזרה"
-              onPress={handleGoBack}
-              style={styles.actionButton}
-            />
-          </View>
-        </ScrollView>
-      </Screen>
-    );
-  }
-
-  // Frame S6-A01-F03 — Auth Success + Wedding Join Failure (Owner Screen 10)
+  // Frame S6-A01-F03 — Auth Success + Wedding Join Failure (Owner Screen 10/25)
   if (partialJoinState) {
     const weddingDisplayName = effectiveWeddingName
       ? `משפחות ${effectiveWeddingName}`
-      : (myWedding?.weddingName || 'משפחות אבוחצירא-בן-דוד');
+      : (myWedding?.weddingName || 'החתונה');
 
     return (
-      <View style={styles.partialDarkCanvas}>
+      <Screen style={styles.partialDarkCanvas}>
         <ScrollView contentContainerStyle={styles.partialScrollContent}>
-          {/* Top Header */}
-          <View style={styles.partialHeaderRow}>
-            <View style={styles.partialHeaderPlaceholder} />
-            <View style={styles.partialHeaderCenter}>
-              <Text style={styles.partialHeaderTitle}>שידוכים</Text>
-              <View style={styles.headerKnotWrapper}>
-                <KnotOrnament size={12} color={gold.border.strong} />
-              </View>
-            </View>
-            <View style={styles.partialHeaderAction}>
-              <AppIcon name="bell" size={24} color={gold.border.strong} />
-            </View>
-          </View>
-
           {/* Title Section */}
           <View style={styles.partialTitleSection}>
             <View style={styles.partialTitleRow}>
@@ -681,7 +666,7 @@ export const WeddingJoinLandingScreen = () => {
             </TouchableOpacity>
           </View>
         </ScrollView>
-      </View>
+      </Screen>
     );
   }
 
@@ -689,8 +674,8 @@ export const WeddingJoinLandingScreen = () => {
 
   // Main ACTIVE / Unvalidated Surface (S6-A07-F01)
   return (
-    <Screen style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+    <Screen style={!hasWeddingData ? styles.containerLight : styles.partialDarkCanvas}>
+      <ScrollView contentContainerStyle={styles.a07ScrollContent}>
         {!hasWeddingData ? (
           <View style={styles.railContainer}>
             <Text style={styles.title}>הזן קוד חתונה</Text>
@@ -720,85 +705,104 @@ export const WeddingJoinLandingScreen = () => {
             />
           </View>
         ) : (
-          <View style={styles.railContainer}>
-            <Text style={styles.title}>פרטי החתונה</Text>
-
-            <View style={styles.card}>
-              {effectiveImageUri ? (
-                <View style={styles.imageContainer}>
-                  <Image
-                    source={{ uri: getImageUrl(effectiveImageUri) }}
-                    style={styles.backgroundImage}
-                    resizeMode="cover"
-                  />
-                </View>
-              ) : null}
-              <Text style={styles.weddingName}>{effectiveWeddingName}</Text>
-              {effectiveWeddingDate ? (
-                <Text style={styles.weddingDetail}>תאריך: {formatDisplayDate(effectiveWeddingDate)}</Text>
-              ) : null}
-              {effectiveCity ? (
-                <Text style={styles.weddingDetail}>עיר: {effectiveCity}</Text>
-              ) : null}
-              <Text style={styles.weddingDetail}>סטטוס: פעילה</Text>
-            </View>
-
-            {errorMsg ? (
-              <View style={styles.noticeCardError}>
-                <Text style={styles.noticeTextError}>{errorMsg}</Text>
-              </View>
-            ) : null}
-
-            {!user ? (
-              <View style={styles.actionStack}>
-                <Text style={styles.subtitle}>כדי להצטרף לחתונה זו, יש להתחבר או ליצור חשבון.</Text>
-                <AppButton
-                  title="התחברות"
-                  onPress={handleLogin}
-                  style={styles.actionButton}
-                />
-                <AppButton
-                  title="יצירת חשבון"
-                  onPress={handleRegister}
-                  variant="secondary"
-                  style={styles.actionButton}
-                />
-              </View>
-            ) : user.role === 'ADMIN' || user.role === 'EVENT_MANAGER' ? (
-              <View style={styles.noticeCardInfo}>
-                <Text style={styles.noticeTextInfo}>
-                  מנהלים וצוות המערכת אינם יכולים להצטרף למאגר הזיווגים של החתונה כמשתתף.
-                </Text>
-              </View>
-            ) : readiness.state === 'BLOCKED_USER' ? (
-              <View style={styles.noticeCardError}>
-                <Text style={styles.noticeTextError}>המשתמש חסום. פנה להנהלת המערכת.</Text>
-              </View>
-            ) : readiness.state === 'INACTIVE_PARTICIPANT' ? (
-              <View style={styles.noticeCardWarning}>
-                <Text style={styles.noticeTextWarning}>אינך משתתף פעיל בחתונה זו.</Text>
-              </View>
-            ) : readiness.state === 'NOT_JOINED' ? (
-              <View style={styles.actionStack}>
-                <AppButton
-                  title="הצטרפות לחתונה"
-                  onPress={handleJoin}
-                  loading={joinLoading}
-                  style={styles.actionButton}
-                />
+          <View style={styles.a07ActiveContainer}>
+            {effectiveImageUri ? (
+              <View style={styles.a07ImageHeader}>
+                <Image source={{ uri: getImageUrl(effectiveImageUri) }} style={styles.a07Image} resizeMode="cover" />
+                <View style={styles.a07ImageOverlay} />
               </View>
             ) : (
-              <View style={styles.actionStack}>
-                {renderReadinessGuidance()}
-                {readiness.canOpenDiscover && myWedding?.isWeddingPoolEligible === true && (
-                  <AppButton
-                    title="גלה התאמות בחתונה"
-                    onPress={() => navigation.navigate('Discover', { pool: 'WEDDING', weddingId: myWedding.weddingId })}
-                    style={styles.actionButton}
-                  />
-                )}
+              <View style={styles.a07ImageHeaderPlaceholder}>
+                <Text style={styles.a07PlaceholderTitle}>החתונה שלי</Text>
               </View>
             )}
+
+            <View style={styles.a07ContentLayer}>
+              {renderA07WeddingIdentity()}
+
+              {errorMsg ? (
+                <View style={styles.noticeCardError}>
+                  <Text style={styles.noticeTextError}>{errorMsg}</Text>
+                </View>
+              ) : null}
+
+              {/* Action / Readiness Area */}
+              <View style={styles.a07ReadinessSection}>
+                <View style={styles.a07SectionHeader}>
+                  <Text style={styles.a07SectionTitle}>מוכנות לאירוע</Text>
+                  <AppIcon name="star" size={16} color={gold.border.strong} />
+                </View>
+                <Text style={styles.a07SectionSubtitle}>מוכנים לכניסה ל-Wedding Pool</Text>
+
+                {!user ? (
+                  <View style={styles.actionStack}>
+                    <Text style={styles.subtitleDark}>כדי להצטרף לחתונה זו, יש להתחבר או ליצור חשבון.</Text>
+                    <TouchableOpacity style={styles.partialGoldButton} onPress={handleLogin}>
+                      <Text style={styles.partialGoldButtonText}>התחברות</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.partialDarkOutlineButton} onPress={handleRegister}>
+                      <Text style={styles.partialDarkOutlineButtonText}>יצירת חשבון</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : user.role === 'ADMIN' || user.role === 'EVENT_MANAGER' ? (
+                  <View style={styles.noticeCardInfoDark}>
+                    <Text style={styles.noticeTextInfoDark}>
+                      מנהלים וצוות המערכת אינם יכולים להצטרף למאגר הזיווגים של החתונה כמשתתף.
+                    </Text>
+                  </View>
+                ) : readiness.state === 'BLOCKED_USER' ? (
+                  <View style={styles.noticeCardError}>
+                    <Text style={styles.noticeTextError}>המשתמש חסום. פנה להנהלת המערכת.</Text>
+                  </View>
+                ) : readiness.state === 'INACTIVE_PARTICIPANT' ? (
+                  <View style={styles.noticeCardWarning}>
+                    <Text style={styles.noticeTextWarning}>אינך משתתף פעיל בחתונה זו.</Text>
+                  </View>
+                ) : readiness.state === 'NOT_JOINED' ? (
+                  <View style={styles.actionStack}>
+                    <TouchableOpacity style={styles.partialGoldButton} onPress={handleJoin} disabled={joinLoading}>
+                      {joinLoading ? <ActivityIndicator size="small" color={text.onGold} /> : <Text style={styles.partialGoldButtonText}>הצטרפות לחתונה</Text>}
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <View style={styles.actionStack}>
+                    {renderReadinessGuidance()}
+                    {readiness.canOpenDiscover && myWedding?.isWeddingPoolEligible === true && (
+                      <TouchableOpacity
+                        style={styles.a07DiscoverButton}
+                        onPress={() => navigation.navigate('Discover', { pool: 'WEDDING', weddingId: myWedding.weddingId })}
+                      >
+                        <AppIcon name="chevron-left" size={20} color={text.onDark.primary} mirrorRTL style={styles.btnIconLeading} />
+                        <Text style={styles.a07DiscoverButtonText}>כניסה ל-Wedding Pool</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+              </View>
+
+              {/* QR Code Section */}
+              <View style={styles.a07QrSection}>
+                <View style={styles.a07QrHeaderRow}>
+                  <Text style={styles.a07QrTitle}>קוד גישה לאירוע</Text>
+                  <View style={styles.a07QrBadge}>
+                    <AppIcon name="lock" size={12} color={gold.border.strong} />
+                  </View>
+                </View>
+                <View style={styles.a07QrContentRow}>
+                  <View style={styles.a07QrCodeBox}>
+                     <BidiText value={accessCode} kind="code" style={styles.a07QrCodeValue} />
+                  </View>
+                  <View style={styles.a07QrImageWrapper}>
+                    <QRCode value={accessCode} size={90} color={tokens.colors.textPrimary} backgroundColor="white" />
+                  </View>
+                </View>
+                <View style={styles.a07QrFooterRow}>
+                  <AppIcon name="lock" size={12} color={gold.border.strong} />
+                  <Text style={styles.a07QrFooterText}>גישה פרטית לאורחי האירוע בלבד</Text>
+                </View>
+              </View>
+
+            </View>
           </View>
         )}
       </ScrollView>
@@ -807,7 +811,7 @@ export const WeddingJoinLandingScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  containerLight: {
     flex: 1,
     backgroundColor: tokens.colors.background,
   },
@@ -835,96 +839,24 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
-  card: {
-    backgroundColor: tokens.colors.surface,
-    padding: tokens.spacing.lg,
-    borderRadius: tokens.radii.lg,
-    borderWidth: 1,
-    borderColor: tokens.colors.border,
-    marginBottom: tokens.spacing.xl,
-    alignItems: 'center',
-  },
-  imageContainer: {
-    width: '100%',
-    aspectRatio: 16 / 9,
-    borderRadius: tokens.radii.md,
-    overflow: 'hidden',
-    marginBottom: tokens.spacing.md,
-    backgroundColor: tokens.colors.surfaceSubtle,
-  },
-  backgroundImage: {
-    width: '100%',
-    height: '100%',
-  },
-  weddingName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: tokens.colors.textPrimary,
-    marginBottom: tokens.spacing.sm,
-    textAlign: 'center',
-  },
-  weddingDetail: {
+  subtitleDark: {
     fontSize: 16,
-    color: tokens.colors.textSecondary,
-    marginBottom: tokens.spacing.xs,
+    color: tokens.colors.textTertiary,
+    marginBottom: tokens.spacing.md,
     textAlign: 'center',
+    lineHeight: 22,
   },
   actionStack: {
     marginTop: tokens.spacing.md,
     width: '100%',
+    gap: tokens.spacing.md,
   },
   actionButton: {
     marginBottom: tokens.spacing.md,
     minHeight: tokens.sizing.minTouchTarget,
   },
-  codeBox: {
-    backgroundColor: tokens.colors.surfaceSubtle,
-    padding: tokens.spacing.md,
-    borderRadius: tokens.radii.md,
-    borderWidth: 1,
-    borderColor: tokens.colors.border,
-    marginBottom: tokens.spacing.lg,
-    alignItems: 'center',
-  },
-  codeLabel: {
-    fontSize: 14,
-    color: tokens.colors.textSecondary,
-    marginBottom: tokens.spacing.xs,
-  },
-  codeText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: tokens.colors.textPrimary,
-    letterSpacing: 2,
-  },
-  tombstoneCard: {
-    backgroundColor: tokens.colors.surface,
-    padding: tokens.spacing.xxl,
-    borderRadius: tokens.radii.lg,
-    borderWidth: 1,
-    borderColor: tokens.colors.statusErrorBorder,
-    alignItems: 'center',
-  },
-  tombstoneTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: tokens.colors.statusError,
-    marginTop: tokens.spacing.md,
-    marginBottom: tokens.spacing.sm,
-    textAlign: 'center',
-  },
-  tombstoneSubtitle: {
-    fontSize: 15,
-    color: tokens.colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: tokens.spacing.xl,
-    lineHeight: 22,
-  },
   cardIcon: {
     marginRight: tokens.spacing.sm,
-  },
-  cardIconCenter: {
-    marginBottom: tokens.spacing.sm,
   },
   noticeCardError: {
     flexDirection: 'row-reverse',
@@ -976,24 +908,102 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textAlign: 'right',
   },
-  noticeCardInfo: {
+  noticeCardInfoLight: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
-    backgroundColor: tokens.colors.statusInfoBg,
+    backgroundColor: tokens.colors.surfaceSubtle,
     padding: tokens.spacing.md,
     borderRadius: tokens.radii.md,
     borderWidth: 1,
-    borderColor: tokens.colors.statusInfoBorder,
+    borderColor: tokens.colors.border,
+    marginBottom: tokens.spacing.xl,
+  },
+  noticeTextInfoLight: {
+    flex: 1,
+    color: tokens.colors.textSecondary,
+    fontSize: 14,
+    textAlign: 'right',
+    lineHeight: 20,
+  },
+  noticeCardInfoDark: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    padding: tokens.spacing.md,
+    borderRadius: tokens.radii.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
     marginBottom: tokens.spacing.lg,
   },
-  noticeTextInfo: {
+  noticeTextInfoDark: {
     flex: 1,
-    color: tokens.colors.statusInfo,
-    fontSize: 15,
+    color: tokens.colors.textSecondary,
+    fontSize: 14,
     textAlign: 'right',
+    lineHeight: 20,
   },
 
-  // S6-A01-F03 Auth Success + Wedding Join Failure Styles
+  // Deleted Tombstone specific
+  tombstoneIconWrapper: {
+    alignItems: 'center',
+    marginBottom: tokens.spacing.md,
+  },
+  tombstoneIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: tokens.colors.surfaceSubtle,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  tombstoneIconBadge: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: tokens.colors.statusError,
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: tokens.colors.background,
+  },
+  tombstoneTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: tokens.colors.textPrimary,
+    textAlign: 'center',
+  },
+  tombstoneKnotRow: {
+    alignItems: 'center',
+    marginVertical: tokens.spacing.md,
+  },
+  tombstoneSubtitle: {
+    fontSize: 16,
+    color: tokens.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: tokens.spacing.xl,
+  },
+  deletedBackButton: {
+    backgroundColor: gold.action.default,
+    borderRadius: tokens.radii.full,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: tokens.spacing.md,
+    paddingHorizontal: tokens.spacing.lg,
+  },
+  deletedBackButtonText: {
+    color: text.onDark.primary,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginRight: tokens.spacing.sm,
+  },
+
+  // Auth Success + Wedding Join Failure Styles (partialJoinState & A-07 base)
   partialDarkCanvas: {
     flex: 1,
     backgroundColor: visual.canvas.dark,
@@ -1007,36 +1017,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     gap: tokens.spacing.md,
   },
-  partialHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 48,
-    marginTop: tokens.spacing.sm,
-  },
-  partialHeaderPlaceholder: {
-    width: 32,
-  },
-  partialHeaderCenter: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  partialHeaderTitle: {
-    color: gold.border.strong,
-    fontSize: 20,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  headerKnotWrapper: {
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  partialHeaderAction: {
-    width: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
   partialTitleSection: {
     alignItems: 'center',
     marginTop: tokens.spacing.xs,
@@ -1228,7 +1208,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   partialGoldButtonText: {
-    color: text.onGold,
+    color: text.onDark.primary,
     fontSize: 17,
     fontWeight: '700',
   },
@@ -1256,5 +1236,288 @@ const styles = StyleSheet.create({
     color: gold.border.strong,
     fontSize: 16,
     fontWeight: '600',
+  },
+
+  // S6-A07-F01 ACTIVE Wedding Screen Specific Styles
+  a07ScrollContent: {
+    flexGrow: 1,
+    paddingBottom: tokens.spacing.xxl,
+  },
+  a07ActiveContainer: {
+    width: '100%',
+    maxWidth: tokens.sizing.maxContentRailWidth,
+    alignSelf: 'center',
+  },
+  a07ImageHeader: {
+    width: '100%',
+    height: 240,
+    position: 'relative',
+  },
+  a07ImageHeaderPlaceholder: {
+    width: '100%',
+    height: 160,
+    backgroundColor: visual.surface.darkRaised,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  a07PlaceholderTitle: {
+    color: text.onDark.primary,
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  a07Image: {
+    width: '100%',
+    height: '100%',
+  },
+  a07ImageOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  a07ContentLayer: {
+    marginTop: -40,
+    paddingHorizontal: tokens.spacing.lg,
+    gap: tokens.spacing.lg,
+  },
+  a07IdentityCard: {
+    backgroundColor: visual.surface.ivoryHighlight,
+    borderRadius: tokens.radii.xl,
+    padding: tokens.spacing.lg,
+    alignItems: 'center',
+    shadowColor: shadow.color,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+    position: 'relative',
+    marginTop: 20,
+  },
+  a07IdentityBadgeWrapper: {
+    position: 'absolute',
+    top: -24,
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: visual.canvas.dark,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  a07IdentityBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: visual.surface.ivoryHighlight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: gold.border.strong,
+  },
+  a07ActiveStatusBadge: {
+    position: 'absolute',
+    top: tokens.spacing.lg,
+    left: tokens.spacing.lg,
+    backgroundColor: visual.canvas.dark,
+    paddingHorizontal: tokens.spacing.sm,
+    paddingVertical: 4,
+    borderRadius: tokens.radii.full,
+  },
+  a07ActiveStatusText: {
+    color: gold.border.strong,
+    fontSize: 10,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  a07IdentityName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: text.onIvory.primary,
+    marginTop: tokens.spacing.lg,
+    marginBottom: tokens.spacing.md,
+    textAlign: 'center',
+  },
+  a07IdentityDetailsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: tokens.spacing.sm,
+  },
+  a07IdentityDetailItem: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 4,
+  },
+  a07IdentityDetailText: {
+    color: text.onIvory.secondary,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  a07IdentityDetailDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: gold.border.strong,
+    opacity: 0.3,
+    marginHorizontal: tokens.spacing.sm,
+  },
+  a07ReadinessSection: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: tokens.radii.xl,
+    padding: tokens.spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(212,175,55,0.3)',
+  },
+  a07SectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: tokens.spacing.sm,
+    marginBottom: 4,
+  },
+  a07SectionTitle: {
+    color: gold.border.strong,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  a07SectionSubtitle: {
+    color: text.onDark.secondary,
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: tokens.spacing.lg,
+  },
+  a07ReadinessRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    padding: tokens.spacing.md,
+    borderRadius: tokens.radii.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  a07ReadinessIconCircleSuccess: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.statusSuccessBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: tokens.spacing.sm,
+  },
+  a07ReadinessIconCircleWarning: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.statusWarningBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: tokens.spacing.sm,
+  },
+  a07ReadinessTextCol: {
+    flex: 1,
+  },
+  a07ReadinessTitle: {
+    color: tokens.colors.statusSuccess,
+    fontSize: 15,
+    fontWeight: '500',
+    textAlign: 'right',
+  },
+  a07ReadinessTitleWarning: {
+    color: tokens.colors.statusWarning,
+    fontSize: 15,
+    fontWeight: '500',
+    textAlign: 'right',
+    marginBottom: tokens.spacing.sm,
+  },
+  a07ActionCompact: {
+    minHeight: 40,
+    paddingHorizontal: tokens.spacing.md,
+  },
+  a07DiscoverButton: {
+
+    backgroundColor: gold.action.default,
+    borderRadius: tokens.radii.full,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: tokens.spacing.md,
+    paddingHorizontal: tokens.spacing.lg,
+    marginTop: tokens.spacing.sm,
+  },
+  a07DiscoverButtonText: {
+    color: text.onDark.primary,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginRight: tokens.spacing.sm,
+  },
+  a07QrSection: {
+    backgroundColor: visual.surface.ivoryHighlight,
+    borderRadius: tokens.radii.xl,
+    padding: tokens.spacing.lg,
+    shadowColor: shadow.color,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  a07QrHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: tokens.spacing.xs,
+    marginBottom: tokens.spacing.md,
+  },
+  a07QrTitle: {
+    color: text.onIvory.primary,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  a07QrBadge: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: visual.surface.ivoryHighlight,
+    borderWidth: 1,
+    borderColor: gold.border.strong,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  a07QrContentRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: 'rgba(212,175,55,0.3)',
+    borderRadius: tokens.radii.lg,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(212,175,55,0.05)',
+  },
+  a07QrCodeBox: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: tokens.spacing.md,
+  },
+  a07QrCodeValue: {
+    color: text.onIvory.primary,
+    fontSize: 22,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+  },
+  a07QrImageWrapper: {
+    padding: tokens.spacing.sm,
+    backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRightWidth: 1,
+    borderRightColor: 'rgba(212,175,55,0.3)',
+  },
+  a07QrFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: tokens.spacing.xs,
+    marginTop: tokens.spacing.md,
+  },
+  a07QrFooterText: {
+    color: text.onIvory.secondary,
+    fontSize: 12,
   },
 });
