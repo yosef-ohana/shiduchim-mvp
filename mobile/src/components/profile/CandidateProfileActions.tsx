@@ -5,7 +5,7 @@ import { Button } from '../foundation/Button';
 import { ResponsiveActionGroup } from '../foundation/ResponsiveActionGroup';
 import { Card } from '../foundation/Card';
 import { AppIcon } from '../foundation/AppIcon';
-import { colors, spacing, radii } from '../../theme/tokens';
+import { spacing, radii, visual, gold, text } from '../../theme/tokens';
 import { typography } from '../../theme/typography';
 
 export interface CandidateProfileActionsProps {
@@ -51,10 +51,9 @@ export const CandidateProfileActions: React.FC<CandidateProfileActionsProps> = (
   const showChatOpen = allowedActions.includes('CHAT_OPEN');
   const showMatchDetailsOpen = allowedActions.includes('MATCH_DETAILS_OPEN');
 
-  const hasPrimaryDecisionRow = showLike || showDislike || showFreeze;
+  const hasPrimaryDecisionRow = showLike || showFreeze || showUnfreeze || showRemoveAction;
   const hasSecondaryActions =
-    showRemoveAction ||
-    showUnfreeze ||
+    showDislike ||
     showOpeningCreate ||
     showOpeningOpen ||
     showChatOpen ||
@@ -64,9 +63,14 @@ export const CandidateProfileActions: React.FC<CandidateProfileActionsProps> = (
 
   if (!hasAnyRelationshipAction) {
     return (
-      <Card variant="surface" padding="md" style={styles.noActionCard}>
+      <Card
+        appearance="dark"
+        borderAppearance="restrainedGold"
+        padding="md"
+        style={styles.noActionCard}
+      >
         <View style={styles.noActionHeader}>
-          <AppIcon name="info" size={20} color={colors.textSecondary} />
+          <AppIcon name="info" size={20} color={gold.border.strong} />
           <Text style={[typography.heading, styles.noActionTitle]}>כרגע אין פעולות זמינות</Text>
         </View>
         <Text style={[typography.bodyMedium, styles.noActionText]}>
@@ -78,20 +82,78 @@ export const CandidateProfileActions: React.FC<CandidateProfileActionsProps> = (
 
   return (
     <View style={styles.container}>
+      {/* Option B Section Header */}
+      <View style={styles.sectionHeaderRow}>
+        <View style={styles.headerDividerLine} />
+        <Text style={[typography.captionBold, styles.sectionHeaderText]}>
+          פעולות מותרות כרגע
+        </Text>
+        <View style={styles.headerDividerLine} />
+      </View>
+
+      {/* Prominent Primary Gold Action: Opening Message Create */}
+      {showOpeningCreate && (
+        <Button
+          label="שלח/י הודעת פתיחה"
+          onPress={onOpeningCreate}
+          loading={loadingAction === 'OPENING_CREATE'}
+          disabled={isBtnDisabled('OPENING_CREATE')}
+          variant="primary"
+          visualAppearance="gold"
+          iconStart="mail"
+          fullWidth
+          accessibilityLabel="שליחת הודעת פתיחה"
+          style={styles.primaryGoldBtn}
+        />
+      )}
+
+      {/* Prominent Primary Gold Action: Opening Message Open */}
+      {showOpeningOpen && (
+        <Button
+          label="צפייה בהודעת פתיחה"
+          onPress={onOpeningOpen}
+          loading={loadingAction === 'OPENING_OPEN'}
+          disabled={isBtnDisabled('OPENING_OPEN')}
+          variant="primary"
+          visualAppearance="gold"
+          iconStart="mail"
+          fullWidth
+          accessibilityLabel="צפייה בהודעת פתיחה"
+          style={styles.primaryGoldBtn}
+        />
+      )}
+
+      {/* Decision Row: Like, Freeze, Unfreeze, Remove Action */}
       {hasPrimaryDecisionRow && (
         <ResponsiveActionGroup alignment="inline" style={styles.decisionRow}>
           {showLike && (
-            <Button
-              label="לייק"
-              onPress={onLike}
-              loading={loadingAction === 'LIKE'}
-              disabled={isBtnDisabled('LIKE')}
-              variant="primary"
-              iconStart="heart"
-              accessibilityLabel="סימון לייק למועמד"
-              style={styles.flexBtn}
-            />
+            showOpeningCreate ? (
+              <Button
+                label="סימון עניין"
+                onPress={onLike}
+                loading={loadingAction === 'LIKE'}
+                disabled={isBtnDisabled('LIKE')}
+                variant="secondary"
+                iconStart="heart"
+                accessibilityLabel="סימון לייק למועמד"
+                style={styles.darkGoldBtn}
+                labelStyle={styles.darkGoldBtnText}
+              />
+            ) : (
+              <Button
+                label="לייק"
+                onPress={onLike}
+                loading={loadingAction === 'LIKE'}
+                disabled={isBtnDisabled('LIKE')}
+                variant="primary"
+                visualAppearance="gold"
+                iconStart="heart"
+                accessibilityLabel="סימון לייק למועמד"
+                style={styles.flexBtn}
+              />
+            )
           )}
+
           {showFreeze && (
             <Button
               label="שמור בצד"
@@ -101,76 +163,42 @@ export const CandidateProfileActions: React.FC<CandidateProfileActionsProps> = (
               variant="secondary"
               iconStart="star"
               accessibilityLabel="שמירת המועמד בצד"
-              style={styles.flexBtn}
+              style={styles.darkGoldBtn}
+              labelStyle={styles.darkGoldBtnText}
             />
           )}
-          {showDislike && (
+
+          {showUnfreeze && (
             <Button
-              label="לא מתאים"
-              onPress={onDislike}
-              loading={loadingAction === 'DISLIKE'}
-              disabled={isBtnDisabled('DISLIKE')}
-              variant="destructive"
-              iconStart="x"
-              accessibilityLabel="העברה לרשימת לא מתאים"
-              style={styles.flexBtn}
+              label="ביטול שמירה בצד"
+              onPress={onUnfreeze}
+              loading={loadingAction === 'UNFREEZE'}
+              disabled={isBtnDisabled('UNFREEZE')}
+              variant="secondary"
+              iconStart="star"
+              accessibilityLabel="ביטול שמירה בצד"
+              style={styles.darkGoldBtn}
+              labelStyle={styles.darkGoldBtnText}
+            />
+          )}
+
+          {showRemoveAction && (
+            <Button
+              label="ביטול פעולה אחרונה"
+              onPress={onRemoveAction}
+              loading={loadingAction === 'REMOVE_ACTION'}
+              disabled={isBtnDisabled('REMOVE_ACTION')}
+              variant="secondary"
+              iconStart="log-out"
+              accessibilityLabel="ביטול פעולה אחרונה"
+              style={styles.darkGoldBtn}
+              labelStyle={styles.darkGoldBtnText}
             />
           )}
         </ResponsiveActionGroup>
       )}
 
-      {showRemoveAction && (
-        <Button
-          label="ביטול פעולה אחרונה"
-          onPress={onRemoveAction}
-          loading={loadingAction === 'REMOVE_ACTION'}
-          disabled={isBtnDisabled('REMOVE_ACTION')}
-          variant="secondary"
-          iconStart="log-out"
-          fullWidth
-          accessibilityLabel="ביטול פעולה אחרונה"
-        />
-      )}
-
-      {showUnfreeze && (
-        <Button
-          label="ביטול שמירה בצד"
-          onPress={onUnfreeze}
-          loading={loadingAction === 'UNFREEZE'}
-          disabled={isBtnDisabled('UNFREEZE')}
-          variant="secondary"
-          iconStart="star"
-          fullWidth
-          accessibilityLabel="ביטול שמירה בצד"
-        />
-      )}
-
-      {showOpeningCreate && (
-        <Button
-          label="שלח/י הודעת פתיחה"
-          onPress={onOpeningCreate}
-          loading={loadingAction === 'OPENING_CREATE'}
-          disabled={isBtnDisabled('OPENING_CREATE')}
-          variant="secondary"
-          iconStart="mail"
-          fullWidth
-          accessibilityLabel="שליחת הודעת פתיחה"
-        />
-      )}
-
-      {showOpeningOpen && (
-        <Button
-          label="צפייה בהודעת פתיחה"
-          onPress={onOpeningOpen}
-          loading={loadingAction === 'OPENING_OPEN'}
-          disabled={isBtnDisabled('OPENING_OPEN')}
-          variant="primary"
-          iconStart="mail"
-          fullWidth
-          accessibilityLabel="צפייה בהודעת פתיחה"
-        />
-      )}
-
+      {/* Match Actions */}
       {showChatOpen && (
         <Button
           label="פתח צ׳אט"
@@ -178,6 +206,7 @@ export const CandidateProfileActions: React.FC<CandidateProfileActionsProps> = (
           loading={loadingAction === 'CHAT_OPEN'}
           disabled={isBtnDisabled('CHAT_OPEN')}
           variant="primary"
+          visualAppearance="gold"
           iconStart="mail"
           fullWidth
           accessibilityLabel="פתיחת צ׳אט"
@@ -194,6 +223,23 @@ export const CandidateProfileActions: React.FC<CandidateProfileActionsProps> = (
           iconStart="info"
           fullWidth
           accessibilityLabel="צפייה בפרטי השידוך"
+          style={styles.darkGoldBtn}
+          labelStyle={styles.darkGoldBtnText}
+        />
+      )}
+
+      {/* Visually Separated Destructive Action: Dislike */}
+      {showDislike && (
+        <Button
+          label="לא מתאים"
+          onPress={onDislike}
+          loading={loadingAction === 'DISLIKE'}
+          disabled={isBtnDisabled('DISLIKE')}
+          variant="destructive"
+          iconStart="x"
+          fullWidth
+          accessibilityLabel="העברה לרשימת לא מתאים"
+          style={styles.dislikeBtn}
         />
       )}
     </View>
@@ -205,6 +251,26 @@ const styles = StyleSheet.create({
     width: '100%',
     gap: spacing.md,
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+    marginVertical: spacing.xs,
+  },
+  headerDividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: gold.border.restrained,
+    opacity: 0.5,
+  },
+  sectionHeaderText: {
+    color: gold.border.strong,
+    textAlign: 'center',
+  },
+  primaryGoldBtn: {
+    width: '100%',
+  },
   decisionRow: {
     width: '100%',
     flexDirection: 'row',
@@ -213,11 +279,23 @@ const styles = StyleSheet.create({
   },
   flexBtn: {
     flex: 1,
-    minWidth: 100,
+    minWidth: 120,
+  },
+  darkGoldBtn: {
+    flex: 1,
+    minWidth: 120,
+    backgroundColor: visual.surface.darkRaised,
+    borderWidth: 1,
+    borderColor: gold.border.restrained,
+  },
+  darkGoldBtnText: {
+    color: gold.border.strong,
+  },
+  dislikeBtn: {
+    width: '100%',
+    marginTop: spacing.xs,
   },
   noActionCard: {
-    backgroundColor: colors.surfaceSubtle,
-    borderColor: colors.borderSubtle,
     alignItems: 'center',
     padding: spacing.lg,
   },
@@ -228,10 +306,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   noActionTitle: {
-    color: colors.textSecondary,
+    color: text.onDark.primary,
   },
   noActionText: {
-    color: colors.textTertiary,
+    color: text.onDark.secondary,
     textAlign: 'center',
   },
 });
