@@ -1,9 +1,14 @@
 /**
- * ConnectionsHubScreen — Batch A5 Anchor Runtime Proof
- * REL-02 real USER Connections root with three separate canonical domains:
+ * ConnectionsHubScreen — Batch REL-02 C1 Visual Recovery
+ * Canonical USER Connections root with three separate canonical domains:
  * 1. Interest (עניין) -> Lists
  * 2. Opening Messages (הודעות פתיחה) -> OpeningMessages
  * 3. Matches (התאמות) -> Matches
+ *
+ * Visual Authorities:
+ * - Primary: Owner Screen 7 (B-05 / S6-A05-F01 Loaded)
+ * - Supporting: Owner Screen 18 (R-10 / S6-A05-F02 Unknown Counts + Partial Failure)
+ * - Full Empty: OVD-DEV-REL02-001 (R-11 / S6-A05-F03 Bounded Replacement)
  */
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
@@ -16,7 +21,7 @@ import { Button } from '../../components/foundation/Button';
 import { AppIcon } from '../../components/foundation/AppIcon';
 import { StateSurface } from '../../components/foundation/StateSurface';
 import { useAuth } from '../../context/AuthContext';
-import { colors, spacing, radii, sizing } from '../../theme/tokens';
+import { colors, spacing, radii, sizing, visual, gold, text as textTokens } from '../../theme/tokens';
 import { typography } from '../../theme/typography';
 import { getLikes } from '../../api/listsApi';
 import { getInboxOpeningMessages } from '../../api/openingMessagesApi';
@@ -57,10 +62,11 @@ export const ConnectionsHubScreen: React.FC = () => {
     setInterestState(prev => ({ ...prev, status: 'loading', errorMessage: null }));
     try {
       const res = await getLikes();
+      const isArray = Array.isArray(res);
       setInterestState({
         status: 'success',
         errorMessage: null,
-        isEmpty: Array.isArray(res) && res.length === 0,
+        isEmpty: isArray && res.length === 0,
       });
     } catch (err: any) {
       setInterestState({
@@ -75,10 +81,11 @@ export const ConnectionsHubScreen: React.FC = () => {
     setOpeningsState(prev => ({ ...prev, status: 'loading', errorMessage: null }));
     try {
       const res = await getInboxOpeningMessages();
+      const isArray = Array.isArray(res);
       setOpeningsState({
         status: 'success',
         errorMessage: null,
-        isEmpty: Array.isArray(res) && res.length === 0,
+        isEmpty: isArray && res.length === 0,
       });
     } catch (err: any) {
       setOpeningsState({
@@ -93,10 +100,11 @@ export const ConnectionsHubScreen: React.FC = () => {
     setMatchesState(prev => ({ ...prev, status: 'loading', errorMessage: null }));
     try {
       const res = await getMatches();
+      const isArray = Array.isArray(res);
       setMatchesState({
         status: 'success',
         errorMessage: null,
-        isEmpty: Array.isArray(res) && res.length === 0,
+        isEmpty: isArray && res.length === 0,
       });
     } catch (err: any) {
       setMatchesState({
@@ -146,7 +154,7 @@ export const ConnectionsHubScreen: React.FC = () => {
     );
   }
 
-  // Full Empty is valid only when all 3 requests completed successfully and all 3 returned empty collections
+  // Full Empty is valid ONLY when all 3 requests completed successfully and all 3 returned empty collections
   const isFullEmpty =
     interestState.status === 'success' &&
     openingsState.status === 'success' &&
@@ -164,17 +172,25 @@ export const ConnectionsHubScreen: React.FC = () => {
     <ScreenContainer scroll testID="connections-hub-screen">
       {/* Header Title & Subtitle */}
       <View style={styles.headerContainer}>
-        <Text style={[typography.titleLarge, styles.titleText]}>קשרים</Text>
+        <View style={styles.titleWrapper}>
+          <Text style={[typography.titleLarge, styles.titleText]}>קשרים</Text>
+          <View style={styles.headerFlourish} />
+        </View>
         <Text style={[typography.bodyMedium, styles.subtitleText]}>
-          בחרו תחום להמשך ניהול הקשרים
+          כל שלב בתהליך נמצא במקום ברור משלו
         </Text>
       </View>
 
-      {/* Full Empty Banner (F03 Textual State) */}
+      {/* Full Empty Banner (OVD-DEV-REL02-001 Bounded Replacement) */}
       {isFullEmpty && (
-        <Card variant="surface" style={styles.emptyCard} testID="connections-full-empty-banner">
+        <Card
+          variant="surface"
+          appearance="ivory"
+          style={styles.emptyCard}
+          testID="connections-full-empty-banner"
+        >
           <View style={styles.emptyHeaderRow}>
-            <AppIcon name="info" size={sizing.iconMd} color={colors.textSecondary} />
+            <AppIcon name="info" size={sizing.iconMd} color={gold.border.strong} />
             <Text style={[typography.titleMedium, styles.emptyTitle]}>
               אין כעת קשרים בשלושת התחומים
             </Text>
@@ -199,6 +215,7 @@ export const ConnectionsHubScreen: React.FC = () => {
         {/* DOMAIN 1: Interest (עניין) */}
         <Card
           variant="surface"
+          appearance="ivory"
           pressable
           onPress={() => navigation.navigate('Lists')}
           accessibilityLabel="עניין, מעבר לרשימות שלי"
@@ -206,40 +223,55 @@ export const ConnectionsHubScreen: React.FC = () => {
           testID="domain-card-interest"
         >
           <View style={styles.cardHeaderRow}>
-            <View style={styles.iconCircle}>
-              <AppIcon name="heart" size={sizing.iconMd} color={colors.textPrimary} />
+
+            {/* Left side: Chevron */}
+            <View style={styles.leftControlContainer}>
+              <AppIcon name="chevron-left" size={sizing.iconMd} color={textTokens.onIvory.secondary} mirrorRTL />
             </View>
+
+            {/* Middle: Title, Subtitle, Status */}
             <View style={styles.titleColumn}>
               <View style={styles.titleBadgeRow}>
                 <Text style={[typography.titleLarge, styles.cardTitle]}>עניין</Text>
-                <View style={interestState.status === 'error' ? styles.errorBadge : styles.statusBadge}>
-                  <Text style={interestState.status === 'error' ? styles.errorBadgeText : styles.statusBadgeText}>
-                    {interestState.status === 'error'
-                      ? 'לא ניתן לטעון'
-                      : interestState.status === 'loading'
-                      ? 'טוען...'
-                      : 'התחום זמין'}
-                  </Text>
-                </View>
+                {interestState.status === 'error' && (
+                  <View style={styles.errorBadge}>
+                    <Text style={styles.errorBadgeText}>לא זמין</Text>
+                  </View>
+                )}
+                {interestState.status === 'loading' && (
+                  <View style={styles.statusBadge}>
+                    <Text style={styles.statusBadgeText}>טוען...</Text>
+                  </View>
+                )}
               </View>
               <Text style={[typography.bodyMedium, styles.cardDescription]}>
-                לייקים, מי שהתעניין בי, דיסלייקים ושמירות בצד
+                סימוני עניין, מי סימן אותך, לא מתאימים ומעצרים בצד
               </Text>
             </View>
-            <View style={styles.chevronWrapper}>
-              <AppIcon name="chevron-left" size={sizing.iconMd} color={colors.textSecondary} mirrorRTL />
+
+            {/* Right: Icon Circle */}
+            <View style={styles.iconCircle}>
+              <AppIcon name="heart" size={sizing.iconLg} color={gold.action.default} />
             </View>
+
           </View>
 
+          {/* Status / Footer / Isolated Error */}
           {interestState.status === 'loading' ? (
             <View style={styles.cardStatusRow}>
-              <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={[typography.caption, styles.statusSubtext]}>טוען...</Text>
+              <ActivityIndicator size="small" color={gold.action.default} />
+              <Text style={[typography.caption, styles.statusSubtext]}>טוען נתונים...</Text>
             </View>
           ) : interestState.status === 'error' ? (
             <View style={styles.isolatedErrorContainer}>
+              <View style={styles.partialErrorHeader}>
+                <AppIcon name="alert-circle" size={sizing.iconSm} color={colors.statusWarning} />
+                <Text style={[typography.titleSmall, styles.partialErrorTitle]}>
+                  טעינה חלקית באזור זה
+                </Text>
+              </View>
               <Text style={[typography.caption, styles.errorText]}>
-                {interestState.errorMessage || 'לא ניתן לטעון את התחום כרגע'}
+                {interestState.errorMessage || 'לא ניתן לטעון את התחום כרגע. אפשר לנסות שוב או להיכנס לאזור.'}
               </Text>
               <Button
                 label="נסה שוב"
@@ -251,7 +283,7 @@ export const ConnectionsHubScreen: React.FC = () => {
             </View>
           ) : (
             <View style={styles.cardFooterRow}>
-              <AppIcon name="info" size={sizing.iconXs} color={colors.textTertiary} />
+              <AppIcon name="calendar" size={sizing.iconXs} color={textTokens.onIvory.secondary} />
               <Text style={[typography.caption, styles.footerSubtext]}>
                 הספירה אינה זמינה
               </Text>
@@ -262,6 +294,7 @@ export const ConnectionsHubScreen: React.FC = () => {
         {/* DOMAIN 2: Opening Messages (הודעות פתיחה) */}
         <Card
           variant="surface"
+          appearance="ivory"
           pressable
           onPress={() => navigation.navigate('OpeningMessages')}
           accessibilityLabel="הודעות פתיחה, מעבר להודעות פתיחה"
@@ -269,40 +302,55 @@ export const ConnectionsHubScreen: React.FC = () => {
           testID="domain-card-opening-messages"
         >
           <View style={styles.cardHeaderRow}>
-            <View style={styles.iconCircle}>
-              <AppIcon name="mail" size={sizing.iconMd} color={colors.textPrimary} />
+
+            {/* Left side: Chevron */}
+            <View style={styles.leftControlContainer}>
+              <AppIcon name="chevron-left" size={sizing.iconMd} color={textTokens.onIvory.secondary} mirrorRTL />
             </View>
+
+            {/* Middle: Title, Subtitle, Status */}
             <View style={styles.titleColumn}>
               <View style={styles.titleBadgeRow}>
                 <Text style={[typography.titleLarge, styles.cardTitle]}>הודעות פתיחה</Text>
-                <View style={openingsState.status === 'error' ? styles.errorBadge : styles.statusBadge}>
-                  <Text style={openingsState.status === 'error' ? styles.errorBadgeText : styles.statusBadgeText}>
-                    {openingsState.status === 'error'
-                      ? 'לא ניתן לטעון'
-                      : openingsState.status === 'loading'
-                      ? 'טוען...'
-                      : 'התחום זמין'}
-                  </Text>
-                </View>
+                {openingsState.status === 'error' && (
+                  <View style={styles.errorBadge}>
+                    <Text style={styles.errorBadgeText}>לא זמין</Text>
+                  </View>
+                )}
+                {openingsState.status === 'loading' && (
+                  <View style={styles.statusBadge}>
+                    <Text style={styles.statusBadgeText}>טוען...</Text>
+                  </View>
+                )}
               </View>
               <Text style={[typography.bodyMedium, styles.cardDescription]}>
                 הודעות פתיחה שנשלחו והתקבלו
               </Text>
             </View>
-            <View style={styles.chevronWrapper}>
-              <AppIcon name="chevron-left" size={sizing.iconMd} color={colors.textSecondary} mirrorRTL />
+
+            {/* Right: Icon Circle */}
+            <View style={styles.iconCircle}>
+              <AppIcon name="mail" size={sizing.iconLg} color={gold.action.default} />
             </View>
+
           </View>
 
+          {/* Status / Footer / Isolated Error */}
           {openingsState.status === 'loading' ? (
             <View style={styles.cardStatusRow}>
-              <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={[typography.caption, styles.statusSubtext]}>טוען...</Text>
+              <ActivityIndicator size="small" color={gold.action.default} />
+              <Text style={[typography.caption, styles.statusSubtext]}>טוען נתונים...</Text>
             </View>
           ) : openingsState.status === 'error' ? (
             <View style={styles.isolatedErrorContainer}>
+              <View style={styles.partialErrorHeader}>
+                <AppIcon name="alert-circle" size={sizing.iconSm} color={colors.statusWarning} />
+                <Text style={[typography.titleSmall, styles.partialErrorTitle]}>
+                  טעינה חלקית באזור זה
+                </Text>
+              </View>
               <Text style={[typography.caption, styles.errorText]}>
-                {openingsState.errorMessage || 'לא ניתן לטעון את התחום כרגע'}
+                {openingsState.errorMessage || 'לא ניתן לטעון את התחום כרגע. אפשר לנסות שוב או להיכנס לאזור.'}
               </Text>
               <Button
                 label="נסה שוב"
@@ -314,7 +362,7 @@ export const ConnectionsHubScreen: React.FC = () => {
             </View>
           ) : (
             <View style={styles.cardFooterRow}>
-              <AppIcon name="info" size={sizing.iconXs} color={colors.textTertiary} />
+              <AppIcon name="calendar" size={sizing.iconXs} color={textTokens.onIvory.secondary} />
               <Text style={[typography.caption, styles.footerSubtext]}>
                 הספירה אינה זמינה
               </Text>
@@ -325,6 +373,7 @@ export const ConnectionsHubScreen: React.FC = () => {
         {/* DOMAIN 3: Matches (התאמות) */}
         <Card
           variant="surface"
+          appearance="ivory"
           pressable
           onPress={() => navigation.navigate('Matches')}
           accessibilityLabel="התאמות, מעבר להצעות שלי"
@@ -332,47 +381,55 @@ export const ConnectionsHubScreen: React.FC = () => {
           testID="domain-card-matches"
         >
           <View style={styles.cardHeaderRow}>
-            <View style={styles.iconCircle}>
-              <AppIcon name="navConnections" size={sizing.iconMd} color={colors.textPrimary} />
+
+            {/* Left side: Chevron */}
+            <View style={styles.leftControlContainer}>
+              <AppIcon name="chevron-left" size={sizing.iconMd} color={textTokens.onIvory.secondary} mirrorRTL />
             </View>
+
+            {/* Middle: Title, Subtitle, Status */}
             <View style={styles.titleColumn}>
               <View style={styles.titleBadgeRow}>
                 <Text style={[typography.titleLarge, styles.cardTitle]}>התאמות</Text>
-                <View style={matchesState.status === 'error' ? styles.errorBadge : styles.statusBadge}>
-                  <Text style={matchesState.status === 'error' ? styles.errorBadgeText : styles.statusBadgeText}>
-                    {matchesState.status === 'error'
-                      ? 'לא ניתן לטעון'
-                      : matchesState.status === 'loading'
-                      ? 'טוען...'
-                      : 'התחום זמין'}
-                  </Text>
-                </View>
+                {matchesState.status === 'error' && (
+                  <View style={styles.errorBadge}>
+                    <Text style={styles.errorBadgeText}>לא זמין</Text>
+                  </View>
+                )}
+                {matchesState.status === 'loading' && (
+                  <View style={styles.statusBadge}>
+                    <Text style={styles.statusBadgeText}>טוען...</Text>
+                  </View>
+                )}
               </View>
               <Text style={[typography.bodyMedium, styles.cardDescription]}>
-                התאמות והיסטוריית קשרים
+                התאמות פעילות ופרטי הקשר
               </Text>
             </View>
-            <View style={styles.chevronWrapper}>
-              <AppIcon name="chevron-left" size={sizing.iconMd} color={colors.textSecondary} mirrorRTL />
+
+            {/* Right: Icon Circle */}
+            <View style={styles.iconCircle}>
+              <AppIcon name="navConnections" size={sizing.iconLg} color={gold.action.default} />
             </View>
+
           </View>
 
-          {/* Isolated Partial Failure Panel (S6-A05-F02 layout) */}
+          {/* Isolated Partial Failure Panel (Owner Screen 18 R-10 / S6-A05-F02 layout) */}
           {matchesState.status === 'loading' ? (
             <View style={styles.cardStatusRow}>
-              <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={[typography.caption, styles.statusSubtext]}>טוען...</Text>
+              <ActivityIndicator size="small" color={gold.action.default} />
+              <Text style={[typography.caption, styles.statusSubtext]}>טוען נתונים...</Text>
             </View>
           ) : matchesState.status === 'error' ? (
             <View style={styles.partialErrorContainer}>
               <View style={styles.partialErrorHeader}>
-                <AppIcon name="alert-circle" size={sizing.iconSm} color={colors.statusError} />
+                <AppIcon name="alert-circle" size={sizing.iconSm} color={colors.statusWarning} />
                 <Text style={[typography.titleSmall, styles.partialErrorTitle]}>
                   טעינה חלקית באזור זה
                 </Text>
               </View>
               <Text style={[typography.caption, styles.partialErrorMessage]}>
-                {matchesState.errorMessage || 'לא ניתן לטעון את התחום כרגע. אפשר לנסות שוב או להיכנס לאזור.'}
+                {matchesState.errorMessage || 'חלק מהנתונים לא נטענו. אפשר לנסות שוב או להיכנס לאזור.'}
               </Text>
               <Button
                 label="נסה שוב"
@@ -384,7 +441,7 @@ export const ConnectionsHubScreen: React.FC = () => {
             </View>
           ) : (
             <View style={styles.cardFooterRow}>
-              <AppIcon name="info" size={sizing.iconXs} color={colors.textTertiary} />
+              <AppIcon name="calendar" size={sizing.iconXs} color={textTokens.onIvory.secondary} />
               <Text style={[typography.caption, styles.footerSubtext]}>
                 הספירה אינה זמינה
               </Text>
@@ -395,10 +452,10 @@ export const ConnectionsHubScreen: React.FC = () => {
       </View>
 
       {/* Restrained Operational Privacy Footer */}
-      <Card variant="surface" style={styles.privacyCard}>
+      <Card variant="surface" appearance="ivory" style={styles.privacyCard}>
         <View style={styles.privacyRow}>
           <View style={styles.privacyIconWrapper}>
-            <AppIcon name="shield" size={sizing.iconLg} color={colors.accent} />
+            <AppIcon name="shield" size={sizing.iconMd} color={gold.action.default} />
           </View>
           <View style={styles.privacyTextColumn}>
             <Text style={[typography.titleMedium, styles.privacyTitle]}>פרטיות ובטחון</Text>
@@ -415,20 +472,34 @@ export const ConnectionsHubScreen: React.FC = () => {
 const styles = StyleSheet.create({
   headerContainer: {
     marginVertical: spacing.lg,
+    alignItems: 'center',
   },
-  titleText: {
-    color: colors.textPrimary,
-    textAlign: 'right',
+  titleWrapper: {
+    alignItems: 'center',
     marginBottom: spacing.xs,
   },
+  titleText: {
+    color: textTokens.onDark.primary,
+    textAlign: 'center',
+    fontWeight: 'bold',
+    fontSize: 28,
+  },
+  headerFlourish: {
+    width: 60,
+    height: 2,
+    backgroundColor: gold.border.strong,
+    marginTop: spacing.xxs,
+    borderRadius: radii.full,
+  },
   subtitleText: {
-    color: colors.textSecondary,
-    textAlign: 'right',
+    color: textTokens.onDark.secondary,
+    textAlign: 'center',
   },
   emptyCard: {
     marginBottom: spacing.lg,
     padding: spacing.md,
-    backgroundColor: colors.surfaceSubtle,
+    borderWidth: 1.5,
+    borderColor: gold.border.strong,
   },
   emptyHeaderRow: {
     flexDirection: 'row-reverse',
@@ -437,10 +508,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   emptyTitle: {
-    color: colors.textPrimary,
+    color: textTokens.onIvory.primary,
+    fontWeight: 'bold',
   },
   emptySubtext: {
-    color: colors.textSecondary,
+    color: textTokens.onIvory.secondary,
     textAlign: 'right',
     marginBottom: spacing.sm,
   },
@@ -453,18 +525,23 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   domainCard: {
-    minHeight: 110,
+    minHeight: 120,
     justifyContent: 'center',
+    padding: spacing.md,
+    borderWidth: 1.5,
+    borderColor: gold.border.strong,
   },
   cardHeaderRow: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
   },
   iconCircle: {
-    width: sizing.minTouchTarget,
-    height: sizing.minTouchTarget,
+    width: 52,
+    height: 52,
     borderRadius: radii.full,
-    backgroundColor: colors.surfaceSubtle,
+    backgroundColor: visual.surface.dark,
+    borderWidth: 1,
+    borderColor: gold.border.strong,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: spacing.md,
@@ -479,17 +556,18 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   cardTitle: {
-    color: colors.textPrimary,
+    color: textTokens.onIvory.primary,
+    fontWeight: 'bold',
   },
   statusBadge: {
-    backgroundColor: colors.surfaceSubtle,
+    backgroundColor: visual.surface.ivoryMuted,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: radii.sm,
   },
   statusBadgeText: {
     ...typography.caption,
-    color: colors.textSecondary,
+    color: textTokens.onIvory.secondary,
     fontWeight: '600',
   },
   errorBadge: {
@@ -504,15 +582,30 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   cardDescription: {
-    color: colors.textSecondary,
+    color: textTokens.onIvory.secondary,
     marginTop: spacing.xxs,
     textAlign: 'right',
   },
-  chevronWrapper: {
-    paddingLeft: spacing.xs,
-    justifyContent: 'center',
-    minWidth: sizing.minTouchTarget,
+  leftControlContainer: {
+    flexDirection: 'row-reverse',
     alignItems: 'center',
+    gap: spacing.xs,
+    marginRight: spacing.xs,
+  },
+  countBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: radii.full,
+    backgroundColor: visual.surface.ivoryMuted,
+    borderWidth: 1,
+    borderColor: gold.border.restrained,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  countBadgeText: {
+    ...typography.titleMedium,
+    color: textTokens.onIvory.primary,
+    fontWeight: 'bold',
   },
   cardStatusRow: {
     flexDirection: 'row-reverse',
@@ -521,7 +614,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   statusSubtext: {
-    color: colors.textTertiary,
+    color: textTokens.onIvory.secondary,
   },
   cardFooterRow: {
     flexDirection: 'row-reverse',
@@ -530,18 +623,21 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   footerSubtext: {
-    color: colors.textTertiary,
+    color: textTokens.onIvory.secondary,
+    fontSize: 12,
   },
   isolatedErrorContainer: {
     marginTop: spacing.sm,
     padding: spacing.sm,
-    backgroundColor: colors.statusErrorBg,
-    borderRadius: radii.sm,
+    backgroundColor: colors.statusWarningBg,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.statusWarningBorder,
     alignItems: 'flex-start',
     gap: spacing.xs,
   },
   errorText: {
-    color: colors.statusError,
+    color: textTokens.onIvory.primary,
     textAlign: 'right',
   },
   partialErrorContainer: {
@@ -560,9 +656,10 @@ const styles = StyleSheet.create({
   },
   partialErrorTitle: {
     color: colors.statusWarning,
+    fontWeight: 'bold',
   },
   partialErrorMessage: {
-    color: colors.textPrimary,
+    color: textTokens.onIvory.primary,
     textAlign: 'right',
     marginBottom: spacing.sm,
   },
@@ -571,19 +668,23 @@ const styles = StyleSheet.create({
     minHeight: 36,
   },
   privacyCard: {
-    backgroundColor: colors.surfaceSubtle,
     marginBottom: spacing.xl,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: gold.border.restrained,
   },
   privacyRow: {
     flexDirection: 'row-reverse',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: spacing.md,
   },
   privacyIconWrapper: {
     width: 40,
     height: 40,
     borderRadius: radii.full,
-    backgroundColor: colors.accentMuted,
+    backgroundColor: visual.surface.dark,
+    borderWidth: 1,
+    borderColor: gold.border.strong,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -591,13 +692,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   privacyTitle: {
-    color: colors.textPrimary,
+    color: textTokens.onIvory.primary,
     textAlign: 'right',
     marginBottom: spacing.xxs,
+    fontWeight: 'bold',
   },
   privacyBody: {
-    color: colors.textSecondary,
+    color: textTokens.onIvory.secondary,
     textAlign: 'right',
-    lineHeight: 20,
+    lineHeight: 18,
   },
 });
